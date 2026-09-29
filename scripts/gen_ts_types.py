@@ -45,7 +45,7 @@ from pydantic.json_schema import models_json_schema  # noqa: E402
 from app import models  # noqa: E402
 
 #: Request bodies: here a defaulted field may be omitted by the client.
-INPUT_MODELS: frozenset[str] = frozenset({"ScanRequest"})
+INPUT_MODELS: frozenset[str] = frozenset({"ScanRequest", "PatchRequest"})
 
 #: SSE event name -> payload model (MASTERSPEC §12). Rendered as a map type so
 #: the frontend's EventSource handler is typed by event name.

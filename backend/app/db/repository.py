@@ -22,7 +22,7 @@ from sqlalchemy.engine import Engine, make_url
 from sqlmodel import Session, SQLModel, col, create_engine, select
 
 from app.db.tables import ScanRow
-from app.models import ApiError, Scan, ScanResult, ScanStatus
+from app.models import ApiError, PatchInfo, Scan, ScanResult, ScanStatus
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +124,18 @@ class ScanRepository:
             status=ScanStatus.DONE.value,
             before=result.model_dump(mode="json"),
             error=None,
+        )
+
+    async def save_patch(self, scan_id: str, patch: PatchInfo) -> bool:
+        """Store the generated fixes / built patch (MASTERSPEC §5 ``PatchInfo``)."""
+        return await self._update(scan_id, patch=patch.model_dump(mode="json"))
+
+    async def save_after(self, scan_id: str, result: ScanResult, patch: PatchInfo) -> bool:
+        """Store the re-scan of the patched copy and its patch, in one commit."""
+        return await self._update(
+            scan_id,
+            after=result.model_dump(mode="json"),
+            patch=patch.model_dump(mode="json"),
         )
 
     async def mark_error(self, scan_id: str, error: ApiError) -> bool:

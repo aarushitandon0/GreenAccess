@@ -39,6 +39,8 @@ MASTERSPEC.md  CLAUDE.md  Makefile  docker-compose.yml
 - `make lint` — ruff + tsc --noEmit + eslint
 - `make scan URL=http://localhost:8081` — run scanner CLI, print steps, scores and trade-offs
 - `make types` — regenerate `frontend/src/lib/types.ts` from `backend/app/models.py` (a test fails if stale)
+- `make demo-record` — full fix loop on the demo with the live LLM; records the LLM cache and demo fixtures
+- `make demo-replay` — the same loop with `LLM_OFFLINE=1`, from the committed cache
 - `make e2e` — Playwright end-to-end against the demo site
 - `make dogfood` — scan GreenAccess's own frontend; must score 100 accessibility
 

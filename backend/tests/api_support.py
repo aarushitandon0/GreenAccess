@@ -102,6 +102,8 @@ class StubControl:
     write_screenshot: bool = False
     screenshot_override: str | None = None
     combined: int = 39
+    #: Returned (with the stub's host and screenshot) instead of stub_result().
+    result: ScanResult | None = None
     active: int = 0
     max_active: int = 0
     started: list[str] = field(default_factory=list)
@@ -139,7 +141,12 @@ class StubJob:
             if control.screenshot_override is not None:
                 screenshot = control.screenshot_override
             host = httpx.URL(self.spec.url).host
-            self.result = stub_result(host, screenshot_path=screenshot, combined=control.combined)
+            if control.result is not None:
+                self.result = control.result.model_copy(update={"screenshot_path": screenshot})
+            else:
+                self.result = stub_result(
+                    host, screenshot_path=screenshot, combined=control.combined
+                )
         finally:
             control.active -= 1
             control.closed.append(self.spec.scan_id)

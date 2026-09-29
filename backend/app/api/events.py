@@ -10,6 +10,11 @@ without replay it would never see it. Each event carries a sequence id (from 1)
 that is sent as the SSE ``id`` field, so a browser ``EventSource`` that drops
 and reconnects sends ``Last-Event-ID`` and resumes without duplicates.
 
+A finished scan's log can be reopened for the fix pipeline (MASTERSPEC §12:
+``fixes``, ``patch`` and ``rescan`` steps arrive "on the same events stream").
+Each phase ends with its own ``done`` or ``error``; ids keep counting, so a
+client follows just the new phase with ``?after=<last id it saw>``.
+
 Logs are kept in memory only. A scan whose log has been evicted, or that
 finished before a restart, is still served from the database by the route,
 which synthesises its terminal event.
@@ -68,6 +73,15 @@ class ScanEventLog:
             self._changed.notify_all()
             return item
 
+    @property
+    def last_id(self) -> int:
+        return len(self._events)
+
+    async def reopen(self) -> None:
+        """Accept events again after a close; ids continue where they left off."""
+        async with self._changed:
+            self._closed = False
+
     async def close(self) -> None:
         """No more events will come. Subscribers drain what is left and stop."""
         async with self._changed:
@@ -108,6 +122,15 @@ class EventHub:
 
     def get(self, scan_id: str) -> ScanEventLog | None:
         return self._logs.get(scan_id)
+
+    async def reopen(self, scan_id: str) -> ScanEventLog:
+        """The scan's log, reopened; a fresh one if it was evicted or never existed."""
+        log = self._logs.get(scan_id)
+        if log is None:
+            return self.create(scan_id)
+        await log.reopen()
+        self._logs.move_to_end(scan_id)
+        return log
 
     def _evict(self) -> None:
         """Drop the oldest *closed* logs beyond `retain`. Open ones always stay."""

@@ -36,6 +36,8 @@ services:
       DEMO_FALLBACK: "${DEMO_FALLBACK:-0}"
       PUBLIC_BASE_URL: "http://localhost:5173"
       DEMO_URL: "http://demo-site:8081"
+      # The re-scan visits the patched copy this container serves on :8000.
+      PATCHED_BASE_URL: "http://localhost:8000/patched"
     volumes:
       # Keep the scan database and patched output across restarts.
       - backend-data:/app/data

@@ -16,6 +16,21 @@ export interface A11yScore {
   breakdown: ScoreBreakdown;
 }
 
+/** What the fix generator spent on the LLM (MASTERSPEC §8.2). */
+export interface AiUsage {
+  model: string;
+  live_calls: number;
+  cached_calls: number;
+  failed_calls: number;
+  vision_calls: number;
+  input_tokens: number;
+  output_tokens: number;
+  cached_input_tokens: number;
+  cached_output_tokens: number;
+  offline: boolean;
+  unavailable_reason: string | null;
+}
+
 export interface ApiError {
   code: ErrorCode;
   message: string;
@@ -120,6 +135,13 @@ export interface FixDiff {
   after: string;
 }
 
+/** `POST /api/scans/{id}/fixes` response. */
+export interface FixesResponse {
+  scan_id: string;
+  fixes: Fix[];
+  ai_usage: AiUsage;
+}
+
 export interface FontSummary {
   count: number;
   bytes: number;
@@ -197,11 +219,23 @@ export interface MediaItem {
   has_poster: boolean;
 }
 
+/** `POST /api/scans/{id}/patch` response: the job was queued. */
+export interface PatchAccepted {
+  scan_id: string;
+  events_after: number;
+}
+
 export interface PatchInfo {
   fixes: Fix[];
   zip_path: string | null;
   patched_url: string | null;
   skipped: SkippedFix[];
+  ai_usage: AiUsage | null;
+}
+
+/** `POST /api/scans/{id}/patch` body (MASTERSPEC §12). */
+export interface PatchRequest {
+  accepted_fix_ids?: string[];
 }
 
 /** CDP resourceType mapped to the buckets MASTERSPEC §6.2 names. */

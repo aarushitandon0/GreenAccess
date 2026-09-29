@@ -175,20 +175,27 @@ async def scan_events(
     scan_id: str,
     state: State,
     last_event_id: Annotated[str | None, Header()] = None,
+    after: Annotated[int | None, Query(ge=0)] = None,
 ) -> EventSourceResponse:
-    """Replay everything so far, then stream live until the scan ends."""
+    """Replay everything so far, then stream live until the scan ends.
+
+    ``after`` does what ``Last-Event-ID`` does, for clients that cannot set
+    headers (a browser ``EventSource``): follow a fix or patch phase from the
+    id ``POST /patch`` returned.
+    """
     log = state.hub.get(scan_id)
     replay: list[ScanEvent] | None = None
     if log is None:
         replay = _terminal_events(await _load(state, scan_id))
 
     try:
-        after = max(0, int(last_event_id)) if last_event_id else 0
+        resume = max(0, int(last_event_id)) if last_event_id else 0
     except ValueError:
-        after = 0
+        resume = 0
+    start = max(resume, after or 0)
 
     async def stream() -> AsyncIterator[ServerSentEvent]:
-        source = log.subscribe(after) if log is not None else _iterate(replay or [], after)
+        source = log.subscribe(start) if log is not None else _iterate(replay or [], start)
         async for item in source:
             yield ServerSentEvent(
                 data=item.data, event=item.event, id=str(item.id), retry=SSE_RETRY_MS

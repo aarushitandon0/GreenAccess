@@ -141,12 +141,19 @@ async (tags) => {
 
 async def run_axe(page: Page, *, tags: tuple[str, ...] = AXE_TAGS) -> A11yResult:
     """Inject axe-core into `page` and run it."""
+    source = axe_source()
     try:
-        await page.add_script_tag(content=axe_source())
+        await page.add_script_tag(content=source)
     except PlaywrightError as exc:
-        # A page with a strict CSP can refuse an injected script.
-        logger.warning("could not inject axe-core: %s", exc)
-        raise
+        # A page with a strict CSP (the patched preview's ``script-src 'self'``,
+        # MASTERSPEC §8.3) refuses an inline <script>. DevTools evaluation is
+        # exempt from the page's CSP, so run the same source that way instead;
+        # the page's own policy stays in force for everything the page loads.
+        logger.info("inline axe-core injection refused (%s); evaluating it instead", exc)
+        try:
+            await page.evaluate(source)
+        except PlaywrightError as fallback:
+            raise AxeUnavailable(f"could not inject axe-core: {fallback}") from fallback
 
     try:
         raw = await page.evaluate(_AXE_RUN_JS, list(tags))

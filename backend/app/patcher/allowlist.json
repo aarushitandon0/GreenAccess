@@ -1,0 +1,17 @@
+{
+  "_source": "demo-site/DEFECTS.md (IMG-TEXT-01, IMG-TEXT-02, THIRD-PARTY-01). MASTERSPEC §8.1 kinds 11 and 12 are auto-applied only for these known demo targets; everywhere else they are suggestions marked manual_review.",
+  "demo_ports": [8081],
+  "demo_hosts": ["localhost", "127.0.0.1", "demo-site"],
+  "text_in_image_paths": [
+    "/assets/generated/banner-sale.jpg",
+    "/assets/generated/banner-subscribe.png"
+  ],
+  "tracker_ports": [8082],
+  "tracker_hosts": ["localhost", "127.0.0.1", "demo-third-party"],
+  "removable_script_paths": [
+    "/t/analytics.js",
+    "/t/adtech.js",
+    "/t/heatmap.js",
+    "/t/social.js"
+  ]
+}

@@ -20,12 +20,15 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.errors import install_error_handlers
 from app.api.events import EventHub
+from app.api.fixes import LlmFactory, PatchRunner, patched_router
+from app.api.fixes import router as fixes_router
 from app.api.ratelimit import SlidingWindowLimiter
 from app.api.runner import JobFactory, ScanRunner, pipeline_job
 from app.api.scans import router as scans_router
 from app.api.state import AppState, Preflight
 from app.config import Settings, get_settings
 from app.db.repository import ScanRepository
+from app.llm.client import LlmClient
 from app.models import ApiError, ErrorCode
 from app.security.redirects import preflight_redirects
 from app.security.ssrf import ValidatedUrl
@@ -48,6 +51,7 @@ def create_app(
     job_factory: JobFactory = pipeline_job,
     preflight: Preflight = _default_preflight,
     limiter: SlidingWindowLimiter | None = None,
+    llm_factory: LlmFactory = LlmClient.from_settings,
 ) -> FastAPI:
     resolved = settings or get_settings()
 
@@ -68,6 +72,9 @@ def create_app(
         runner = ScanRunner(
             settings=resolved, repository=repository, hub=hub, job_factory=job_factory
         )
+        patches = PatchRunner(
+            settings=resolved, repository=repository, runner=runner, llm_factory=llm_factory
+        )
         app.state.greenaccess = AppState(
             settings=resolved,
             repository=repository,
@@ -75,10 +82,12 @@ def create_app(
             runner=runner,
             limiter=limiter or SlidingWindowLimiter(),
             preflight=preflight,
+            patches=patches,
         )
         try:
             yield
         finally:
+            await patches.shutdown()
             await runner.shutdown()
             repository.dispose()
 
@@ -102,6 +111,8 @@ def create_app(
     )
     install_error_handlers(app)
     app.include_router(scans_router)
+    app.include_router(fixes_router)
+    app.include_router(patched_router)
 
     @app.get("/api/health", tags=["meta"])
     async def health() -> dict[str, object]:

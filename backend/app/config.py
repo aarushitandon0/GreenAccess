@@ -12,6 +12,12 @@ from pathlib import Path
 #: started from; in Docker that is /app/data, the volume docker-compose mounts.
 DEFAULT_DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
+#: MASTERSPEC §8.2: the disk cache lives in ``backend/.llm_cache/`` (gitignored).
+DEFAULT_LLM_CACHE_DIR = Path(__file__).resolve().parent.parent / ".llm_cache"
+
+#: MASTERSPEC §16: the demo run's cache, committed and labelled as cached.
+DEFAULT_LLM_FIXTURE_CACHE_DIR = Path(__file__).resolve().parent / "fixtures" / "llm_cache"
+
 
 def _csv(raw: str) -> tuple[str, ...]:
     return tuple(item.strip().lower() for item in raw.split(",") if item.strip())
@@ -51,11 +57,34 @@ class Settings:
     #: browser build differs from the one the pinned Playwright expects; unset,
     #: Playwright uses its own managed browser.
     chromium_executable: str | None = None
+    #: Where the backend serves patched copies (MASTERSPEC §8.3). The re-scan
+    #: visits ``{patched_base_url}/{scan_id}/index.html``, so this host must be
+    #: on ``ALLOWED_LOCAL_HOSTS`` when it is local.
+    patched_base_url: str = "http://localhost:8000/patched"
+    #: Writable LLM answer cache (MASTERSPEC §8.2: ``backend/.llm_cache/``).
+    llm_cache_dir: Path = DEFAULT_LLM_CACHE_DIR
+    #: Read-only cache committed with the demo run (MASTERSPEC §16).
+    llm_fixture_cache_dir: Path = DEFAULT_LLM_FIXTURE_CACHE_DIR
 
     @property
     def screenshot_dir(self) -> Path:
         """Scan screenshots, one sub-directory per scan id."""
         return self.data_dir / "screenshots"
+
+    @property
+    def patched_dir(self) -> Path:
+        """Patched copies served at ``/patched``, one sub-directory per scan id."""
+        return self.data_dir / "patched"
+
+    @property
+    def work_dir(self) -> Path:
+        """Per-scan fix plans and fetched source, never served."""
+        return self.data_dir / "work"
+
+    @property
+    def zip_dir(self) -> Path:
+        """Downloadable patch archives, outside the statically served tree."""
+        return self.data_dir / "zips"
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -74,6 +103,10 @@ class Settings:
             public_base_url=os.environ.get("PUBLIC_BASE_URL", "http://localhost:5173"),
             demo_url=os.environ.get("DEMO_URL", "http://localhost:8081"),
             chromium_executable=os.environ.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE") or None,
+            patched_base_url=os.environ.get(
+                "PATCHED_BASE_URL", "http://localhost:8000/patched"
+            ).rstrip("/"),
+            llm_cache_dir=Path(os.environ.get("LLM_CACHE_DIR") or DEFAULT_LLM_CACHE_DIR),
         )
 
 

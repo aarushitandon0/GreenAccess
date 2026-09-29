@@ -53,7 +53,9 @@ RESET = "\033[0m"
 #: The demo hosts the backend may scan in development. The SSRF guard blocks
 #: localhost by default; CLAUDE.md allows dev hosts only through an explicit
 #: ALLOWED_LOCAL_HOSTS list, so this is that list, used when none is set.
-DEV_ALLOWED_LOCAL_HOSTS = "localhost:8081,localhost:8082"
+#: localhost:8000 is the backend itself: the patch re-scan visits the patched
+#: copy it serves at /patched (MASTERSPEC §8.3).
+DEV_ALLOWED_LOCAL_HOSTS = "localhost:8081,localhost:8082,localhost:8000"
 
 
 @dataclass(frozen=True)

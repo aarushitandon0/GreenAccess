@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 from app.config import Settings, get_settings
-from app.models import ScanResult, StepStatus
+from app.models import ScanResult, StepStatus, TradeoffType
 from app.scanner.pipeline import ScanFailed, ScanPipeline
 
 
@@ -141,13 +141,33 @@ def print_summary(result: ScanResult, url: str) -> None:
 
     print("\nSCORES")
     if result.scores.is_placeholder:
-        print("  not computed — the scoring module is not implemented yet.")
+        print("  not computed — this result carries placeholder scores.")
     else:
-        print(f"  accessibility      {result.scores.a11y}")
+        print(f"  accessibility      {result.scores.a11y}  (automated checks)")
         print(
-            f"  carbon             {result.scores.carbon} (grade {result.scores.carbon_grade.value})"
+            f"  carbon             {result.scores.carbon} "
+            f"(grade {result.scores.carbon_grade.value}, estimate)"
         )
         print(f"  combined           {result.scores.combined}")
+
+    synergies = [f for f in result.tradeoffs if f.type is TradeoffType.SYNERGY]
+    print(
+        f"\nTRADE-OFFS ({len(synergies)} synergy, "
+        f"{len(result.tradeoffs) - len(synergies)} tension; byte and gram deltas are estimates)"
+    )
+    if not result.tradeoffs:
+        print("  none")
+    for finding in result.tradeoffs:
+        delta = finding.carbon_delta_bytes
+        sign = "-" if delta > 0 else ("+" if delta < 0 else " ")
+        # carbon_delta_* is positive when the fix saves; print it as the change
+        # to the page, so a saving reads as a minus in both columns.
+        bytes_text = f"{sign}{_human_bytes(abs(delta))}" if delta else "0 B"
+        grams_text = f"{sign}{abs(finding.carbon_delta_grams):.4f} g"
+        print(
+            f"  [{finding.type.value:<7}] {finding.rule_id:<20} {bytes_text:>12}  "
+            f"{grams_text:>10}  fix: {finding.recommended_fix_id or '-'}"
+        )
 
     print(f"\nengines: {result.engine_versions.model_dump()}")
     print()

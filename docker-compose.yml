@@ -31,7 +31,8 @@ services:
       SCAN_TIMEOUT_S: "90"
       NAV_TIMEOUT_S: "30"
       MAX_PAGE_BYTES: "26214400"
-      DATABASE_URL: "sqlite:///./greenaccess.db"
+      # Inside /app/data, the volume below, so scans survive a restart.
+      DATABASE_URL: "sqlite:///./data/greenaccess.db"
       DEMO_FALLBACK: "${DEMO_FALLBACK:-0}"
       PUBLIC_BASE_URL: "http://localhost:5173"
       DEMO_URL: "http://demo-site:8081"

@@ -126,11 +126,24 @@ def human_bytes(count: int, *, precise: bool = False) -> str:
 
 
 def _detection(result: ScanResult, name: str) -> Detection | None:
-    """The first scanner detection with this name, if the scanner recorded one."""
-    for detection in result.carbon.detections:
-        if detection.detector == name:
-            return detection
-    return None
+    """Every scanner detection with this name, merged into one, or None.
+
+    The carbon detectors emit one detection per offending element (one per
+    banner, one per below-the-fold image), so a rule must see all of them:
+    savings are summed and evidence is concatenated in scan order.
+    """
+    matches = [d for d in result.carbon.detections if d.detector == name]
+    if not matches:
+        return None
+    if len(matches) == 1:
+        return matches[0]
+    return Detection(
+        detector=name,
+        summary=matches[0].summary,
+        estimated_saving_bytes=sum(d.estimated_saving_bytes for d in matches),
+        evidence=[item for d in matches for item in d.evidence],
+        saves_bytes=any(d.saves_bytes for d in matches),
+    )
 
 
 def _images_with(result: ScanResult, issue: ImageIssueKind) -> list[ImageIssue]:

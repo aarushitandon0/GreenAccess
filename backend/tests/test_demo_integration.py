@@ -408,3 +408,51 @@ def test_image_issue_table_is_populated(scan: ScanResult):
 def test_result_serialises_to_json(scan: ScanResult):
     payload = scan.model_dump_json()
     assert len(payload) > 10_000
+
+
+# --------------------------------------------------------------------------- #
+# Scoring and trade-offs (MASTERSPEC §9, §10): the last two pipeline steps
+# --------------------------------------------------------------------------- #
+
+
+def test_scores_are_computed_not_placeholders(scan: ScanResult):
+    from app.scoring import score_a11y, score_carbon_result
+
+    assert not scan.scores.is_placeholder
+    assert scan.scores.breakdown is not None
+    # The stored scores must be exactly what the pure functions give for the
+    # stored findings: nothing is tuned or overridden on the way out.
+    assert scan.scores.a11y == score_a11y(scan.a11y, scan.keyboard).score
+    carbon = score_carbon_result(scan.carbon, scan.green)
+    assert scan.scores.carbon == carbon.score
+    assert scan.scores.carbon_grade == carbon.grade
+
+
+def test_demo_produces_at_least_six_tradeoffs_including_a_tension(scan: ScanResult):
+    from app.models import TradeoffType
+
+    assert len(scan.tradeoffs) >= 6
+    assert any(f.type is TradeoffType.TENSION for f in scan.tradeoffs)
+    rule_ids = {f.rule_id for f in scan.tradeoffs}
+    # The page has no prefers-color-scheme handling and an uncaptioned video.
+    assert {"dark_mode", "captions_bytes", "autoplay_media", "text_in_image"} <= rule_ids
+
+
+@pytest.mark.parametrize(
+    ("rule_id", "detector"),
+    [
+        ("text_in_image", "text_in_image_suspected"),
+        ("eager_below_fold", "eager_below_fold"),
+        ("autoplay_media", "autoplay_media"),
+    ],
+)
+def test_tradeoff_bytes_cover_every_offending_element(
+    scan: ScanResult, rule_id: str, detector: str
+):
+    """Detectors emit one detection per element; the finding must sum them all."""
+    expected = sum(
+        d.estimated_saving_bytes for d in scan.carbon.detections if d.detector == detector
+    )
+    finding = next(f for f in scan.tradeoffs if f.rule_id == rule_id)
+    assert expected > 0
+    assert finding.carbon_delta_bytes == expected

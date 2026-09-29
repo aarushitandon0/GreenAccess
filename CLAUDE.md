@@ -37,7 +37,8 @@ MASTERSPEC.md  CLAUDE.md  Makefile  docker-compose.yml
 - `make dev` — backend, frontend, demo site
 - `make test` — backend pytest + frontend vitest
 - `make lint` — ruff + tsc --noEmit + eslint
-- `make scan URL=http://localhost:8081` — run scanner CLI, print JSON
+- `make scan URL=http://localhost:8081` — run scanner CLI, print steps, scores and trade-offs
+- `make types` — regenerate `frontend/src/lib/types.ts` from `backend/app/models.py` (a test fails if stale)
 - `make e2e` — Playwright end-to-end against the demo site
 - `make dogfood` — scan GreenAccess's own frontend; must score 100 accessibility
 

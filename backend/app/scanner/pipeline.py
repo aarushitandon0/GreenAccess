@@ -1,9 +1,9 @@
 """Scan orchestration (MASTERSPEC §4).
 
 Runs the scan steps in the order §4 lays out and reports progress as an async
-generator of :class:`~app.models.StepEvent`. The API layer will later forward
-those straight down an SSE stream (MASTERSPEC §12); the CLI prints them. Neither
-has to know how a scan works.
+generator of :class:`~app.models.StepEvent`. The API job runner forwards those
+straight down an SSE stream (MASTERSPEC §12); the CLI prints them. Neither has
+to know how a scan works.
 
 Steps, in order::
 
@@ -16,14 +16,15 @@ Steps, in order::
     green     Green Web Foundation lookup
     score     three pure score functions (MASTERSPEC §9)
     tradeoffs rules-driven synergy and tension findings (MASTERSPEC §10)
-    persist   -- not implemented in this phase
 
-`persist` is reported with status ``skipped`` and a reason rather than silently
-omitted, so the progress UI and the CLI tell the truth about what ran.
+The pipeline is storage-agnostic, so the tenth step, ``persist``, belongs to
+the caller: :mod:`app.api.runner` saves the result and reports ``persist``
+itself. The CLI does not persist and so reports no such step.
 """
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from collections.abc import AsyncIterator
@@ -66,9 +67,6 @@ from app.version import engine_versions
 
 logger = logging.getLogger(__name__)
 
-# Steps that exist in MASTERSPEC §4 but arrive in a later phase.
-_DEFERRED_STEPS: tuple[tuple[str, str], ...] = (("persist", "database not implemented yet"),)
-
 
 class ScanFailed(Exception):
     """A scan could not complete. `code` maps to MASTERSPEC §12's error codes."""
@@ -108,8 +106,9 @@ class ScanPipeline:
         async for event in self._step("validate"):
             yield event
         try:
-            validated = validate_url(
-                self.url, allowed_local_hosts=self.settings.allowed_local_hosts
+            # DNS resolution blocks, and the API serves other scans on this loop.
+            validated = await asyncio.to_thread(
+                validate_url, self.url, allowed_local_hosts=self.settings.allowed_local_hosts
             )
         except UrlBlocked as blocked:
             self.error = ScanFailed("URL_BLOCKED", blocked.reason)
@@ -168,12 +167,25 @@ class ScanPipeline:
             yield StepEvent(name="a11y", status=StepStatus.RUNNING)
             try:
                 a11y_result = await a11y_module.run_axe(session.page)
-                detail = f"{a11y_result.unique_rules} rule(s), {a11y_result.total_nodes} node(s)"
-                status = StepStatus.OK
             except (a11y_module.AxeUnavailable, TimeoutError, OSError) as exc:
+                # Carrying on would score an empty violation list as 100, a
+                # number nobody measured (CLAUDE.md: never fake results).
                 logger.warning("a11y step failed: %s", exc)
-                detail, status = str(exc), StepStatus.ERROR
-            yield StepEvent(name="a11y", status=status, ms=self._ms(step_started), detail=detail)
+                code = "TIMEOUT" if isinstance(exc, TimeoutError) else "NAV_FAILED"
+                self.error = ScanFailed(code, f"accessibility audit could not run: {exc}")
+                yield StepEvent(
+                    name="a11y",
+                    status=StepStatus.ERROR,
+                    ms=self._ms(step_started),
+                    detail=str(exc),
+                )
+                raise self.error from exc
+            yield StepEvent(
+                name="a11y",
+                status=StepStatus.OK,
+                ms=self._ms(step_started),
+                detail=f"{a11y_result.unique_rules} rule(s), {a11y_result.total_nodes} node(s)",
+            )
 
             # -- keyboard ------------------------------------------------- #
             step_started = time.monotonic()
@@ -283,10 +295,6 @@ class ScanPipeline:
             ms=self._ms(step_started),
             detail=f"{synergies} synergy, {tensions} tension",
         )
-
-        # -- deferred steps ------------------------------------------------- #
-        for name, reason in _DEFERRED_STEPS:
-            yield StepEvent(name=name, status=StepStatus.SKIPPED, ms=0, detail=reason)
 
     # -- helpers ---------------------------------------------------------- #
 

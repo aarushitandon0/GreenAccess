@@ -218,6 +218,34 @@ def test_eager_below_fold_fires_and_says_bytes_are_deferred() -> None:
     assert len(finding.evidence) == 5, "evidence is capped for the card"
 
 
+@pytest.mark.parametrize(
+    ("rule_id", "detector", "savings"),
+    [
+        # The carbon detectors emit one detection per offending element, which
+        # is what the demo site produces: two banners, seven eager images.
+        ("text_in_image", "text_in_image_suspected", [192_200, 183_900]),
+        ("eager_below_fold", "eager_below_fold", [194_300, 90_900, 90_700, 89_600]),
+        ("autoplay_media", "autoplay_media", [1_001_000, 250_000]),
+    ],
+)
+def test_per_element_detections_are_summed_not_just_the_first(
+    rule_id: str, detector: str, savings: list[int]
+) -> None:
+    scan = _scan(
+        detections=[
+            _detection(detector, saving=saving, evidence=[f"#el-{i}"])
+            for i, saving in enumerate(savings)
+        ]
+    )
+    finding = _by_id(evaluate(scan), rule_id)
+    assert finding is not None
+    assert finding.carbon_delta_bytes == sum(savings)
+    assert finding.carbon_delta_grams == pytest.approx(swd.per_visit(sum(savings), green=False))
+    assert finding.evidence == [f"#el-{i}" for i in range(len(savings))]
+    count = len(savings)
+    assert f" {count} " in finding.explanation, "the count must cover every detection"
+
+
 def test_third_party_widgets_pluralises_hosts_and_requests_separately() -> None:
     scan = _scan(
         third_party=ThirdPartySummary(

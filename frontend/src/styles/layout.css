@@ -204,7 +204,7 @@
   padding: 0;
   display: grid;
   gap: var(--space-6);
-  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
   border-top: var(--border-width) solid var(--border);
   padding-top: var(--space-8);
 }
@@ -251,22 +251,16 @@
   position: absolute;
 }
 
-.diorama__tree {
-  width: 40%;
-  left: 2%;
-  bottom: 14%;
-}
-
 .diorama__character {
-  width: 56%;
-  left: 30%;
-  bottom: 8%;
+  width: 92%;
+  left: 4%;
+  bottom: 12%;
 }
 
 .diorama__sprout {
-  width: 20%;
-  right: 4%;
-  bottom: 16%;
+  width: 17%;
+  right: 0;
+  bottom: 8%;
 }
 
 .diorama__cloud {
@@ -307,7 +301,7 @@
   .violation-list,
   .detection-list,
   .fix-list {
-    grid-template-columns: repeat(auto-fit, minmax(26rem, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(26rem, 100%), 1fr));
   }
 }
 

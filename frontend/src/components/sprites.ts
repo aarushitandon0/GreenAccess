@@ -7,7 +7,7 @@
  * The sizes are baked in at build time rather than measured at runtime,
  * because they exist to reserve the element box *before* the image arrives.
  * Measuring them late would defeat the point and reintroduce layout shift --
- * which is one of the defects this product reports on other people's pages.
+ * one of the very defects this product reports on other pages.
  *
  * Imports go through Vite, so each file is content-hashed and cache-busted.
  */
@@ -36,19 +36,19 @@ export interface SpriteAsset {
 }
 
 export const SPRITES = {
-  'char-analyse': { src: CHAR_ANALYSE, width: 210, height: 223 },
-  'char-build': { src: CHAR_BUILD, width: 380, height: 239 },
-  'char-fix': { src: CHAR_FIX, width: 314, height: 224 },
-  'char-measure': { src: CHAR_MEASURE, width: 253, height: 210 },
-  'char-scan': { src: CHAR_SCAN, width: 242, height: 219 },
-  'char-tradeoffs': { src: CHAR_TRADEOFFS, width: 275, height: 216 },
+  'char-analyse': { src: CHAR_ANALYSE, width: 210, height: 207 },
+  'char-build': { src: CHAR_BUILD, width: 380, height: 231 },
+  'char-fix': { src: CHAR_FIX, width: 309, height: 216 },
+  'char-measure': { src: CHAR_MEASURE, width: 253, height: 202 },
+  'char-scan': { src: CHAR_SCAN, width: 191, height: 211 },
+  'char-tradeoffs': { src: CHAR_TRADEOFFS, width: 222, height: 208 },
   'iso-cloud': { src: ISO_CLOUD, width: 146, height: 139 },
-  'iso-co2': { src: ISO_CO2, width: 132, height: 154 },
+  'iso-co2': { src: ISO_CO2, width: 132, height: 155 },
   'iso-globe': { src: ISO_GLOBE, width: 199, height: 139 },
   'iso-laptop': { src: ISO_LAPTOP, width: 143, height: 139 },
-  'iso-server': { src: ISO_SERVER, width: 165, height: 177 },
+  'iso-server': { src: ISO_SERVER, width: 164, height: 177 },
   'iso-sprout': { src: ISO_SPROUT, width: 108, height: 155 },
-  'iso-sun': { src: ISO_SUN, width: 122, height: 115 },
+  'iso-sun': { src: ISO_SUN, width: 113, height: 114 },
   'iso-tree': { src: ISO_TREE, width: 154, height: 160 },
   'iso-turbine': { src: ISO_TURBINE, width: 128, height: 164 },
 } as const satisfies Record<string, SpriteAsset>

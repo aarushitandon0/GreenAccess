@@ -166,9 +166,10 @@ export function Begin({ onScan, demoUrl, busy, error }: BeginProps): JSX.Element
         <div className="begin__scene">
           <div className="diorama">
             <Sprite name="iso-cloud" width={150} className="diorama__cloud" />
-            <Sprite name="iso-tree" width={200} className="diorama__tree" />
-            <Sprite name="char-scan" width={280} className="diorama__character" eager />
-            <Sprite name="iso-sprout" width={110} className="diorama__sprout" />
+            {/* A self-contained scene: the figure already stands on its own
+                ground, so nothing else needs placing under it. */}
+            <Sprite name="char-build" width={420} className="diorama__character" eager />
+            <Sprite name="iso-sprout" width={96} className="diorama__sprout" />
           </div>
         </div>
       </div>

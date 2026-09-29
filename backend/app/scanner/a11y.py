@@ -48,8 +48,7 @@ def axe_source() -> str:
     """Read the vendored axe-core source."""
     if not AXE_PATH.exists():
         raise AxeUnavailable(
-            f"vendored axe-core not found at {AXE_PATH}. "
-            "Run `node scripts/vendor_axe.mjs 4.13.0`."
+            f"vendored axe-core not found at {AXE_PATH}. Run `node scripts/vendor_axe.mjs 4.13.0`."
         )
     return AXE_PATH.read_text(encoding="utf-8")
 

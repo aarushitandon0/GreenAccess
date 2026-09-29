@@ -57,6 +57,12 @@ class FocusStop:
     key: str
     has_visible_focus: bool
     is_body: bool
+    #: Selectors of the element's ancestors, outermost first (html excluded),
+    #: used to name the container that holds a trap.
+    ancestors: tuple[str, ...] = ()
+    #: Selector of the nearest dialog-like ancestor (``dialog``,
+    #: ``role=dialog|alertdialog``, ``aria-modal=true``), or "".
+    dialog: str = ""
 
 
 # Collect every focusable element, so we can tell "trapped" from "that is all
@@ -150,9 +156,19 @@ _DESCRIBE_ACTIVE_JS = """
   const box = el.getBoundingClientRect();
   const selector = selectorFor(el);
 
+  const ancestors = [];
+  for (let node = el.parentElement; node && node !== document.documentElement;
+       node = node.parentElement) {
+    ancestors.unshift(selectorFor(node));
+  }
+  const dialog = el.parentElement && el.parentElement.closest(
+    'dialog, [role="dialog"], [role="alertdialog"], [aria-modal="true"]');
+
   return {
     isBody: false,
     selector: selector,
+    ancestors: ancestors,
+    dialog: dialog ? selectorFor(dialog) : '',
     tag: el.tagName,
     key: selector + '@' + Math.round(box.x) + ',' + Math.round(box.y) +
          ',' + Math.round(box.width) + ',' + Math.round(box.height),
@@ -189,12 +205,34 @@ def detect_trap(stops: list[FocusStop], total_focusable: int) -> tuple[bool, str
         if total_focusable <= len(cycle_members):
             continue
 
-        container = _common_ancestor_selector(
-            [stop.selector for stop in stops if stop.key in cycle_members]
-        )
+        container = _trap_container([stop for stop in stops if stop.key in cycle_members])
         return True, container
 
     return False, None
+
+
+def _trap_container(cycle: list[FocusStop]) -> str | None:
+    """Name the element that holds the trapped cycle.
+
+    Preference order: a dialog-like ancestor shared by every stop in the cycle
+    (that is what a user would call "the modal"); else the nearest common DOM
+    ancestor; else, for stops recorded without ancestry, the shared prefix of
+    their selectors.
+    """
+    if not cycle:
+        return None
+    dialogs = {stop.dialog for stop in cycle}
+    if len(dialogs) == 1 and "" not in dialogs:
+        return dialogs.pop()
+    if all(stop.ancestors for stop in cycle):
+        shared: list[str] = []
+        for parts in zip(*(stop.ancestors for stop in cycle), strict=False):
+            if len(set(parts)) != 1:
+                break
+            shared.append(parts[0])
+        if shared:
+            return shared[-1]
+    return _common_ancestor_selector([stop.selector for stop in cycle])
 
 
 def _common_ancestor_selector(selectors: list[str]) -> str | None:
@@ -222,8 +260,9 @@ async def crawl(page: Page, *, max_presses: int = MAX_TAB_PRESSES) -> KeyboardRe
 
     # Start from a known place, so the first Tab lands on the first stop.
     try:
-        await page.evaluate("() => { document.body.setAttribute('tabindex','-1');"
-                            " document.body.focus(); }")
+        await page.evaluate(
+            "() => { document.body.setAttribute('tabindex','-1'); document.body.focus(); }"
+        )
     except PlaywrightError as exc:
         logger.warning("could not focus body: %s", exc)
 
@@ -250,6 +289,8 @@ async def crawl(page: Page, *, max_presses: int = MAX_TAB_PRESSES) -> KeyboardRe
                 key=str(described.get("key") or ""),
                 has_visible_focus=bool(described.get("hasVisibleFocus")),
                 is_body=bool(described.get("isBody")),
+                ancestors=tuple(str(a) for a in (described.get("ancestors") or [])),
+                dialog=str(described.get("dialog") or ""),
             )
         )
 

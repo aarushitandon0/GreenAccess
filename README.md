@@ -43,9 +43,22 @@ docker compose up --build
 | `make lint` | ruff, the WCAG contrast gate, `tsc --noEmit`, eslint |
 | `make assets` | Regenerates the demo's images and hero video |
 | `make weight` | Measures the demo's first-load transfer size |
-| `make scan URL=…` | Scanner CLI |
+| `make scan URL=…` | Scans one URL: step progress on stderr, `ScanResult` JSON on stdout. Defaults to the demo (`http://localhost:8081`) and allow-lists only `localhost:8081,localhost:8082` unless `ALLOWED_LOCAL_HOSTS` is already set. Exits 2 with a `URL_BLOCKED` error envelope for a blocked URL. Also: `cd backend && python -m app.cli scan <url> --out scan.json` |
 | `make e2e` | Playwright end-to-end run |
 | `make dogfood` | Scans GreenAccess's own frontend |
+
+`make test` includes browser tests and a full scan of the demo site, so it needs
+the generated demo assets (`make assets`) and a Chromium that matches the pinned
+Playwright (`python -m playwright install chromium`). The demo integration test
+reuses a running `make demo`, or starts the demo on :8081/:8082 itself.
+
+If your machine already has a Chromium build that differs from the one the
+pinned Playwright expects (some CI images and sandboxes do), point the scanner
+and tests at it instead of upgrading Playwright:
+
+```bash
+export PLAYWRIGHT_CHROMIUM_EXECUTABLE=/path/to/chrome
+```
 
 ## The demo site
 
@@ -104,6 +117,9 @@ docs/
 
 All user-supplied URLs pass through `backend/app/security/ssrf.py` before any browser
 or HTTP call: scheme allow-list, DNS resolution with every A/AAAA record checked,
-and blocks on private, loopback, link-local and cloud-metadata ranges, re-validated
-after every redirect. Local demo hosts are permitted only via an explicit
+and blocks on private, loopback, link-local and cloud-metadata ranges. The scan
+browser runs behind a per-scan egress proxy (`backend/app/security/egress_proxy.py`)
+that re-validates every connection, including every redirect hop (which Playwright's
+route handler never sees), and connects only to the address it validated, so DNS
+rebinding cannot swap the target. Local demo hosts are permitted only via an explicit
 `ALLOWED_LOCAL_HOSTS` list, never by disabling the guard.

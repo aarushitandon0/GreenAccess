@@ -16,8 +16,6 @@ import pytest
 
 from app.scanner.keyboard import FocusStop, crawl, detect_trap
 
-
-
 # --------------------------------------------------------------------------- #
 # Pure cycle detection
 # --------------------------------------------------------------------------- #
@@ -185,25 +183,12 @@ NO_FOCUS_HTML = """<!doctype html>
 """
 
 
-@pytest.fixture(scope="module")
-def chromium_available() -> bool:
-    from playwright.sync_api import sync_playwright
-
-    try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            browser.close()
-        return True
-    except Exception:  # noqa: BLE001 - any launch failure means "not available"
-        return False
-
-
-async def _crawl_html(html: str):
+async def _crawl_html(html: str, executable: str | None):
     """Serve `html` through a Playwright route and run the crawl over it."""
     from playwright.async_api import async_playwright
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
+        browser = await p.chromium.launch(headless=True, executable_path=executable)
         try:
             context = await browser.new_context(viewport={"width": 1366, "height": 768})
             page = await context.new_page()
@@ -220,24 +205,20 @@ async def _crawl_html(html: str):
 
 
 @pytest.mark.browser
-async def test_trap_fixture_is_detected(chromium_available: bool):
-    if not chromium_available:
-        pytest.skip("chromium is not installed")
+async def test_trap_fixture_is_detected(chromium_executable: str | None):
 
-    result = await _crawl_html(TRAP_HTML)
+    result = await _crawl_html(TRAP_HTML, chromium_executable)
 
     assert result.trap_detected is True
-    assert result.trap_container is not None
-    assert "promo" in result.trap_container
+    # The dialog holding the cycle, not one of the trapped controls.
+    assert result.trap_container == "div#promo"
     assert result.tabs_pressed > 0
 
 
 @pytest.mark.browser
-async def test_clean_fixture_is_not_flagged(chromium_available: bool):
-    if not chromium_available:
-        pytest.skip("chromium is not installed")
+async def test_clean_fixture_is_not_flagged(chromium_executable: str | None):
 
-    result = await _crawl_html(CLEAN_HTML)
+    result = await _crawl_html(CLEAN_HTML, chromium_executable)
 
     assert result.trap_detected is False
     assert result.trap_container is None
@@ -246,19 +227,66 @@ async def test_clean_fixture_is_not_flagged(chromium_available: bool):
 
 
 @pytest.mark.browser
-async def test_clean_fixture_reports_visible_focus(chromium_available: bool):
-    if not chromium_available:
-        pytest.skip("chromium is not installed")
+async def test_clean_fixture_reports_visible_focus(chromium_executable: str | None):
 
-    result = await _crawl_html(CLEAN_HTML)
+    result = await _crawl_html(CLEAN_HTML, chromium_executable)
     assert result.focus_visible_missing_count == 0
 
 
 @pytest.mark.browser
-async def test_removed_focus_indicator_is_reported(chromium_available: bool):
+async def test_removed_focus_indicator_is_reported(chromium_executable: str | None):
     """Defect FOCUS-01, in miniature."""
-    if not chromium_available:
-        pytest.skip("chromium is not installed")
 
-    result = await _crawl_html(NO_FOCUS_HTML)
+    result = await _crawl_html(NO_FOCUS_HTML, chromium_executable)
     assert result.focus_visible_missing_count >= 3
+
+
+@pytest.mark.browser
+async def test_trap_container_without_a_dialog_role_is_the_common_ancestor(
+    chromium_executable: str | None,
+):
+    html = TRAP_HTML.replace(' role="dialog" aria-label="Offer"', "")
+    result = await _crawl_html(html, chromium_executable)
+    assert result.trap_detected is True
+    assert result.trap_container == "div#promo"
+
+
+# --------------------------------------------------------------------------- #
+# Naming the trap container
+# --------------------------------------------------------------------------- #
+
+
+def _stop(key: str, *, ancestors: tuple[str, ...] = (), dialog: str = "") -> FocusStop:
+    return FocusStop(
+        index=0,
+        selector=key.split("@")[0],
+        tag="BUTTON",
+        key=key,
+        has_visible_focus=True,
+        is_body=False,
+        ancestors=ancestors,
+        dialog=dialog,
+    )
+
+
+def test_trap_container_prefers_a_shared_dialog():
+    cycle = [
+        _stop(
+            "button#yes@1", ancestors=("body", "div#promo", "div#promo > div"), dialog="div#promo"
+        ),
+        _stop("a#terms@2", ancestors=("body", "div#promo", "div#promo > div"), dialog="div#promo"),
+    ]
+    lead = [_stop(f"a:nth-of-type({i})@0,{i}", ancestors=("body", "nav")) for i in range(5)]
+    detected, container = detect_trap(lead + cycle * 3, total_focusable=20)
+    assert detected is True
+    assert container == "div#promo"
+
+
+def test_trap_container_falls_back_to_nearest_common_ancestor():
+    cycle = [
+        _stop("button#yes@1", ancestors=("body", "section#w", "section#w > div:nth-of-type(1)")),
+        _stop("button#no@2", ancestors=("body", "section#w", "section#w > div:nth-of-type(2)")),
+    ]
+    detected, container = detect_trap(cycle * 3, total_focusable=20)
+    assert detected is True
+    assert container == "section#w"

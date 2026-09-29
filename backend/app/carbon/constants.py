@@ -161,18 +161,75 @@ GRAMS_CO2_PER_KM_DRIVEN: Final[float] = 248.5
 # https://www.epa.gov/energy/greenhouse-gases-equivalencies-calculator-calculations-and-references
 GRAMS_CO2_PER_PHONE_CHARGE: Final[float] = 8.21
 
+# --------------------------------------------------------------------------- #
+# Detector thresholds and saving estimates (MASTERSPEC §7.3)
+#
+# Source: MASTERSPEC §7.3, the detector table. These are NOT part of the SWD
+# model and not from CO2.js; they are the product's own documented heuristics.
+# Every "saving" they produce is an ESTIMATE and is labelled as one in the
+# Detection summary.
+#
+# Units: "KB" in §7.3 is read as decimal (1 KB = 1,000 bytes), matching the
+# decimal GIGABYTE the SWD model uses. The one exception is the 2 KB
+# uncompressed-text floor, which the network collector has applied as 2,048
+# bytes since it was written; the 48-byte difference cannot change a finding
+# that matters.
+# --------------------------------------------------------------------------- #
+
+#: oversized_image: flag when natural width > this x rendered width, and size
+#: the saving as if resized to this x rendered width (the "DPR 2 allowance").
+OVERSIZED_DPR_ALLOWANCE: Final[float] = 2.0
+
+#: legacy_format: JPEG/PNG/GIF above this size, where WebP/AVIF would apply.
+LEGACY_FORMAT_MIN_BYTES: Final[int] = 30_000
+#: legacy_format saving share by format. §7.3 gives JPEG and PNG only; a GIF is
+#: flagged but carries no byte estimate rather than an invented one.
+LEGACY_FORMAT_SAVING_RATIO: Final[dict[str, float]] = {"jpeg": 0.30, "png": 0.50}
+
+#: text_in_image_suspected: minimum image size.
+TEXT_IN_IMAGE_MIN_BYTES: Final[int] = 40_000
+#: text_in_image_suspected: "banner aspect ratio". §7.3 does not give a number;
+#: 3:1 (width:height) is our choice, e.g. 1600x400, 728x90, 970x250.
+TEXT_IN_IMAGE_MIN_ASPECT: Final[float] = 3.0
+#: text_in_image_suspected: alt longer than this counts as "lots of text".
+TEXT_IN_IMAGE_MIN_ALT_CHARS: Final[int] = 25
+#: text_in_image_suspected: the replacement live text is "~2 KB".
+TEXT_IN_IMAGE_TEXT_BYTES: Final[int] = 2_000
+
+#: autoplay_media: an animated GIF counts above this size.
+ANIMATED_GIF_MIN_BYTES: Final[int] = 200_000
+
+#: font_bloat: flag above this many font files, OR above this many bytes.
+FONT_BLOAT_MAX_FILES: Final[int] = 3
+FONT_BLOAT_MAX_BYTES: Final[int] = 150_000
+#: font_bloat saving: "fonts - 60 KB", i.e. a lean font budget of 60 KB.
+FONT_BUDGET_BYTES: Final[int] = 60_000
+
+#: uncompressed_text: html/css/js with no gzip/br and decoded size above this.
+UNCOMPRESSED_MIN_BYTES: Final[int] = 2_048
+#: uncompressed_text saving: "~70% of decoded size".
+COMPRESSION_SAVING_RATIO: Final[float] = 0.70
+
 __all__ = [
+    "ANIMATED_GIF_MIN_BYTES",
     "CO2JS_SOURCE_URL",
     "CO2JS_VERSION",
+    "COMPRESSION_SAVING_RATIO",
     "DATACENTER_ENERGY",
     "END_USER_DEVICE_ENERGY",
     "FIRST_TIME_VIEWING_PERCENTAGE",
+    "FONT_BLOAT_MAX_BYTES",
+    "FONT_BLOAT_MAX_FILES",
+    "FONT_BUDGET_BYTES",
     "GIGABYTE",
     "GLOBAL_GRID_INTENSITY",
     "GRAMS_CO2_PER_KM_DRIVEN",
     "GRAMS_CO2_PER_PHONE_CHARGE",
     "KWH_PER_GB",
+    "LEGACY_FORMAT_MIN_BYTES",
+    "LEGACY_FORMAT_SAVING_RATIO",
     "NETWORK_ENERGY",
+    "OVERSIZED_DPR_ALLOWANCE",
     "PERCENTAGE_OF_DATA_LOADED_ON_SUBSEQUENT_LOAD",
     "PRODUCTION_ENERGY",
     "RENEWABLES_GRID_INTENSITY",
@@ -180,4 +237,9 @@ __all__ = [
     "SWDM_V3_RATINGS",
     "SWD_MODEL_VERSION",
     "SWD_SOURCE_URL",
+    "TEXT_IN_IMAGE_MIN_ALT_CHARS",
+    "TEXT_IN_IMAGE_MIN_ASPECT",
+    "TEXT_IN_IMAGE_MIN_BYTES",
+    "TEXT_IN_IMAGE_TEXT_BYTES",
+    "UNCOMPRESSED_MIN_BYTES",
 ]

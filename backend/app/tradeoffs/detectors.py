@@ -92,9 +92,7 @@ PAGE_FACT_DETECTIONS: Final[dict[str, str]] = {
         "No same-origin stylesheet contains a prefers-color-scheme rule and "
         "no color-scheme declaration is present, so the page has no dark mode."
     ),
-    "video_no_captions": (
-        "A video element with no track element of kind captions or subtitles."
-    ),
+    "video_no_captions": ("A video element with no track element of kind captions or subtitles."),
     "lazy_above_fold": (
         "An image inside the first viewport carrying loading=lazy, which "
         "delays content the user is already looking at."
@@ -185,7 +183,11 @@ def text_in_image(result: ScanResult) -> DetectorHit | None:
 
 def autoplay_media(result: ScanResult) -> DetectorHit | None:
     """Autoplaying video or heavy animated GIFs (MASTERSPEC §7.3)."""
-    media = [item for item in result.carbon.autoplay_media if item.autoplay or item.kind == "animated_gif"]
+    media = [
+        item
+        for item in result.carbon.autoplay_media
+        if item.autoplay or item.kind == "animated_gif"
+    ]
     detection = _detection(result, "autoplay_media")
     if not media and detection is None:
         return None
@@ -315,14 +317,17 @@ def captions_bytes(result: ScanResult) -> DetectorHit | None:
     matched = [
         item
         for item in result.carbon.autoplay_media
-        if item.kind == "video" and (item.selector in detection.evidence or item.url in detection.evidence)
+        if item.kind == "video"
+        and (item.selector in detection.evidence or item.url in detection.evidence)
     ]
     video_bytes = sum(item.bytes for item in matched) or sum(
         item.bytes for item in result.carbon.autoplay_media if item.kind == "video"
     )
 
     caption_bytes = WEBVTT_BYTES_PER_VIDEO * video_count
-    share = f"{caption_bytes / video_bytes * 100:.2f}%" if video_bytes > 0 else "an unknown share of"
+    share = (
+        f"{caption_bytes / video_bytes * 100:.2f}%" if video_bytes > 0 else "an unknown share of"
+    )
 
     return DetectorHit(
         evidence=targets,

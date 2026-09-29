@@ -121,9 +121,7 @@ def test_segment_breakdown_matches_co2js(case: dict[str, Any]):
         if key == "total":
             continue
         assert key in ours, f"missing segment {key}"
-        assert ours[key] == pytest.approx(
-            expected, rel=STRICT_RELATIVE_TOLERANCE, abs=1e-18
-        ), key
+        assert ours[key] == pytest.approx(expected, rel=STRICT_RELATIVE_TOLERANCE, abs=1e-18), key
 
 
 @pytest.mark.parametrize("case", CASES, ids=_case_id)
@@ -140,9 +138,7 @@ def test_per_visit_segment_breakdown_matches_co2js(case: dict[str, Any]):
         if key == "total":
             continue
         assert key in ours, f"missing segment {key}"
-        assert ours[key] == pytest.approx(
-            expected, rel=STRICT_RELATIVE_TOLERANCE, abs=1e-18
-        ), key
+        assert ours[key] == pytest.approx(expected, rel=STRICT_RELATIVE_TOLERANCE, abs=1e-18), key
 
 
 # --------------------------------------------------------------------------- #

@@ -83,10 +83,14 @@ weight:
 	$(PY) scripts/demo_page_weight.py
 
 # ---------------------------------------------------------------- scan -----
-# Implemented in the scanner phase.
+# Prints the ScanResult JSON on stdout and step progress on stderr. The demo
+# site and its tracker host are private addresses, so this target allow-lists
+# exactly those two, and only when ALLOWED_LOCAL_HOSTS is not already set. The
+# SSRF guard itself stays on: every other private address is still blocked.
 
+scan: export ALLOWED_LOCAL_HOSTS ?= localhost:8081,localhost:8082
 scan:
-	@echo "make scan: not implemented yet (scanner phase). URL=$(URL)"
+	@cd backend && ../$(PY) -m app.cli scan $(URL)
 
 e2e:
 	@echo "make e2e: not implemented yet (frontend phase)"

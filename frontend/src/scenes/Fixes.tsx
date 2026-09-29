@@ -150,6 +150,8 @@ export function Fixes({
   return (
     <Scene
       id="fixes"
+      eyebrow="Fixes"
+      motif={'char-fix'}
       title="What can be fixed"
       lede="GreenAccess can apply the changes below to a copy of the page, then scan that copy again. The after figures come from that second scan, not from an estimate of what the fixes should have achieved."
       className="scene--data"

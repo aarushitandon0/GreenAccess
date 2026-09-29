@@ -147,11 +147,16 @@ export function Terrain({ className }: TerrainProps): JSX.Element {
           landmass group at once, so shore, canopy and creeks all distort
           together and stay registered with each other.
         */}
+        {/*
+          Octave counts are kept low on purpose. Each extra octave is another
+          full pass of noise over the whole viewport, and the coastline reads
+          the same at two as at four -- it is being displaced, not inspected.
+        */}
         <filter id="ga-coast" x="-15%" y="-15%" width="130%" height="130%">
           <feTurbulence
             type="fractalNoise"
             baseFrequency="0.005 0.008"
-            numOctaves="4"
+            numOctaves="2"
             seed="11"
             result="noise"
           />
@@ -166,7 +171,7 @@ export function Terrain({ className }: TerrainProps): JSX.Element {
 
         {/* Fine mottling, used as a canopy texture over the land fill. */}
         <filter id="ga-canopy" x="0%" y="0%" width="100%" height="100%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="5" seed="5" />
+          <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="2" seed="5" />
           <feColorMatrix
             type="matrix"
             values="0 0 0 0 0.05
@@ -178,7 +183,7 @@ export function Terrain({ className }: TerrainProps): JSX.Element {
 
         {/* Broad haze, to keep the water from reading as flat colour. */}
         <filter id="ga-haze" x="0%" y="0%" width="100%" height="100%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.004" numOctaves="3" seed="19" />
+          <feTurbulence type="fractalNoise" baseFrequency="0.004" numOctaves="2" seed="19" />
           <feColorMatrix
             type="matrix"
             values="0 0 0 0 0.42

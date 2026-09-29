@@ -47,44 +47,53 @@ export function BytesBar({ byType, total, caption }: BytesBarProps): JSX.Element
   const largest = rows.reduce((max, row) => Math.max(max, row.bytes), 0)
 
   return (
-    <table className="bytes">
-      <caption className="bytes__caption">{caption}</caption>
-      <thead>
-        <tr>
-          <th scope="col">Resource type</th>
-          <th scope="col">Share of page weight</th>
-          <th scope="col">Transfer size</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row) => {
-          const share = total > 0 ? (row.bytes / total) * 100 : 0
-          const width = largest > 0 ? (row.bytes / largest) * 100 : 0
-          return (
-            <tr key={row.type}>
-              <th scope="row">{LABELS[row.type]}</th>
-              <td className="bytes__plot">
-                {/*
-                  The bar is a reading of the cell beside it, so it carries no
-                  information of its own and is hidden from assistive tech.
-                */}
-                <span className="bytes__track" aria-hidden="true">
-                  <span className="bytes__fill" style={{ width: `${width.toFixed(2)}%` }} />
-                </span>
-                <span className="bytes__share">{share.toFixed(0)}%</span>
-              </td>
-              <td className="bytes__value">{formatBytes(row.bytes)}</td>
-            </tr>
-          )
-        })}
-      </tbody>
-      <tfoot>
-        <tr>
-          <th scope="row">Total</th>
-          <td />
-          <td className="bytes__value">{formatBytes(total)}</td>
-        </tr>
-      </tfoot>
-    </table>
+    /*
+     * A scrollable region rather than a bare table. The plot column needs room
+     * to be a plot, so on a narrow screen the table is wider than the viewport;
+     * without this the whole page scrolls sideways, which fails reflow
+     * (WCAG 1.4.10). `tabindex` and the region role are what make the scroll
+     * container reachable and announced for anyone not using a pointer.
+     */
+    <div className="table-scroll" tabIndex={0} role="region" aria-label={caption}>
+      <table className="bytes">
+        <caption className="bytes__caption">{caption}</caption>
+        <thead>
+          <tr>
+            <th scope="col">Resource type</th>
+            <th scope="col">Share of page weight</th>
+            <th scope="col">Transfer size</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => {
+            const share = total > 0 ? (row.bytes / total) * 100 : 0
+            const width = largest > 0 ? (row.bytes / largest) * 100 : 0
+            return (
+              <tr key={row.type}>
+                <th scope="row">{LABELS[row.type]}</th>
+                <td className="bytes__plot">
+                  {/*
+                    The bar is a reading of the cell beside it, so it carries no
+                    information of its own and is hidden from assistive tech.
+                  */}
+                  <span className="bytes__track" aria-hidden="true">
+                    <span className="bytes__fill" style={{ width: `${width.toFixed(2)}%` }} />
+                  </span>
+                  <span className="bytes__share">{share.toFixed(0)}%</span>
+                </td>
+                <td className="bytes__value">{formatBytes(row.bytes)}</td>
+              </tr>
+            )
+          })}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th scope="row">Total</th>
+            <td />
+            <td className="bytes__value">{formatBytes(total)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
   )
 }

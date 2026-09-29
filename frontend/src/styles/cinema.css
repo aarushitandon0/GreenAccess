@@ -70,25 +70,56 @@
 .sticky-scene__figure {
   position: absolute;
   inset: 0;
+  z-index: 0;
   /*
-   * The analysis arc, as one V-shaped curve per property: full colour as the
-   * chapter opens, drained through the middle while the scan runs, restored at
-   * the end. `max()` of a falling and a rising ramp gives the V without
-   * needing keyframes or a timeline.
+   * A slow push in. Transform only: the figure is promoted to its own layer,
+   * rasterised once, and moved by the compositor. Nothing here may animate a
+   * property that forces a repaint of the terrain -- see SceneGrade for why
+   * the colour grading is separate layers rather than a filter.
    */
-  --sat: max(
-    clamp(0.12, calc(1 - (var(--p, 1) - 0.16) * 4.2), 1),
-    clamp(0.12, calc((var(--p, 1) - 0.76) * 4.6), 1)
-  );
-  --lum: max(
-    clamp(0.55, calc(1 - (var(--p, 1) - 0.18) * 2.2), 1),
-    clamp(0.55, calc((var(--p, 1) - 0.78) * 2.8), 1)
-  );
-  filter: saturate(var(--sat)) brightness(var(--lum));
-  /* A slow push in, so the figure is never quite still. */
-  transform: scale(calc(1.04 + var(--p, 1) * 0.1));
+  transform: scale(calc(1.04 + var(--p, 1) * 0.08));
   transform-origin: 58% 45%;
-  will-change: filter, transform;
+  will-change: transform;
+  /*
+   * Layout and paint containment only. `contain: strict` adds *size*
+   * containment, which strips the element of intrinsic size -- for a wrapper
+   * whose child is an SVG that then has nothing to size against, that costs
+   * more layout than it saves.
+   */
+  contain: layout paint;
+}
+
+/* ---- Colour grading (see SceneGrade) ---- */
+
+.grade {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  will-change: opacity;
+}
+
+/*
+ * The analysis arc as one V per layer: colour drains through the middle of the
+ * chapter and returns at the end. `max()` of a rising and a falling ramp gives
+ * the V without a keyframe. The `var(--p, 1)` fallback lands on 0 -- with no
+ * script the landscape is simply ungraded.
+ */
+.grade--desaturate {
+  background-color: #808080;
+  mix-blend-mode: saturation;
+  opacity: min(
+    clamp(0, calc((var(--p, 1) - 0.16) * 4.2), 1),
+    clamp(0, calc((0.92 - var(--p, 1)) * 4.6), 1)
+  );
+}
+
+.grade--darken {
+  background-color: #0d0f0e;
+  opacity: min(
+    clamp(0, calc((var(--p, 1) - 0.18) * 2.4), 0.62),
+    clamp(0, calc((0.9 - var(--p, 1)) * 2.8), 0.62)
+  );
 }
 
 .terrain {
@@ -107,7 +138,7 @@
     linear-gradient(to right, rgba(13, 15, 14, 0.7) 0%, rgba(13, 15, 14, 0) 52%),
     linear-gradient(to left, rgba(13, 15, 14, 0.55) 0%, rgba(13, 15, 14, 0) 46%),
     linear-gradient(to bottom, rgba(13, 15, 14, 0.5) 0%, rgba(13, 15, 14, 0) 26%);
-  z-index: 1;
+  z-index: 2;
 }
 
 /*
@@ -116,13 +147,13 @@
  */
 .sticky-scene__steps {
   position: relative;
-  z-index: 2;
+  z-index: 6;
   margin-top: -100vh;
 }
 
 .sticky-scene__title {
   position: relative;
-  z-index: 2;
+  z-index: 6;
   max-width: 40rem;
   padding: var(--space-16) var(--space-8) 0;
   margin-inline: auto;
@@ -210,7 +241,7 @@
 .scan-grid {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: 3;
   display: grid;
   grid-template-columns: repeat(var(--cols), 1fr);
   grid-template-rows: repeat(var(--rows), 1fr);
@@ -237,6 +268,9 @@
  */
 .scan-grid__cell {
   background-color: #0d0f0e;
+  /* Paint containment only: these are grid items, and size containment would
+     fight the track sizing that gives them their dimensions. */
+  contain: paint;
   opacity: clamp(0, calc((var(--d) - var(--aperture)) * 7), 1);
 }
 
@@ -247,7 +281,7 @@
 .hud {
   position: absolute;
   inset: 0;
-  z-index: 3;
+  z-index: 4;
   pointer-events: none;
 }
 
@@ -348,7 +382,7 @@
 
 .cue {
   position: absolute;
-  z-index: 3;
+  z-index: 5;
   left: 50%;
   bottom: clamp(var(--space-8), 12vh, var(--space-20));
   width: 6.5rem;
@@ -388,7 +422,7 @@
 .hero-cine {
   position: absolute;
   inset: 0;
-  z-index: 3;
+  z-index: 5;
   display: grid;
   align-content: center;
   padding: var(--space-8) var(--space-6);
@@ -449,7 +483,7 @@
   position: absolute;
   top: var(--space-6);
   left: var(--space-10);
-  z-index: 4;
+  z-index: 7;
   font-family: var(--font-display);
   font-size: var(--text-sm);
   font-weight: var(--weight-bold);
@@ -509,37 +543,10 @@
 
 /* --------------------------------------------------------------------------
    Console chapter
+
+   The console's own layout lives in layout.css, which owns the full-bleed
+   split. Only the shared eyebrow stays here.
    -------------------------------------------------------------------------- */
-
-.scene--begin {
-  border-top: 0;
-  padding-block: var(--space-20);
-}
-
-.begin {
-  display: grid;
-  gap: var(--space-12);
-  align-items: center;
-  grid-template-columns: 1fr;
-}
-
-@media (min-width: 60rem) {
-  .begin {
-    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-  }
-}
-
-.begin__title {
-  font-size: clamp(1.9rem, 3.6vw, 2.9rem);
-  line-height: 1.08;
-  margin-bottom: var(--space-5);
-  text-wrap: balance;
-}
-
-.begin__figure {
-  display: flex;
-  justify-content: center;
-}
 
 .scene__eyebrow {
   display: flex;

@@ -84,6 +84,8 @@ export function Tradeoffs({ tradeoffs }: TradeoffsProps): JSX.Element {
     <div data-scope="cinema" className="scene-wrap scene-wrap--cinema">
       <Scene
         id="tradeoffs"
+        eyebrow="Trade-offs"
+        motif={'char-tradeoffs'}
         title="Where the two goals meet"
         lede="Most of what makes a page lighter also makes it more usable. Not all of it. Both cases are below, with the numbers behind them."
         className="scene--tradeoffs"

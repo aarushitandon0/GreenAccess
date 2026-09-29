@@ -7,13 +7,16 @@
  * Interactive controls do not belong in a chapter whose content dims as the
  * reader scrolls past it, so the form gets a section of its own that is always
  * fully visible and fully operable.
+ *
+ * It is laid out as a full-bleed split rather than a centred card: the argument
+ * and the field on one side, a voxel diorama on the other. A lone input box in
+ * the middle of a wide screen reads as a form to be filled in; the same input
+ * beside the thing it acts on reads as the start of a story.
  */
 
 import { useId, useState } from 'react'
 
-import { Sapling } from '../components/Sapling'
-import { useCountUp } from '../lib/motion'
-import { useInView } from '../lib/scroll'
+import { Sprite } from '../components/Sprite'
 import type { ApiError } from '../lib/types'
 
 export interface BeginProps {
@@ -47,13 +50,18 @@ function explain(error: ApiError): string {
   }
 }
 
+/** What one scan actually does, as three short claims beside the form. */
+const STEPS = [
+  { n: '01', label: 'Load', body: 'A real Chromium browser opens the page and scrolls it to the bottom.' },
+  { n: '02', label: 'Measure', body: 'Accessibility rules, a Tab-key crawl, and every byte the page requests.' },
+  { n: '03', label: 'Compare', body: 'Where a fix helps both goals, and where it cannot.' },
+]
+
 export function Begin({ onScan, demoUrl, busy, error }: BeginProps): JSX.Element {
   const fieldId = useId()
   const hintId = useId()
   const errorId = useId()
   const [url, setUrl] = useState('')
-  const [ref, inView] = useInView<HTMLDivElement>({ threshold: 0.2 })
-  const growth = useCountUp(100, inView, 1800)
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>): void {
     event.preventDefault()
@@ -64,8 +72,8 @@ export function Begin({ onScan, demoUrl, busy, error }: BeginProps): JSX.Element
   }
 
   return (
-    <section className="scene scene--begin" id="begin" aria-labelledby="begin-title">
-      <div className="container begin">
+    <section className="begin" id="begin" aria-labelledby="begin-title">
+      <div className="begin__inner">
         <div className="begin__text">
           <p className="scene__eyebrow">
             <span className="panel__bullet" aria-hidden="true" />
@@ -73,13 +81,9 @@ export function Begin({ onScan, demoUrl, busy, error }: BeginProps): JSX.Element
           </p>
 
           <h2 className="begin__title" id="begin-title">
-            How inclusive and how green is your website?
+            Give it one page.
+            <span className="begin__title-soft">It will tell you what that page costs.</span>
           </h2>
-
-          <p className="scene__lede">
-            One page per scan. GreenAccess loads it in a real browser, runs the accessibility
-            rule set, crawls it with the Tab key, and weighs every byte it requests.
-          </p>
 
           <form className="scan-form" onSubmit={handleSubmit} noValidate>
             <div className="field">
@@ -101,26 +105,28 @@ export function Begin({ onScan, demoUrl, busy, error }: BeginProps): JSX.Element
                 disabled={busy}
               />
               <span className="field__hint" id={hintId}>
-                One page per scan. Public http and https addresses only.
+                Public http and https addresses only.
               </span>
             </div>
 
-            <button className="button button--primary" type="submit" disabled={busy}>
-              {busy ? 'Scanning…' : 'Scan'}
-            </button>
+            <div className="scan-form__actions">
+              <button className="button button--primary" type="submit" disabled={busy}>
+                {busy ? 'Scanning…' : 'Scan'}
+              </button>
 
-            {/*
-              The demo runs the same pipeline against the Daily Herald, so the
-              numbers it produces are real. Disabled until GET /api/demo answers.
-            */}
-            <button
-              className="button button--secondary"
-              type="button"
-              onClick={() => demoUrl && onScan(demoUrl)}
-              disabled={busy || demoUrl === null}
-            >
-              Try the Daily Herald demo
-            </button>
+              {/*
+                The demo runs the same pipeline against the Daily Herald, so the
+                numbers it produces are real. Disabled until GET /api/demo answers.
+              */}
+              <button
+                className="button button--secondary"
+                type="button"
+                onClick={() => demoUrl && onScan(demoUrl)}
+                disabled={busy || demoUrl === null}
+              >
+                Try the Daily Herald demo
+              </button>
+            </div>
           </form>
 
           {/*
@@ -132,6 +138,18 @@ export function Begin({ onScan, demoUrl, busy, error }: BeginProps): JSX.Element
             {error ? explain(error) : ''}
           </p>
 
+          <ol className="begin__steps">
+            {STEPS.map((step) => (
+              <li key={step.n}>
+                <span className="begin__step-n" aria-hidden="true">
+                  {step.n}
+                </span>
+                <h3 className="begin__step-label">{step.label}</h3>
+                <p className="begin__step-body">{step.body}</p>
+              </li>
+            ))}
+          </ol>
+
           <p className="note">
             <span className="chip chip--estimate">Estimate</span>
             Automated checks only; carbon values are estimates from the Sustainable Web Design
@@ -139,8 +157,19 @@ export function Begin({ onScan, demoUrl, busy, error }: BeginProps): JSX.Element
           </p>
         </div>
 
-        <div className="begin__figure" ref={ref}>
-          <Sapling growth={growth / 100} className="sapling--hero" />
+        {/*
+          The diorama. Every piece is decorative and stated in the text beside
+          it, so all of it carries an empty alt. The console is the one place
+          art loads eagerly: it is the first thing below the opening and the
+          reader is looking straight at it.
+        */}
+        <div className="begin__scene">
+          <div className="diorama">
+            <Sprite name="iso-cloud" width={150} className="diorama__cloud" />
+            <Sprite name="iso-tree" width={200} className="diorama__tree" />
+            <Sprite name="char-scan" width={280} className="diorama__character" eager />
+            <Sprite name="iso-sprout" width={110} className="diorama__sprout" />
+          </div>
         </div>
       </div>
     </section>

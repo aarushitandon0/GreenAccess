@@ -128,6 +128,8 @@ export function Accessibility({ a11y, keyboard }: AccessibilityProps): JSX.Eleme
   return (
     <Scene
       id="accessibility"
+      eyebrow="Accessibility"
+      motif={'char-analyse'}
       title="Who the page shuts out"
       lede={`Automated checks found ${pluralise(a11y.unique_rules, 'rule')} failing across ${pluralise(a11y.total_nodes, 'element')}. These are issues detected by a rule set — passing them all is not the same as being accessible.`}
       className="scene--data"

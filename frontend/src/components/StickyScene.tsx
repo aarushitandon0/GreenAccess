@@ -20,7 +20,7 @@
  * (WCAG 2.4.7). Interactive content belongs in the chapters that are not pinned.
  */
 
-import { HudFrame, ScrollCue } from './Hud'
+import { HudFrame, SceneGrade, ScrollCue } from './Hud'
 import { usePrefersReducedMotion } from '../lib/motion'
 import { useInView, useStickyProgress } from '../lib/scroll'
 
@@ -104,6 +104,7 @@ export function StickyScene({
     >
       <div className="sticky-scene__pin">
         <div className="sticky-scene__figure">{figure}</div>
+        <SceneGrade />
         <HudFrame />
         {overlay}
         <ScrollCue />

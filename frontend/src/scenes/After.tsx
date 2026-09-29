@@ -11,7 +11,7 @@
  */
 
 import { Gauge } from '../components/Gauge'
-import { Sapling } from '../components/Sapling'
+import { Sprite } from '../components/Sprite'
 import { Scene } from '../components/Scene'
 import { patchZipUrl, screenshotUrl } from '../lib/api'
 import {
@@ -23,7 +23,6 @@ import {
   formatReduction,
   pluralise,
 } from '../lib/format'
-import { useCountUp } from '../lib/motion'
 import { useInView } from '../lib/scroll'
 import type { PatchInfo, ScanResult } from '../lib/types'
 
@@ -56,7 +55,6 @@ export interface AfterProps {
 
 export function After({ scanId, before, after, patch }: AfterProps): JSX.Element {
   const [ref, inView] = useInView<HTMLDivElement>({ threshold: 0.3 })
-  const growth = useCountUp(after.scores.combined, inView, 1400)
 
   const byteDelta = after.carbon.total_bytes - before.carbon.total_bytes
   const gramDelta = after.carbon.grams_per_view - before.carbon.grams_per_view
@@ -67,6 +65,7 @@ export function After({ scanId, before, after, patch }: AfterProps): JSX.Element
   return (
     <Scene
       id="after"
+      eyebrow="After the fixes"
       title="The same page, scanned again"
       lede={`${pluralise(applied, 'fix')} applied, then the patched page was loaded and measured from scratch. These are the numbers that second scan produced.`}
       className="scene--after"
@@ -95,7 +94,7 @@ export function After({ scanId, before, after, patch }: AfterProps): JSX.Element
         </div>
 
         <div className="reveal__tree">
-          <Sapling growth={growth / 100} className="sapling--verdict" />
+          <Sprite name={'char-build'} width={200} className="sprite--verdict" />
           <p className="reveal__tree-caption">
             The tree tracks the combined score from the re-scan.
           </p>

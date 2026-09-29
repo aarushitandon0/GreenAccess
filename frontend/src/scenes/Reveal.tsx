@@ -9,12 +9,11 @@
  */
 
 import { Gauge } from '../components/Gauge'
-import { Sapling } from '../components/Sapling'
+import { Sprite } from '../components/Sprite'
 import { Scene } from '../components/Scene'
 import { ScoreExplainer } from '../components/ScoreExplainer'
 import { screenshotUrl } from '../lib/api'
 import { formatBytes, formatGrams, pluralise } from '../lib/format'
-import { useCountUp } from '../lib/motion'
 import { useInView } from '../lib/scroll'
 import type { ScanResult } from '../lib/types'
 
@@ -28,12 +27,12 @@ export function Reveal({ scanId, url, result }: RevealProps): JSX.Element {
   const [ref, inView] = useInView<HTMLDivElement>({ threshold: 0.3 })
   const { scores, carbon, green, a11y } = result
 
-  // The tree stands for the combined score, which is the chapter's headline.
-  const growth = useCountUp(scores.combined, inView, 1400)
 
   return (
     <Scene
       id="verdict"
+      eyebrow="Verdict"
+      motif={'char-measure'}
       title="The verdict"
       lede={`Three scores for ${url}. Accessibility counts what automated rules found; carbon estimates what one page view costs; combined weighs them ${Math.round(scores.weights.a11y * 100)}/${Math.round(scores.weights.carbon * 100)}.`}
       className="scene--reveal"
@@ -62,7 +61,7 @@ export function Reveal({ scanId, url, result }: RevealProps): JSX.Element {
         </div>
 
         <div className="reveal__tree">
-          <Sapling growth={growth / 100} className="sapling--verdict" />
+          <Sprite name={'iso-tree'} width={200} className="sprite--verdict" />
           <p className="reveal__tree-caption">
             The tree tracks the combined score. It grows again after the fixes are applied and
             the page is scanned a second time.

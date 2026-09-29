@@ -13,7 +13,7 @@
  * defect, so the scan form is its own section immediately below.
  */
 
-import { HudFrame, ScanGrid, ScrollCue } from '../components/Hud'
+import { HudFrame, ScanGrid, SceneGrade, ScrollCue } from '../components/Hud'
 import { StickyStep, type StickyStepContent } from '../components/StickyScene'
 import { Terrain } from '../components/Terrain'
 import { usePrefersReducedMotion } from '../lib/motion'
@@ -56,6 +56,8 @@ export function Opening(): JSX.Element {
         <div className="sticky-scene__figure">
           <Terrain />
         </div>
+
+        <SceneGrade />
 
         {/* The blocky mask that clears outward as the scan runs. */}
         <ScanGrid />

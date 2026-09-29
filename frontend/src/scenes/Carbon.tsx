@@ -89,6 +89,8 @@ export function Carbon({ carbon }: CarbonProps): JSX.Element {
   return (
     <Scene
       id="carbon"
+      eyebrow="Carbon"
+      motif={'iso-co2'}
       title="What the page weighs"
       lede={`${formatBytes(carbon.total_bytes)} over ${pluralise(carbon.request_count, 'request')}, which the Sustainable Web Design model puts at ${formatGrams(carbon.grams_per_view)} of CO₂ per view.`}
       className="scene--data"
@@ -177,10 +179,17 @@ export function Carbon({ carbon }: CarbonProps): JSX.Element {
       {images.length > 0 ? (
         <section className="images" aria-labelledby="images-title">
           <h3 id="images-title">The heaviest images</h3>
-          <table className="data-table">
-            <caption className="visually-hidden">
-              The ten heaviest images on the page, with the issues detected for each
-            </caption>
+          {/* Scrollable region, for the reason BytesBar gives. */}
+          <div
+            className="table-scroll"
+            tabIndex={0}
+            role="region"
+            aria-label="The ten heaviest images on the page"
+          >
+            <table className="data-table">
+              <caption className="visually-hidden">
+                The ten heaviest images on the page, with the issues detected for each
+              </caption>
             <thead>
               <tr>
                 <th scope="col">Image</th>
@@ -221,8 +230,9 @@ export function Carbon({ carbon }: CarbonProps): JSX.Element {
                   </td>
                 </tr>
               ))}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         </section>
       ) : null}
 

@@ -1,0 +1,364 @@
+/*
+ * Chapter layout and the voxel cast.
+ *
+ * Loaded after scenes.css and chapters.css, and deliberately overrides the
+ * centred-column layout they started from.
+ *
+ * The governing idea: a wide screen should not show a narrow column of content
+ * with empty margins either side. Every data chapter is a sticky rail plus a
+ * wide body, so the left third carries the chapter's heading and motif while
+ * the right does the work. Below 64rem it all stacks and the rail stops being
+ * sticky.
+ */
+
+:root {
+  /* Wider than --container-max: the data chapters have tables to show. */
+  --shell-max: 104rem;
+  --shell-pad: var(--space-6);
+  --rail-width: 19rem;
+}
+
+@media (min-width: 64rem) {
+  :root {
+    --shell-pad: var(--space-12);
+  }
+}
+
+@media (min-width: 100rem) {
+  :root {
+    --shell-pad: var(--space-16);
+    --rail-width: 22rem;
+  }
+}
+
+/* -------------------------------------------------------------- the shell */
+
+.scene {
+  padding-block: var(--space-20);
+  border-top: var(--border-width) solid var(--border);
+}
+
+.scene__grid {
+  width: 100%;
+  max-width: var(--shell-max);
+  margin-inline: auto;
+  padding-inline: var(--shell-pad);
+  display: grid;
+  gap: var(--space-10);
+  /*
+   * minmax(0, 1fr), not 1fr. A `1fr` track has an automatic minimum of its
+   * content, so one wide table inside it pushes the whole column -- and with
+   * it the page -- past the viewport. Zero is the only minimum that lets the
+   * scroll containers inside actually do their job.
+   */
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 64rem) {
+  .scene__grid {
+    grid-template-columns: var(--rail-width) minmax(0, 1fr);
+    gap: var(--space-16);
+    align-items: start;
+  }
+
+  .scene__rail {
+    position: sticky;
+    /* Clears the chapter nav, which is sticky at the top. */
+    top: var(--space-16);
+  }
+}
+
+.scene__rail-inner {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.scene__title {
+  margin: 0;
+  text-wrap: balance;
+}
+
+.scene__lede {
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+  text-wrap: pretty;
+  margin: 0;
+}
+
+.scene__body {
+  display: grid;
+  /*
+   * An explicit minmax(0, 1fr) column. A grid with no declared columns gets an
+   * implicit `auto` track, which sizes to its content -- so a wide table inside
+   * stretches the column, the chapter and the page, and the scroll container
+   * wrapping that table never gets a width small enough to scroll against.
+   */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-12);
+  align-content: start;
+  min-width: 0;
+}
+
+/* The old inner wrapper is no longer used for these chapters. */
+.scene__body > * {
+  margin: 0;
+}
+
+/* ------------------------------------------------------------ the voxels */
+
+/*
+ * Sprites carry width and height attributes so their box is reserved before
+ * they load; these rules let them scale down without losing that ratio.
+ */
+.sprite {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.sprite--motif {
+  margin-top: var(--space-4);
+}
+
+@media (max-width: 63.99rem) {
+  .sprite--motif {
+    max-width: 7rem;
+  }
+}
+
+/* ---------------------------------------------------------- the console */
+
+.begin {
+  position: relative;
+  padding-block: var(--space-20);
+  background-color: var(--surface);
+  border-top: var(--border-width) solid var(--border);
+  overflow: hidden;
+}
+
+.begin__inner {
+  width: 100%;
+  max-width: var(--shell-max);
+  margin-inline: auto;
+  padding-inline: var(--shell-pad);
+  display: grid;
+  gap: var(--space-12);
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+}
+
+@media (min-width: 64rem) {
+  .begin__inner {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: var(--space-16);
+  }
+}
+
+.begin__title {
+  font-size: clamp(2.1rem, 4.4vw, 3.6rem);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  margin-block: var(--space-2) var(--space-8);
+  text-wrap: balance;
+}
+
+/* The second clause sits back, so the first reads as the headline. */
+.begin__title-soft {
+  display: block;
+  color: var(--ink-muted);
+  font-size: 0.62em;
+  line-height: 1.15;
+  margin-top: var(--space-3);
+  letter-spacing: -0.01em;
+}
+
+.scan-form {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 34rem;
+}
+
+.scan-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.field {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.field__input {
+  width: 100%;
+  font-size: var(--text-md);
+  padding: var(--space-4) var(--space-5);
+  min-height: 3.5rem;
+}
+
+/* ---- The three claims ---- */
+
+.begin__steps {
+  list-style: none;
+  margin: var(--space-12) 0 var(--space-8);
+  padding: 0;
+  display: grid;
+  gap: var(--space-6);
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  border-top: var(--border-width) solid var(--border);
+  padding-top: var(--space-8);
+}
+
+.begin__step-n {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--forest);
+  letter-spacing: 0.14em;
+  margin-bottom: var(--space-2);
+}
+
+.begin__step-label {
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-1);
+}
+
+.begin__step-body {
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+
+/* ---------------------------------------------------------- the diorama */
+
+.begin__scene {
+  display: flex;
+  justify-content: center;
+}
+
+/*
+ * The pieces are placed by hand on a square stage, because an isometric scene
+ * has no flow: what matters is which block sits on which, and that is a
+ * position, not a layout.
+ */
+.diorama {
+  position: relative;
+  width: min(100%, 34rem);
+  aspect-ratio: 1 / 1;
+}
+
+.diorama > * {
+  position: absolute;
+}
+
+.diorama__tree {
+  width: 40%;
+  left: 2%;
+  bottom: 14%;
+}
+
+.diorama__character {
+  width: 56%;
+  left: 30%;
+  bottom: 8%;
+}
+
+.diorama__sprout {
+  width: 20%;
+  right: 4%;
+  bottom: 16%;
+}
+
+.diorama__cloud {
+  width: 30%;
+  right: 2%;
+  top: 2%;
+  animation: drift 9s var(--ease-out) infinite alternate;
+  will-change: transform;
+}
+
+@keyframes drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-8%, 6%, 0);
+  }
+}
+
+/* --------------------------------------------------- wide data chapters */
+
+/*
+ * Tables and card grids get the full body width. Without this the body column
+ * keeps the old centred max-width and the rail layout buys nothing.
+ */
+.scene__body .facts,
+.scene__body .deltas,
+.scene__body .finding-list,
+.scene__body .detection-list,
+.scene__body .violation-list,
+.scene__body .fix-list,
+.scene__body .reveal__gauges {
+  width: 100%;
+}
+
+/* Cards can breathe on a wide screen instead of stretching to one per row. */
+@media (min-width: 90rem) {
+  .violation-list,
+  .detection-list,
+  .fix-list {
+    grid-template-columns: repeat(auto-fit, minmax(26rem, 1fr));
+  }
+}
+
+/* The trade-off chapter keeps its dark full-bleed background. */
+.scene-wrap--cinema .scene {
+  border-top: 0;
+}
+
+/* The verdict and after chapters put the tree beside their gauges. */
+.sprite--verdict {
+  margin-inline: auto;
+}
+
+.reveal {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 72rem) {
+  .reveal {
+    grid-template-columns: minmax(0, 1fr) 15rem;
+    gap: var(--space-12);
+  }
+}
+
+/*
+ * Wide tables scroll inside their own region rather than dragging the page
+ * sideways with them (WCAG 1.4.10 Reflow). The focus ring matters here: the
+ * container is focusable so it can be scrolled from the keyboard, and a
+ * focusable thing must show that it has focus (WCAG 2.4.7).
+ */
+.table-scroll {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  /* Let a scrolled table be read without also scrolling the page vertically. */
+  overscroll-behavior-x: contain;
+}
+
+.table-scroll:focus-visible {
+  outline: var(--focus-width) solid var(--focus-color);
+  outline-offset: var(--focus-offset);
+  border-radius: var(--radius-sm);
+}
+
+/* The table is a table again; the scrolling is the wrapper's job. */
+.data-table {
+  display: table;
+  overflow: visible;
+}
+
+.bytes,
+.data-table {
+  min-width: 28rem;
+}

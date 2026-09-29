@@ -35,41 +35,50 @@ export function ScoreExplainer({ title, breakdown }: ScoreExplainerProps): JSX.E
             there.
           </p>
         ) : (
-          <table className="explainer__table">
-            <caption className="visually-hidden">
-              Every item contributing to the {title} score
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col">What</th>
-                <th scope="col">Points</th>
-                <th scope="col">Detail</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th scope="row">Starting points</th>
-                <td className="explainer__points">{breakdown.starting_points}</td>
-                <td />
-              </tr>
-              {breakdown.items.map((item, index) => (
-                <tr key={`${item.label}-${index}`}>
-                  <th scope="row">{item.label}</th>
-                  <td className="explainer__points">
-                    {item.points > 0 ? `+${item.points}` : item.points}
-                  </td>
-                  <td>{item.detail}</td>
+          // A scrollable region, so a narrow screen scrolls the table rather
+          // than the whole page (WCAG 1.4.10 Reflow).
+          <div
+            className="table-scroll"
+            tabIndex={0}
+            role="region"
+            aria-label={`Every item contributing to the ${title} score`}
+          >
+            <table className="explainer__table">
+              <caption className="visually-hidden">
+                Every item contributing to the {title} score
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">What</th>
+                  <th scope="col">Points</th>
+                  <th scope="col">Detail</th>
                 </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr>
-                <th scope="row">Total</th>
-                <td className="explainer__points">{breakdown.total}</td>
-                <td />
-              </tr>
-            </tfoot>
-          </table>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Starting points</th>
+                  <td className="explainer__points">{breakdown.starting_points}</td>
+                  <td />
+                </tr>
+                {breakdown.items.map((item, index) => (
+                  <tr key={`${item.label}-${index}`}>
+                    <th scope="row">{item.label}</th>
+                    <td className="explainer__points">
+                      {item.points > 0 ? `+${item.points}` : item.points}
+                    </td>
+                    <td>{item.detail}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th scope="row">Total</th>
+                  <td className="explainer__points">{breakdown.total}</td>
+                  <td />
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         )}
       </div>
     </details>

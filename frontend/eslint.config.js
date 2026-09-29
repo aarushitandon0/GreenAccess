@@ -23,6 +23,14 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       ...jsxA11y.flatConfigs.recommended.rules,
+      /*
+       * A scrollable container has to be focusable, or a keyboard user cannot
+       * scroll it and the content inside is unreachable. The rule's default
+       * list does not include `region`, so it is added here rather than
+       * silenced case by case: the pattern is correct and is used for every
+       * wide table in the app.
+       */
+      'jsx-a11y/no-noninteractive-tabindex': ['error', { tags: [], roles: ['region'] }],
       // CLAUDE.md: "TypeScript: strict, no any".
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/consistent-type-imports': 'warn',

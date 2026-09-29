@@ -14,6 +14,30 @@
  * to scroll itself, and nothing re-renders as the reader moves.
  */
 
+/**
+ * The colour grading over a pinned figure.
+ *
+ * Two flat layers rather than a CSS `filter` on the figure itself, and the
+ * difference is the whole frame budget. The terrain is drawn with
+ * `feTurbulence`; animating a `filter` on the element that contains it makes
+ * the browser re-run that filter and re-rasterise the full-viewport SVG on
+ * every single frame, which measured as 12.7% dropped frames and a 250 ms
+ * worst case under a 6x CPU throttle.
+ *
+ * These layers are solid colours whose opacity animates. Opacity on a promoted
+ * layer is a compositor property: the terrain rasterises once and is never
+ * touched again. `saturation` blending drains the colour exactly as
+ * `filter: saturate()` did, and a flat wash does the darkening.
+ */
+export function SceneGrade(): JSX.Element {
+  return (
+    <>
+      <div className="grade grade--desaturate" aria-hidden="true" />
+      <div className="grade grade--darken" aria-hidden="true" />
+    </>
+  )
+}
+
 /** Corner brackets and the vertical travel rail. */
 export function HudFrame(): JSX.Element {
   return (

@@ -59,7 +59,7 @@ ignore = [
 # Tests may use asserts, skip return annotations, and print for diagnostics.
 "**/tests/**" = ["ANN", "T20"]
 # The CLI is the one place in the app allowed to write to stdout.
-"app/cli.py" = ["T20"]
+"**/app/cli.py" = ["T20"]
 # Developer scripts and the demo server are command-line tools: printing is
 # their output, and their argparse entry points are not app code.
 "**/scripts/*.py" = ["T20"]

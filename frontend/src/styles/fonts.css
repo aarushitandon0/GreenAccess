@@ -1,0 +1,48 @@
+/*
+ * Self-hosted variable fonts, latin subset only (MASTERSPEC §13).
+ *
+ * The @font-face rules are declared here by hand rather than importing the
+ * packages' own index.css entry points, because those ship every available
+ * subset (cyrillic, greek, vietnamese, latin-ext). GreenAccess must pass its own
+ * carbon audit, so we load only the latin subset:
+ *
+ *   fraunces-latin-wght-normal.woff2   36,620 bytes
+ *   inter-latin-wght-normal.woff2      48,256 bytes
+ *   -------------------------------------------
+ *   total                              84,876 bytes  (2 files)
+ *
+ * That keeps us under our own `font_bloat` detector thresholds (MASTERSPEC §7.3:
+ * more than 3 files or more than 150 KB).
+ *
+ * Both are variable weight axes (100-900), so a single file covers every weight
+ * in the type scale. `font-display: swap` is required by §13.
+ *
+ * The woff2 files are resolved from node_modules by Vite at build time.
+ * unicode-range values are copied verbatim from the upstream fontsource CSS.
+ */
+
+/* Headlines: Fraunces */
+@font-face {
+  font-family: 'Fraunces Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('@fontsource-variable/fraunces/files/fraunces-latin-wght-normal.woff2')
+    format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+
+/* UI: Inter */
+@font-face {
+  font-family: 'Inter Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('@fontsource-variable/inter/files/inter-latin-wght-normal.woff2')
+    format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}

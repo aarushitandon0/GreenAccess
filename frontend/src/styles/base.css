@@ -1,0 +1,228 @@
+/*
+ * Base reset, typography and accessibility utilities.
+ * Depends on tokens.css being imported first.
+ */
+
+/* ---- Reset ---- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  /* Never disable zoom, and never set a max-scale: WCAG 1.4.4 Resize Text. */
+}
+
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+figure,
+blockquote,
+dl,
+dd {
+  margin: 0;
+}
+
+ul[role='list'],
+ol[role='list'] {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background-color: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  font-synthesis-weight: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+img,
+picture,
+svg,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* Long words and URLs must not force horizontal scrolling (WCAG 1.4.10). */
+p,
+li,
+h1,
+h2,
+h3,
+h4 {
+  overflow-wrap: break-word;
+}
+
+/* ---- Headings ---- */
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
+}
+
+h1 {
+  font-size: var(--text-xl);
+}
+
+h2 {
+  font-size: var(--text-lg);
+}
+
+h3 {
+  font-size: var(--text-md);
+}
+
+h4 {
+  font-size: var(--text-sm);
+}
+
+@media (min-width: 48rem) {
+  h1 {
+    font-size: var(--text-2xl);
+  }
+}
+
+a {
+  color: var(--forest);
+  text-underline-offset: 0.2em;
+}
+
+a:hover {
+  color: var(--forest-strong);
+}
+
+/* ---- Focus: 3px --forest ring with 2px offset (MASTERSPEC §13) ---- */
+
+/*
+ * :focus-visible is the primary rule. The bare :focus fallback is scoped to
+ * browsers without :focus-visible support so that a visible indicator is never
+ * absent (WCAG 2.4.7).
+ */
+:focus-visible {
+  outline: var(--focus-width) solid var(--focus-color);
+  outline-offset: var(--focus-offset);
+  border-radius: var(--radius-sm);
+}
+
+@supports not selector(:focus-visible) {
+  :focus {
+    outline: var(--focus-width) solid var(--focus-color);
+    outline-offset: var(--focus-offset);
+  }
+}
+
+/* ---- Utilities ---- */
+
+/*
+ * Visually hidden, but still announced by assistive technology.
+ * Never use `display: none` or `visibility: hidden` for this: both remove the
+ * element from the accessibility tree.
+ */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* A visually-hidden element that becomes visible on focus, e.g. the skip link. */
+.visually-hidden-focusable:not(:focus):not(:focus-within) {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* ---- Skip link (MASTERSPEC §13) ---- */
+
+.skip-link {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 100;
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--forest);
+  color: var(--on-forest);
+  border-radius: var(--radius-sm);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+  box-shadow: var(--shadow-md);
+}
+
+/* ---- Reduced motion ----
+ * MASTERSPEC §13: gauge sweep, tab underline and count-up are all disabled
+ * under prefers-reduced-motion. This blanket rule is the backstop; it keeps a
+ * 1ms duration rather than 0 so that transitionend/animationend still fire and
+ * JS that awaits them does not hang.
+ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---- Forced colours (Windows High Contrast) ---- */
+
+@media (forced-colors: active) {
+  :focus-visible {
+    outline-color: Highlight;
+  }
+}

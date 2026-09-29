@@ -1,0 +1,161 @@
+/*
+ * GreenAccess design tokens — MASTERSPEC §13.
+ *
+ * Every colour named in §13 appears here verbatim. Two additional tokens
+ * (--amber-text-strong, --border-strong) exist because the §13 palette does not
+ * by itself satisfy the contrast rule stated in §13. They are additions, not
+ * edits: the spec values are preserved unchanged. See docs/CONTRAST.md.
+ *
+ * Contrast is enforced by scripts/contrast_check.py, which runs in `make lint`.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* ---- Colour: light theme (MASTERSPEC §13 verbatim) ---- */
+  --bg: #faf8f3;
+  --surface: #ffffff;
+  --ink: #1b2a22;
+  --ink-muted: #4a5a50;
+  --forest: #1f5d3a;
+  --forest-strong: #164a2e;
+  --leaf: #e3f0e6;
+  --amber-fill: #f2b84b;
+  --amber-text: #7a4e00;
+  --danger: #a4262c;
+  --border: #ddd8cc;
+
+  /* ---- Derived colour tokens (additions, see header) ---- */
+  /* #7A4E00 on --amber-fill is 4.02:1 — valid for large text only. This darker
+     companion reaches 4.79:1 and is what normal-size text on amber must use. */
+  --amber-text-strong: #6b4400;
+  /* --border is a decorative hairline (1.34:1) and is exempt under WCAG 1.4.11.
+     Borders that carry meaning — input outlines, control edges, chart axes —
+     use --border-strong, which is 3.47:1 on --bg. */
+  --border-strong: #8c8571;
+  /* Text/icon colour for use on top of a --forest or --danger fill. */
+  --on-forest: #ffffff;
+  --on-danger: #ffffff;
+  --on-amber: var(--amber-text-strong);
+
+  /* ---- Type (MASTERSPEC §13: headlines Fraunces, UI Inter) ---- */
+  --font-display: 'Fraunces Variable', 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-ui: 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Type scale 14/16/20/28/40/56 (MASTERSPEC §13) */
+  --text-xs: 0.875rem;  /* 14px */
+  --text-sm: 1rem;      /* 16px */
+  --text-md: 1.25rem;   /* 20px */
+  --text-lg: 1.75rem;   /* 28px */
+  --text-xl: 2.5rem;    /* 40px */
+  --text-2xl: 3.5rem;   /* 56px */
+
+  --leading-tight: 1.15;
+  --leading-snug: 1.3;
+  --leading-normal: 1.6;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* ---- Spacing: 4-pt scale (MASTERSPEC §13) ---- */
+  --space-1: 0.25rem;   /*  4px */
+  --space-2: 0.5rem;    /*  8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.25rem;   /* 20px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-8: 2rem;      /* 32px */
+  --space-10: 2.5rem;   /* 40px */
+  --space-12: 3rem;     /* 48px */
+  --space-16: 4rem;     /* 64px */
+  --space-20: 5rem;     /* 80px */
+
+  /* ---- Shape: radius 12, 1px borders (MASTERSPEC §13) ---- */
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+  --border-width: 1px;
+
+  /* ---- Soft shadows (MASTERSPEC §13) ---- */
+  --shadow-sm: 0 1px 2px rgba(27, 42, 34, 0.06), 0 1px 3px rgba(27, 42, 34, 0.08);
+  --shadow-md: 0 2px 6px rgba(27, 42, 34, 0.07), 0 6px 16px rgba(27, 42, 34, 0.09);
+  --shadow-lg: 0 8px 24px rgba(27, 42, 34, 0.1), 0 16px 48px rgba(27, 42, 34, 0.12);
+
+  /* ---- Motion (MASTERSPEC §13; neutralised under prefers-reduced-motion) ---- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-gauge: 700ms;   /* gauge sweep */
+  --duration-tab: 220ms;     /* tab underline slide */
+  --duration-count: 900ms;   /* before/after count-up */
+  --duration-fast: 120ms;
+
+  /* ---- Focus ring: 3px --forest, 2px offset (MASTERSPEC §13) ---- */
+  --focus-width: 3px;
+  --focus-offset: 2px;
+  --focus-color: var(--forest);
+
+  --container-max: 72rem;
+}
+
+/*
+ * Dark theme. MASTERSPEC §13 fixes --bg #121212 and --ink #E8E8E8; the
+ * remaining values are derived so that every registered pair still meets the
+ * same ratios. Verified by scripts/contrast_check.py.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
+    --bg: #121212;
+    --surface: #1c1c1c;
+    --ink: #e8e8e8;
+    --ink-muted: #a7b4ac;
+    --forest: #7fc79b;
+    --forest-strong: #a5dcb8;
+    --leaf: #16281d;
+    --amber-fill: #f2b84b;
+    --amber-text: #7a4e00;
+    --amber-text-strong: #6b4400;
+    --danger: #f0989d;
+    --border: #2e2e2e;
+    --border-strong: #707070;
+
+    /* On a light-green or light-red fill, dark ink is the readable choice. */
+    --on-forest: #0e1a13;
+    --on-danger: #2a0d0f;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.5), 0 6px 16px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.55), 0 16px 48px rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* Explicit opt-in, so the theme can be forced in tests and screenshots. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #121212;
+  --surface: #1c1c1c;
+  --ink: #e8e8e8;
+  --ink-muted: #a7b4ac;
+  --forest: #7fc79b;
+  --forest-strong: #a5dcb8;
+  --leaf: #16281d;
+  --amber-fill: #f2b84b;
+  --amber-text: #7a4e00;
+  --amber-text-strong: #6b4400;
+  --danger: #f0989d;
+  --border: #2e2e2e;
+  --border-strong: #707070;
+
+  --on-forest: #0e1a13;
+  --on-danger: #2a0d0f;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.5), 0 6px 16px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.55), 0 16px 48px rgba(0, 0, 0, 0.5);
+}

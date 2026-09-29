@@ -142,5 +142,14 @@ after every redirect. Redirects are checked twice: `POST /api/scans` follows the
 itself (connecting only to the address it just validated, so DNS rebinding cannot
 swap it) and answers `URL_BLOCKED` before queuing anything; then, during the scan, a
 CDP `Fetch` interceptor re-validates every hop the browser takes, because
-Playwright's own route handler never sees redirects. Local demo hosts are permitted
-only via an explicit `ALLOWED_LOCAL_HOSTS` list, never by disabling the guard.
+Playwright's own route handler never sees redirects. Underneath both, the scan
+browser runs behind a per-scan egress proxy (`backend/app/security/egress_proxy.py`)
+that re-validates every connection and connects only to the address it validated:
+that closes the DNS-rebinding window a `Fetch` continue leaves, and covers
+connections a page-level CDP session never sees (out-of-process iframes, workers).
+Local demo hosts are permitted only via an explicit `ALLOWED_LOCAL_HOSTS` list,
+never by disabling the guard.
+
+If your machine's Chromium build differs from the one the pinned Playwright expects
+(some CI images and sandboxes), point the scanner and tests at it instead of
+upgrading Playwright: `export PLAYWRIGHT_CHROMIUM_EXECUTABLE=/path/to/chrome`.

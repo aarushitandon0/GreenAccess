@@ -521,3 +521,32 @@ def test_initiator_is_recorded():
     record = collector.summarize().records[0]
     assert record.initiator_type == "script"
     assert record.initiator_url == PAGE_URL
+
+
+def test_live_bytes_count_unfinished_and_failed_responses():
+    """The page-weight cap must see bytes before a response finishes."""
+    collector = NetworkCollector(PAGE_URL)
+    collector.handle(
+        "Network.requestWillBeSent",
+        {"requestId": "big", "request": {"url": PAGE_URL + "big.js"}, "type": "Script"},
+    )
+    collector.handle(
+        "Network.dataReceived", {"requestId": "big", "dataLength": 700_000, "encodedDataLength": 0}
+    )
+    assert collector.total_bytes == 0
+    assert collector.live_bytes == 700_000
+
+    collector.handle("Network.loadingFailed", {"requestId": "big", "errorText": "net::ERR_ABORTED"})
+    assert collector.total_bytes == 0, "failed requests stay out of the carbon total"
+    assert collector.live_bytes == 700_000, "but their bytes still count toward the cap"
+
+    collector.handle(
+        "Network.requestWillBeSent",
+        {"requestId": "ok", "request": {"url": PAGE_URL + "a.css"}, "type": "Stylesheet"},
+    )
+    collector.handle(
+        "Network.dataReceived", {"requestId": "ok", "dataLength": 9_000, "encodedDataLength": 0}
+    )
+    collector.handle("Network.loadingFinished", {"requestId": "ok", "encodedDataLength": 3_000})
+    # A finished response counts its real transfer size, not its decoded size.
+    assert collector.live_bytes == 703_000

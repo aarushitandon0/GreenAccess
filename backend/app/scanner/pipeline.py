@@ -137,6 +137,7 @@ class ScanPipeline:
             max_page_bytes=self.settings.max_page_bytes,
             allowed_local_hosts=self.settings.allowed_local_hosts,
             screenshot_dir=self.screenshot_dir,
+            executable_path=self.settings.chromium_executable,
         ) as session:
             # -- load ----------------------------------------------------- #
             step_started = time.monotonic()

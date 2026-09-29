@@ -158,6 +158,9 @@ class RequestRecord:
     transfer_bytes: int = 0
     #: Decoded size, summed from dataReceived.
     decoded_bytes: int = 0
+    #: Encoded bytes seen so far via dataReceived, before loadingFinished.
+    #: Only used for the live page-weight cap; totals use transfer_bytes.
+    streamed_bytes: int = 0
 
     finished: bool = False
     failed: bool = False
@@ -292,6 +295,7 @@ class NetworkCollector:
     def _on_data_received(self, params: dict[str, Any]) -> None:
         record = self._record(params.get("requestId", ""))
         record.decoded_bytes += int(params.get("dataLength") or 0)
+        record.streamed_bytes += int(params.get("encodedDataLength") or 0)
 
     def _on_loading_finished(self, params: dict[str, Any]) -> None:
         record = self._record(params.get("requestId", ""))
@@ -319,6 +323,27 @@ class NetworkCollector:
     def total_bytes(self) -> int:
         """Live total, so a scan can abort once it exceeds the page-weight cap."""
         return sum(record.transfer_bytes for record in self.records if not record.failed)
+
+    @property
+    def live_bytes(self) -> int:
+        """Bytes received so far, counting responses still downloading.
+
+        ``total_bytes`` only grows when a response finishes, so one huge
+        in-flight download would slip past the page-weight cap until it ended.
+        This figure includes what has streamed in so far, from requests that
+        later failed or were aborted too, since those bytes still arrived.
+
+        Chromium often reports ``encodedDataLength`` as 0 on ``dataReceived``,
+        so an unfinished response falls back to its decoded byte count. That
+        can overstate a compressed download, which is the safe direction for a
+        safety cap. It is used only for the cap, never for carbon figures.
+        """
+        return sum(
+            record.transfer_bytes
+            if record.finished
+            else max(record.transfer_bytes, record.streamed_bytes, record.decoded_bytes)
+            for record in self.records
+        )
 
     def summarize(self, page_url: str | None = None) -> NetworkSummary:
         """Aggregate everything collected so far."""

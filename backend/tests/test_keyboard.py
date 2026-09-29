@@ -12,6 +12,8 @@ not installed, so the suite still runs on a machine without it.
 
 from __future__ import annotations
 
+import os
+
 import pytest
 
 from app.scanner.keyboard import FocusStop, crawl, detect_trap
@@ -189,7 +191,10 @@ def chromium_available() -> bool:
 
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
+            browser = p.chromium.launch(
+                headless=True,
+                executable_path=os.environ.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE") or None,
+            )
             browser.close()
         return True
     except Exception:  # noqa: BLE001 - any launch failure means "not available"
@@ -201,7 +206,9 @@ async def _crawl_html(html: str):
     from playwright.async_api import async_playwright
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
+        browser = await p.chromium.launch(
+            headless=True, executable_path=os.environ.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE") or None
+        )
         try:
             context = await browser.new_context(viewport={"width": 1366, "height": 768})
             page = await context.new_page()

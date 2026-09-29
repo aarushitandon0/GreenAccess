@@ -47,6 +47,10 @@ class Settings:
     public_base_url: str = "http://localhost:5173"
     demo_url: str = "http://localhost:8081"
     data_dir: Path = DEFAULT_DATA_DIR
+    #: Optional path to a Chromium binary. Only for hosts whose preinstalled
+    #: browser build differs from the one the pinned Playwright expects; unset,
+    #: Playwright uses its own managed browser.
+    chromium_executable: str | None = None
 
     @property
     def screenshot_dir(self) -> Path:
@@ -69,6 +73,7 @@ class Settings:
             demo_fallback=os.environ.get("DEMO_FALLBACK", "0") not in {"0", "false", "False"},
             public_base_url=os.environ.get("PUBLIC_BASE_URL", "http://localhost:5173"),
             demo_url=os.environ.get("DEMO_URL", "http://localhost:8081"),
+            chromium_executable=os.environ.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE") or None,
         )
 
 

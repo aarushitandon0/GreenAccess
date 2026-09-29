@@ -18,6 +18,7 @@ assets are missing, so the unit suite still runs anywhere.
 from __future__ import annotations
 
 import importlib.util
+import os
 from collections.abc import Iterator
 from pathlib import Path
 from types import ModuleType
@@ -61,7 +62,10 @@ def _chromium_available() -> bool:
 
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
+            browser = p.chromium.launch(
+                headless=True,
+                executable_path=os.environ.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE") or None,
+            )
             browser.close()
         return True
     except Exception:  # noqa: BLE001

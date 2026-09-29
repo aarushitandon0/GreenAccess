@@ -17,6 +17,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -27,13 +28,16 @@ from playwright.async_api import (
     CDPSession,
     Page,
     Playwright,
+    Request,
     Response,
+    Route,
     async_playwright,
 )
 from playwright.async_api import Error as PlaywrightError
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 
 from app.scanner.network import NetworkCollector
+from app.security.egress_proxy import BLOCKED_HEADER, PROXY_ERROR_HEADER, EgressProxy
 from app.security.ssrf import check_browser_request, make_request_guard
 
 logger = logging.getLogger(__name__)
@@ -94,15 +98,22 @@ class BrowserSession:
         allowed_local_hosts: tuple[str, ...] = (),
         screenshot_dir: Path | None = None,
         headless: bool = True,
+        executable_path: str | None = None,
     ) -> None:
         self.nav_timeout_s = nav_timeout_s
         self.max_page_bytes = max_page_bytes
         self.allowed_local_hosts = allowed_local_hosts
         self.screenshot_dir = screenshot_dir
         self.headless = headless
+        # Explicit argument first, then the environment, so every construction
+        # site (pipeline, API, tests) honours the override without plumbing.
+        self.executable_path = executable_path or os.environ.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE")
 
         self.collector = NetworkCollector()
         self.blocked_requests: list[tuple[str, str]] = []
+        #: Set the moment live bytes cross the cap; from then on every new
+        #: request is aborted and the next checkpoint raises PAGE_TOO_LARGE.
+        self.over_byte_cap = False
 
         self._playwright: Playwright | None = None
         self._browser: Browser | None = None
@@ -111,18 +122,39 @@ class BrowserSession:
         self._cdp: CDPSession | None = None
         #: In-flight redirect-guard checks, kept referenced until they finish.
         self._guard_tasks: set[asyncio.Task[None]] = set()
+        self._proxy: EgressProxy | None = None
+        self._stop_task: asyncio.Task[None] | None = None
 
     # -- lifecycle -------------------------------------------------------- #
 
     async def __aenter__(self) -> BrowserSession:
+        # Network-level backstop for the Fetch guard below: every browser
+        # connection goes through a proxy that re-validates the target and
+        # connects only to the address it validated. That closes the DNS
+        # rebinding window a Fetch.continueRequest leaves (Chromium resolves
+        # again after the check) and covers connections a page-level CDP
+        # session never sees (out-of-process iframes, workers).
+        self._proxy = EgressProxy(
+            allowed_local_hosts=self.allowed_local_hosts,
+            on_block=self._record_blocked,
+        )
+        await self._proxy.__aenter__()
+
         self._playwright = await async_playwright().start()
         self._browser = await self._playwright.chromium.launch(
             headless=self.headless,
+            executable_path=self.executable_path or None,
+            # "<-loopback>" removes Chromium's implicit proxy bypass for
+            # localhost/127.0.0.1, so local targets are checked too.
+            proxy={"server": self._proxy.url, "bypass": "<-loopback>"},
             args=[
                 "--disable-dev-shm-usage",
                 # Deterministic rendering across machines.
                 "--force-color-profile=srgb",
                 "--disable-lcd-text",
+                # WebRTC UDP does not go through an HTTP proxy; forbid it so a
+                # page cannot use STUN/TURN to reach internal addresses.
+                "--force-webrtc-ip-handling-policy=disable_non_proxied_udp",
             ],
         )
         self._context = await self._browser.new_context(
@@ -139,13 +171,19 @@ class BrowserSession:
         self._context.set_default_navigation_timeout(self.nav_timeout_s * 1000)
 
         # Re-validate every request, including redirects (CLAUDE.md security).
-        await self._context.route(
-            "**/*",
-            make_request_guard(
-                allowed_local_hosts=self.allowed_local_hosts,
-                on_block=self._record_blocked,
-            ),
+        ssrf_guard = make_request_guard(
+            allowed_local_hosts=self.allowed_local_hosts,
+            on_block=self._record_blocked,
         )
+
+        async def route_handler(route: Route, request: Request) -> None:
+            if self.over_byte_cap:
+                self._record_blocked(request.url, "page-weight cap exceeded")
+                await route.abort("blockedbyclient")
+                return
+            await ssrf_guard(route, request)
+
+        await self._context.route("**/*", route_handler)
 
         self._page = await self._context.new_page()
         await self._attach_cdp(self._page)
@@ -154,6 +192,8 @@ class BrowserSession:
     async def __aexit__(self, *exc: object) -> None:
         for task in list(self._guard_tasks):
             task.cancel()
+        if self._stop_task is not None and not self._stop_task.done():
+            self._stop_task.cancel()
         for closer in (
             getattr(self._context, "close", None),
             getattr(self._browser, "close", None),
@@ -163,6 +203,8 @@ class BrowserSession:
                 continue
             with contextlib.suppress(PlaywrightError, RuntimeError):
                 await closer()
+        if self._proxy is not None:
+            await self._proxy.__aexit__(None, None, None)
 
     def _record_blocked(self, url: str, reason: str) -> None:
         # Both guards see a first hop, so the same block can be reported twice.
@@ -196,6 +238,7 @@ class BrowserSession:
             def make_handler(name: str):  # noqa: ANN202
                 def handler(params: dict[str, Any]) -> None:
                     self.collector.handle(name, params)
+                    self._watch_byte_cap()
 
                 return handler
 
@@ -237,10 +280,34 @@ class BrowserSession:
             # The page or context closed while the check ran; nothing to resume.
             logger.debug("could not resolve paused request %s: %s", url, exc)
 
+    def _watch_byte_cap(self) -> None:
+        """Called on every CDP network event: trip the cap as soon as it is hit.
+
+        Raising is impossible in an event callback, so this sets a flag, stops
+        the page loading, and lets the route handler refuse further requests.
+        :meth:`_check_byte_cap` turns the flag into PAGE_TOO_LARGE.
+        """
+        if self.over_byte_cap or self.collector.live_bytes <= self.max_page_bytes:
+            return
+        self.over_byte_cap = True
+        logger.warning("page exceeded the %s-byte cap; stopping the load", self.max_page_bytes)
+        if self._cdp is not None:
+            self._stop_task = asyncio.ensure_future(self._stop_loading())
+
+    async def _stop_loading(self) -> None:
+        if self._cdp is None:
+            return
+        with contextlib.suppress(PlaywrightError):
+            await self._cdp.send("Page.stopLoading")
+
     def _check_byte_cap(self) -> None:
-        """Abort once the page exceeds the weight cap (MASTERSPEC §6.1)."""
-        total = self.collector.total_bytes
-        if total > self.max_page_bytes:
+        """Abort once the page exceeds the weight cap (MASTERSPEC §6.1).
+
+        Counts in-flight and aborted downloads too (``live_bytes``), so one
+        huge response cannot slip past the cap until it finishes.
+        """
+        total = max(self.collector.total_bytes, self.collector.live_bytes)
+        if self.over_byte_cap or total > self.max_page_bytes:
             raise ScanAborted(
                 "PAGE_TOO_LARGE",
                 f"page exceeded the {self.max_page_bytes:,}-byte cap at {total:,} bytes",
@@ -260,7 +327,10 @@ class BrowserSession:
         except PlaywrightTimeoutError as exc:
             raise ScanAborted("TIMEOUT", f"navigation to {url} timed out") from exc
         except PlaywrightError as exc:
-            if "ERR_BLOCKED_BY_CLIENT" in str(exc) and self.blocked_requests:
+            # A load stopped by the byte cap surfaces as a navigation error.
+            self._check_byte_cap()
+            blocked_markers = ("ERR_BLOCKED_BY_CLIENT", "ERR_TUNNEL_CONNECTION_FAILED")
+            if any(marker in str(exc) for marker in blocked_markers) and self.blocked_requests:
                 # The document itself, or a hop it redirected to, failed the
                 # SSRF guard. That is a blocked URL, not a navigation failure.
                 blocked_url, reason = self.blocked_requests[-1]
@@ -271,6 +341,16 @@ class BrowserSession:
 
         if response is None:
             raise ScanAborted("NAV_FAILED", f"no response for {url}")
+
+        # The egress proxy answers for itself with marked responses: a 403 when
+        # the SSRF policy refused the target, or a 502 when the host was
+        # unreachable. Neither is the site's page, so neither may be scanned.
+        blocked = response.headers.get(BLOCKED_HEADER.lower())
+        if blocked:
+            raise ScanAborted("URL_BLOCKED", f"{url} led to {response.url}, blocked: {blocked}")
+        proxy_error = response.headers.get(PROXY_ERROR_HEADER.lower())
+        if proxy_error:
+            raise ScanAborted("NAV_FAILED", f"could not load {url}: {proxy_error}")
 
         self._check_byte_cap()
 

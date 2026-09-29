@@ -1,0 +1,575 @@
+/*
+ * The Daily Herald -- demo stylesheet.
+ *
+ * DELIBERATELY DEFECTIVE. See demo-site/DEFECTS.md. Notable planted defects
+ * in this file:
+ *   FONT-BLOAT-01     four font files, two of which nothing on the page matches
+ *   CONTRAST-01       .fine-print is #B8B8B8 on white (~1.9:1)
+ *   MOTION-01         several always-on animations, no prefers-reduced-motion
+ *   IMG-OVERSIZE-01   .card__image renders 3000px-wide sources at 400px
+ *   UNCOMPRESSED-01   served without gzip/br by the demo server
+ */
+
+/* ------------------------------------------------------------------ *
+ * Defect FONT-BLOAT-01
+ * Four font files are requested. The page only ever renders latin text,
+ * so the two latin-ext subsets below are downloaded and never used.
+ * ------------------------------------------------------------------ */
+
+@font-face {
+  font-family: 'Herald Display';
+  src: url('/assets/fonts/fraunces-latin-wght-normal.woff2') format('woff2');
+  font-weight: 100 900;
+}
+
+@font-face {
+  font-family: 'Herald Display Ext';
+  src: url('/assets/fonts/fraunces-latin-ext-wght-normal.woff2') format('woff2');
+  font-weight: 100 900;
+}
+
+@font-face {
+  font-family: 'Herald Text';
+  src: url('/assets/fonts/inter-latin-wght-normal.woff2') format('woff2');
+  font-weight: 100 900;
+}
+
+@font-face {
+  font-family: 'Herald Text Ext';
+  src: url('/assets/fonts/inter-latin-ext-wght-normal.woff2') format('woff2');
+  font-weight: 100 900;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #ffffff;
+  color: #1a1a1a;
+  font-family: 'Herald Text', Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+a {
+  color: #14508c;
+}
+
+/* ---- Masthead ---- */
+
+.masthead {
+  border-bottom: 3px double #1a1a1a;
+  padding: 18px 0 0;
+}
+
+.masthead__inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 20px 14px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.masthead__brand {
+  font-family: 'Herald Display', Georgia, serif;
+  font-size: 46px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  /* Defect MOTION-01: the masthead pulses forever. */
+  animation: herald-pulse 2.6s ease-in-out infinite;
+}
+
+.masthead__date {
+  /* Defect FONT-BLOAT-01: pulls in a second Fraunces file whose only extra
+     coverage is latin-ext, which this English-language page never renders. */
+  font-family: 'Herald Display Ext', Georgia, serif;
+  /* Defect CONTRAST-01 (secondary instance). */
+  color: #b0b0b0;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.nav {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 10px 20px;
+  display: flex;
+  gap: 22px;
+  border-top: 1px solid #e2e2e2;
+}
+
+.nav a {
+  color: #333333;
+  text-decoration: none;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  /* Defect FOCUS-01: the focus outline is removed and nothing replaces it. */
+  outline: none;
+}
+
+.nav a:hover {
+  color: #14508c;
+}
+
+.nav__icon {
+  margin-left: auto;
+}
+
+.icon-glass {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  border: 2px solid #333333;
+  border-radius: 50%;
+}
+
+/* ---- Hero ---- */
+
+.hero {
+  position: relative;
+  max-height: 480px;
+  overflow: hidden;
+  background: #0d1622;
+}
+
+.hero__video {
+  width: 100%;
+  display: block;
+  opacity: 0.75;
+}
+
+.hero__overlay {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  padding: 28px 32px;
+  color: #ffffff;
+}
+
+.hero__overlay h1 {
+  font-family: 'Herald Display', Georgia, serif;
+  font-size: 52px;
+  margin: 0 0 6px;
+}
+
+.hero__overlay h4 {
+  margin: 0;
+  font-weight: 400;
+  /* Low contrast against the bright parts of the video underneath. */
+  color: #c9c9c9;
+}
+
+/* ---- Layout ---- */
+
+.wrap {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 26px 20px 60px;
+}
+
+.columns {
+  display: flex;
+  gap: 34px;
+  align-items: flex-start;
+}
+
+.main-column {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.side-column {
+  flex: 0 0 300px;
+}
+
+.banner {
+  display: block;
+  width: 100%;
+  max-width: 820px;
+  margin: 0 0 26px;
+}
+
+.section-head {
+  font-family: 'Herald Display', Georgia, serif;
+  font-size: 20px;
+  font-weight: 700;
+  border-bottom: 2px solid #1a1a1a;
+  padding-bottom: 6px;
+  margin: 26px 0 16px;
+}
+
+/* ---- Article cards ---- */
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 400px);
+  gap: 26px 24px;
+}
+
+.card {
+  min-width: 0;
+}
+
+/*
+ * Defect IMG-OVERSIZE-01: the sources are 3000x2000 and render at 400x260 --
+ * roughly 7.5x more pixels than the layout can ever show.
+ */
+.card__image {
+  width: 400px;
+  height: 260px;
+  object-fit: cover;
+  display: block;
+  background: #eeeeee;
+}
+
+.card__title {
+  font-family: 'Herald Display', Georgia, serif;
+  font-size: 19px;
+  line-height: 1.25;
+  margin: 10px 0 4px;
+}
+
+.card__title a {
+  color: #1a1a1a;
+  text-decoration: none;
+}
+
+.card__meta {
+  /* Defect FONT-BLOAT-01: likewise a fourth font file for no added coverage. */
+  font-family: 'Herald Text Ext', Helvetica, Arial, sans-serif;
+  margin: 0 0 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  /* Defect CONTRAST-01 (secondary instance). */
+  color: #b4b4b4;
+}
+
+.card__standfirst {
+  margin: 0;
+  font-size: 15px;
+  color: #3c3c3c;
+}
+
+/* ---- Fake buttons (defect DIV-BUTTON-01) ---- */
+
+.pager {
+  display: flex;
+  gap: 12px;
+  margin: 28px 0 18px;
+}
+
+.pager__btn {
+  background: #14508c;
+  color: #ffffff;
+  padding: 11px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+
+.pager__btn--wide {
+  width: 100%;
+  text-align: center;
+  margin-top: 10px;
+}
+
+.pager__btn:hover {
+  background: #0f3d6b;
+}
+
+.tag-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  border: 1px solid #d8d8d8;
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  /* Defect MOTION-01: transition plus a hover lift, never reduced. */
+  transition: transform 220ms ease, background 220ms ease;
+}
+
+.tag:hover {
+  transform: translateY(-3px);
+  background: #f2f2f2;
+}
+
+/*
+ * Defect CONTRAST-01 (primary instance): #B8B8B8 on #FFFFFF is about 1.9:1,
+ * far below the 4.5:1 AA requires for normal text.
+ */
+.fine-print {
+  color: #b8b8b8;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ---- Side column ---- */
+
+.ranked p {
+  margin: 0 0 10px;
+  font-size: 15px;
+  border-bottom: 1px solid #ededed;
+  padding-bottom: 9px;
+}
+
+.ranked__n {
+  font-family: 'Herald Display', Georgia, serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #c0c0c0;
+  margin-right: 8px;
+}
+
+.newsletter {
+  background: #f6f4ef;
+  padding: 16px;
+  margin-top: 22px;
+}
+
+.newsletter__blurb {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #444444;
+}
+
+.newsletter__input {
+  display: block;
+  width: 100%;
+  padding: 9px 10px;
+  margin-bottom: 9px;
+  border: 1px solid #cfcfcf;
+  font-size: 14px;
+  background: #ffffff;
+}
+
+.newsletter__check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #555555;
+}
+
+/* ---- Weather widget (defect MOTION-01) ---- */
+
+.weather {
+  text-align: center;
+  padding: 16px 0;
+}
+
+.weather__sun {
+  width: 54px;
+  height: 54px;
+  margin: 0 auto 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffd76a 0%, #f2a71b 100%);
+  animation: herald-spin 9s linear infinite, herald-glow 3s ease-in-out infinite;
+}
+
+.weather__temp {
+  font-family: 'Herald Display', Georgia, serif;
+  font-size: 30px;
+  margin: 0;
+}
+
+/* ---- Footer ---- */
+
+.footer {
+  border-top: 1px solid #e2e2e2;
+  margin-top: 40px;
+  padding: 22px 0;
+}
+
+.footer__inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* ---- Chat widget ---- */
+
+.chat {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: 260px;
+  background: #ffffff;
+  border: 1px solid #d5d5d5;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.16);
+  z-index: 40;
+}
+
+.chat__head {
+  background: #14508c;
+  color: #ffffff;
+  padding: 9px 12px;
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Defect CHAT-CLOSE-01: icon-only control, no accessible name. */
+.chat__close {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 19px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.chat__body {
+  padding: 12px;
+}
+
+.chat__msg {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+
+.chat__input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #cfcfcf;
+  font-size: 14px;
+}
+
+/* ---- Promo modal (defect TRAP-01) ---- */
+
+.promo {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  width: 300px;
+  background: #1a1a1a;
+  color: #ffffff;
+  padding: 18px;
+  z-index: 50;
+  /* Defect MOTION-01: the promo slides in and keeps breathing. */
+  animation: herald-rise 520ms ease-out, herald-breathe 4s ease-in-out infinite 520ms;
+}
+
+.promo__title {
+  font-family: 'Herald Display', Georgia, serif;
+  font-size: 19px;
+  margin: 0 0 6px;
+}
+
+.promo__body {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: #cfcfcf;
+}
+
+.promo__actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.promo__btn {
+  background: #ffffff;
+  color: #1a1a1a;
+  border: none;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.promo__btn--ghost {
+  background: transparent;
+  color: #ffffff;
+  border: 1px solid #5a5a5a;
+}
+
+.promo__link {
+  color: #9fc4ea;
+  font-size: 13px;
+}
+
+/* ------------------------------------------------------------------ *
+ * Defect MOTION-01
+ * Every animation below runs unconditionally. There is no
+ * @media (prefers-reduced-motion: reduce) rule anywhere in this file.
+ * ------------------------------------------------------------------ */
+
+@keyframes herald-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.72;
+  }
+}
+
+@keyframes herald-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes herald-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(242, 167, 27, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 22px 8px rgba(242, 167, 27, 0.25);
+  }
+}
+
+@keyframes herald-rise {
+  from {
+    transform: translateY(26px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes herald-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.015);
+  }
+}
+
+@media (max-width: 900px) {
+  .columns {
+    flex-direction: column;
+  }
+
+  .side-column {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .card-grid {
+    grid-template-columns: 400px;
+  }
+}

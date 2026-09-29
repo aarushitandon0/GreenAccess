@@ -1,0 +1,327 @@
+<!doctype html>
+<!--
+  The Daily Herald -- MASTERSPEC §11 demo site.
+
+  THIS PAGE IS DELIBERATELY BROKEN. Every accessibility and carbon defect in it
+  is planted on purpose and catalogued in demo-site/DEFECTS.md, which is the
+  source of truth for the integration tests. Do not "fix" anything here without
+  updating DEFECTS.md and the tests that read it.
+
+  Defect HTML-LANG-01: the <html> element below has no lang attribute.
+-->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>The Daily Herald</title>
+    <link rel="stylesheet" href="/css/main.css" />
+
+    <!--
+      Defect THIRD-PARTY-01: four tracker scripts from a second origin
+      (localhost:8082), which is a different registrable domain from the page's
+      own origin only in the sense the scanner cares about -- a different host
+      and port. They are render-blocking on purpose.
+    -->
+    <script src="http://localhost:8082/t/analytics.js"></script>
+    <script src="http://localhost:8082/t/adtech.js"></script>
+    <script src="http://localhost:8082/t/heatmap.js"></script>
+    <script src="http://localhost:8082/t/social.js"></script>
+  </head>
+
+  <body>
+    <!--
+      Defect LANDMARK-01: no skip link, and the page uses bare <div>s instead of
+      header/nav/main/footer landmarks.
+    -->
+    <div class="masthead">
+      <div class="masthead__inner">
+        <div class="masthead__brand">The Daily Herald</div>
+        <div class="masthead__date">Friday Edition</div>
+      </div>
+      <div class="nav">
+        <a href="#world">World</a>
+        <a href="#business">Business</a>
+        <a href="#tech">Technology</a>
+        <a href="#culture">Culture</a>
+        <a href="#sport">Sport</a>
+        <!-- Defect LINK-NAME-01: an icon-only link with no accessible name. -->
+        <a href="#search" class="nav__icon"><span class="icon-glass"></span></a>
+      </div>
+    </div>
+
+    <!--
+      Defect VIDEO-AUTOPLAY-01: an ~890 KB hero video that autoplays, loops and
+      is muted, with no poster and preload="auto".
+    -->
+    <div class="hero">
+      <video
+        class="hero__video"
+        src="/assets/generated/hero.mp4"
+        autoplay
+        loop
+        muted
+        playsinline
+        preload="auto"
+      ></video>
+      <div class="hero__overlay">
+        <h1>The city at night</h1>
+        <!--
+          Defect HEADING-ORDER-01: h1 is followed directly by h4, skipping
+          h2 and h3.
+        -->
+        <h4>A photo essay from our correspondents</h4>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <!--
+        Defect IMG-TEXT-01: a banner with its message baked into the pixels,
+        carrying a long alt that duplicates the text.
+      -->
+      <img
+        class="banner"
+        src="/assets/generated/banner-sale.jpg"
+        alt="HALF-PRICE SALE Every subscription tier this week only. Claim offer now by clicking this banner advertisement for the Daily Herald half price subscription sale event"
+      />
+
+      <div class="columns">
+        <div class="main-column">
+          <div class="section-head" id="world">Top stories</div>
+
+          <div class="card-grid">
+            <!--
+              The eight article photos. All of them:
+                IMG-OVERSIZE-01  natural 3000x2000, rendered 400px wide
+                IMG-DIM-01       no width/height attributes
+                IMG-EAGER-01     loading="eager", several below the fold
+                IMG-ALT-01       six of the eight have no alt at all
+            -->
+            <div class="card">
+              <img class="card__image" src="/assets/generated/article-01.jpg" loading="eager" />
+              <h4 class="card__title">
+                <a href="#story-1">Harbour redevelopment clears final vote</a>
+              </h4>
+              <p class="card__meta">City desk</p>
+              <p class="card__standfirst">
+                Councillors approved the scheme after a four-hour session, ending a
+                dispute that has run since the spring.
+              </p>
+            </div>
+
+            <div class="card">
+              <img class="card__image" src="/assets/generated/article-02.jpg" loading="eager" />
+              <h4 class="card__title">
+                <a href="#story-2">Rail operators warn of winter disruption</a>
+              </h4>
+              <p class="card__meta">Transport</p>
+              <p class="card__standfirst">
+                Engineering work on the northern line will close three stations for
+                six weekends from November.
+              </p>
+            </div>
+
+            <div class="card">
+              <img
+                class="card__image"
+                src="/assets/generated/article-03.jpg"
+                loading="eager"
+                alt="Aerial view of the old harbour at dusk"
+              />
+              <h4 class="card__title">
+                <a href="#story-3">A quiet revolution in the allotments</a>
+              </h4>
+              <p class="card__meta">Environment</p>
+              <p class="card__standfirst">
+                Growers are trading seed varieties that have not been planted here in
+                fifty years.
+              </p>
+            </div>
+
+            <div class="card">
+              <img class="card__image" src="/assets/generated/article-04.jpg" loading="eager" />
+              <h4 class="card__title">
+                <a href="#story-4">Gallery buys disputed portrait</a>
+              </h4>
+              <p class="card__meta">Culture</p>
+              <p class="card__standfirst">
+                The acquisition ends a decade of argument about where the painting
+                properly belongs.
+              </p>
+            </div>
+
+            <div class="card">
+              <img class="card__image" src="/assets/generated/article-05.jpg" loading="eager" />
+              <h4 class="card__title">
+                <a href="#story-5">Small brewers face a hard autumn</a>
+              </h4>
+              <p class="card__meta">Business</p>
+              <p class="card__standfirst">
+                Energy costs and a soft summer have left independents with more stock
+                than they can shift.
+              </p>
+            </div>
+
+            <div class="card">
+              <img class="card__image" src="/assets/generated/article-06.jpg" loading="eager" />
+              <h4 class="card__title">
+                <a href="#story-6">The bridge that took thirty years</a>
+              </h4>
+              <p class="card__meta">Feature</p>
+              <p class="card__standfirst">
+                It was meant to open in 1994. We traced what happened to the money and
+                the people.
+              </p>
+            </div>
+
+            <div class="card">
+              <img
+                class="card__image"
+                src="/assets/generated/article-07.jpg"
+                loading="eager"
+                alt="Crowds outside the municipal theatre"
+              />
+              <h4 class="card__title">
+                <a href="#story-7">Theatre announces its winter season</a>
+              </h4>
+              <p class="card__meta">Culture</p>
+              <p class="card__standfirst">
+                Two revivals and a commission, in a programme the new director calls
+                deliberately unfashionable.
+              </p>
+            </div>
+
+            <div class="card">
+              <img class="card__image" src="/assets/generated/article-08.jpg" loading="eager" />
+              <h4 class="card__title">
+                <a href="#story-8">United hold on at the death</a>
+              </h4>
+              <p class="card__meta">Sport</p>
+              <p class="card__standfirst">
+                A goal in the ninety-fourth minute settled a match that neither side
+                deserved to lose.
+              </p>
+            </div>
+          </div>
+
+          <!--
+            Defect IMG-TEXT-02: the second text-baked banner, this one with no
+            alt attribute at all.
+          -->
+          <img class="banner" src="/assets/generated/banner-subscribe.png" />
+
+          <!--
+            Defect DIV-BUTTON-01: clickable divs standing in for buttons. They
+            have onclick handlers, no role, no tabindex and no keyboard support.
+          -->
+          <div class="pager">
+            <div class="pager__btn" onclick="loadMore('prev')">Previous</div>
+            <div class="pager__btn" onclick="loadMore('next')">Load more stories</div>
+            <div class="pager__btn" role="button" onclick="openPaywall()">Subscribe</div>
+          </div>
+
+          <!--
+            Defect CONTRAST-01: grey text on white, well under 3:1.
+          -->
+          <p class="fine-print">
+            Prices correct at time of publication. Terms apply to all subscription
+            offers. The Daily Herald is published daily except on public holidays.
+          </p>
+        </div>
+
+        <div class="side-column">
+          <div class="section-head" id="business">Most read</div>
+          <div class="ranked">
+            <p><span class="ranked__n">1</span> <a href="#r1">What the budget means for renters</a></p>
+            <p><span class="ranked__n">2</span> <a href="#r2">The quiet return of the corner shop</a></p>
+            <p><span class="ranked__n">3</span> <a href="#r3">Why the reservoir is still empty</a></p>
+            <p><span class="ranked__n">4</span> <a href="#r4">A season that turned on one match</a></p>
+            <p><span class="ranked__n">5</span> <a href="#r5">Letters: on the harbour vote</a></p>
+          </div>
+
+          <!--
+            Defect FORM-LABEL-01: newsletter inputs with no <label>, no
+            aria-label and no accessible name of any kind. The placeholder is
+            not a label.
+          -->
+          <div class="newsletter">
+            <div class="section-head" id="culture">Newsletter</div>
+            <p class="newsletter__blurb">The day's reporting, every evening at six.</p>
+            <form class="newsletter__form" onsubmit="return subscribe(event)">
+              <input type="text" name="name" placeholder="Your name" class="newsletter__input" />
+              <input type="email" name="email" placeholder="Email address" class="newsletter__input" />
+              <select name="edition" class="newsletter__input">
+                <option>Morning edition</option>
+                <option>Evening edition</option>
+              </select>
+              <div class="newsletter__check">
+                <input type="checkbox" id="terms-box" name="terms" />
+                <span>I agree to the terms</span>
+              </div>
+              <div class="pager__btn pager__btn--wide" onclick="subscribe(event)">Sign up</div>
+            </form>
+          </div>
+
+          <div class="section-head" id="tech">Weather</div>
+          <!-- Defect MOTION-01: this element animates continuously. -->
+          <div class="weather">
+            <div class="weather__sun"></div>
+            <p class="weather__temp">14&deg;C</p>
+            <p class="fine-print">Cloud clearing after midday.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-head" id="sport">More from the Herald</div>
+      <div class="tag-row">
+        <div class="tag" onclick="filterBy('politics')">Politics</div>
+        <div class="tag" onclick="filterBy('economy')">Economy</div>
+        <div class="tag" onclick="filterBy('climate')">Climate</div>
+        <div class="tag" onclick="filterBy('media')">Media</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="footer__inner">
+        <p class="fine-print">&copy; The Daily Herald. All rights reserved.</p>
+        <p class="fine-print">
+          <a href="#privacy">Privacy</a> &middot; <a href="#terms">Terms</a> &middot;
+          <a href="#contact">Contact</a>
+        </p>
+      </div>
+    </div>
+
+    <!--
+      Defect CHAT-CLOSE-01: a chat widget whose close control is an icon-only
+      button with no accessible name.
+    -->
+    <div class="chat" id="chat">
+      <div class="chat__head">
+        <span>Herald Assistant</span>
+        <button class="chat__close" onclick="closeChat()">&times;</button>
+      </div>
+      <div class="chat__body">
+        <p class="chat__msg">Hello! Can I help you find a story?</p>
+        <input type="text" class="chat__input" placeholder="Type a message" />
+      </div>
+    </div>
+
+    <!--
+      Defect TRAP-01: a modal-like widget that traps Tab. Its script cycles
+      focus between its own controls and never lets focus leave, and it has no
+      Escape handler. See js/main.js.
+    -->
+    <div class="promo" id="promo" role="dialog" aria-label="Subscription offer">
+      <h4 class="promo__title">Read without limits</h4>
+      <p class="promo__body">
+        Unlimited articles, the full archive, and the evening newsletter.
+      </p>
+      <div class="promo__actions">
+        <button class="promo__btn" id="promo-yes">See offers</button>
+        <button class="promo__btn promo__btn--ghost" id="promo-no">Not now</button>
+        <a class="promo__link" id="promo-terms" href="#promo-terms">Offer terms</a>
+      </div>
+    </div>
+
+    <script src="/js/main.js"></script>
+  </body>
+</html>

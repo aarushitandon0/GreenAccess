@@ -32,3 +32,6 @@ demo-site/assets/generated/
 # OS
 .DS_Store
 Thumbs.db
+
+# Demo fonts are copied from frontend/node_modules by make_demo_assets.py
+# (kept in git so the demo runs without a frontend install)

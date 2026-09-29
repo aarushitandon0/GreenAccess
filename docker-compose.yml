@@ -1,0 +1,104 @@
+# GreenAccess — full stack (MASTERSPEC §4).
+#
+#   backend            :8000   FastAPI + Playwright
+#   frontend           :5173   Vite dev server
+#   demo-site          :8081   The Daily Herald
+#   demo-third-party   :8082   tracker host for the demo (defect THIRD-PARTY-01)
+#
+#   docker compose up --build
+#
+# The demo hosts exist so the scanner has a deterministic target. The backend
+# reaches them by service name inside the compose network, which is why they are
+# named in ALLOWED_LOCAL_HOSTS — the SSRF guard blocks private addresses unless a
+# host is on that explicit allow list (CLAUDE.md, security rules).
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: greenaccess-backend:dev
+    ports:
+      - "8000:8000"
+    environment:
+      # MASTERSPEC §17.
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      ANTHROPIC_MODEL: "${ANTHROPIC_MODEL:-claude-opus-5}"
+      # Offline unless explicitly turned on, so a demo never depends on the network.
+      LLM_OFFLINE: "${LLM_OFFLINE:-1}"
+      ALLOWED_LOCAL_HOSTS: "demo-site,demo-third-party,localhost,127.0.0.1"
+      MAX_CONCURRENT_SCANS: "2"
+      SCAN_TIMEOUT_S: "90"
+      NAV_TIMEOUT_S: "30"
+      MAX_PAGE_BYTES: "26214400"
+      DATABASE_URL: "sqlite:///./greenaccess.db"
+      DEMO_FALLBACK: "${DEMO_FALLBACK:-0}"
+      PUBLIC_BASE_URL: "http://localhost:5173"
+      DEMO_URL: "http://demo-site:8081"
+    volumes:
+      # Keep the scan database and patched output across restarts.
+      - backend-data:/app/data
+    depends_on:
+      - demo-site
+      - demo-third-party
+    # Chromium needs more than Docker's default 64 MB of shared memory or it
+    # crashes on content-heavy pages.
+    shm_size: "1gb"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: greenaccess-frontend:dev
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_BASE: "http://localhost:8000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  demo-site:
+    build:
+      context: ./demo-site
+      dockerfile: Dockerfile
+    image: greenaccess-demo:dev
+    ports:
+      - "8081:8081"
+    command:
+      - python
+      - server.py
+      - --port
+      - "8081"
+      - --root
+      - /app
+      - --quiet
+    volumes:
+      # Generated media is gitignored, so mount it from the host rather than
+      # baking stale copies into the image.
+      - ./demo-site/assets:/app/assets:ro
+    restart: unless-stopped
+
+  demo-third-party:
+    build:
+      context: ./demo-site
+      dockerfile: Dockerfile
+    image: greenaccess-demo:dev
+    ports:
+      - "8082:8082"
+    command:
+      - python
+      - server.py
+      - --port
+      - "8082"
+      - --root
+      - /app/third-party
+      # Given without a leading slash on purpose; see demo-site/server.py.
+      - --strip-prefix
+      - "t"
+      - --quiet
+    restart: unless-stopped
+
+volumes:
+  backend-data:

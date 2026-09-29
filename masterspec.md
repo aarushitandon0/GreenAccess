@@ -266,6 +266,16 @@ SSE step names: `validate, load, a11y, keyboard, aria, carbon, green, score, tra
 
 ## 13. UI specification
 
+> **Presentation note (agreed change, 2026-09-29).** The results UI is told as one
+> continuous scrolling narrative rather than as a tabbed dashboard. The six tabs below
+> (Overview, Accessibility, Carbon, Trade-offs, Fixes, Simulate) become **chapters** of
+> the same page over the same `ScanResult`, and the tab bar becomes a sticky chapter
+> nav of in-page links. This changes arrangement only: §5 data models, §9 scoring and
+> §12 API are untouched, every screen below still exists, and the accessibility rules
+> in this section apply to the narrative unchanged — no scroll-jacking, every chapter
+> a real section with a real heading, full content with JavaScript disabled, and all
+> scroll-driven motion neutralised under `prefers-reduced-motion`.
+
 **Design language**: calm, editorial, trustworthy.
 - Tokens: `--bg #FAF8F3`, `--surface #FFFFFF`, `--ink #1B2A22`, `--ink-muted #4A5A50`, `--forest #1F5D3A`, `--forest-strong #164A2E`, `--leaf #E3F0E6`, `--amber-fill #F2B84B`, `--amber-text #7A4E00`, `--danger #A4262C`, `--border #DDD8CC`. Check every text/background pair for ≥ 4.5:1 (≥ 3:1 for large text and UI borders).
 - Type: headlines Fraunces, UI Inter, both self-hosted via `@fontsource-variable/*`, latin subset, `font-display: swap`, system fallbacks. Type scale 14/16/20/28/40/56.

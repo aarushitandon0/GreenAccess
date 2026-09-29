@@ -1,4 +1,4 @@
-/** Browser entry point. Stylesheet order matters: tokens, fonts, reset, app. */
+/** Browser entry point. Stylesheet order matters: tokens, fonts, reset, app, scenes. */
 
 import React from 'react'
 import ReactDOM from 'react-dom/client'
@@ -7,6 +7,7 @@ import './styles/tokens.css'
 import './styles/fonts.css'
 import './styles/base.css'
 import './styles/app.css'
+import './styles/scenes.css'
 
 import { App } from './App'
 

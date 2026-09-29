@@ -1,0 +1,508 @@
+/*
+ * The narrative layer: chapters, figures and the sticky chapter nav.
+ *
+ * Depends on tokens.css and base.css. Adds no colour of its own — every value
+ * here resolves to a token that scripts/contrast_check.py has already checked
+ * in both themes.
+ *
+ * All motion in this file is a transition or an animation, so the blanket
+ * `prefers-reduced-motion` rule in base.css neutralises it. Motion driven from
+ * JavaScript asks usePrefersReducedMotion instead.
+ */
+
+/* ---- Chapter nav ---- */
+
+.chapter-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  /*
+   * Opaque on purpose. A translucent bar would put nav text over whatever
+   * happens to scroll beneath it, and scripts/contrast_check.py can only
+   * vouch for the token pairs it can see — so the bar keeps a background the
+   * gate has actually checked.
+   */
+  background-color: var(--bg);
+  border-bottom: var(--border-width) solid var(--border);
+}
+
+.chapter-nav__list {
+  display: flex;
+  gap: var(--space-1);
+  list-style: none;
+  margin: 0 auto;
+  padding: var(--space-2) var(--space-6);
+  max-width: var(--container-max);
+  overflow-x: auto;
+}
+
+.chapter-nav__link {
+  display: inline-block;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition:
+    color var(--duration-tab) var(--ease-out),
+    border-color var(--duration-tab) var(--ease-out);
+}
+
+.chapter-nav__link:hover {
+  color: var(--ink);
+}
+
+/*
+ * The current chapter is marked three ways: colour, weight and an underline.
+ * Colour alone would fail WCAG 1.4.1, and aria-current carries it for
+ * assistive technology regardless.
+ */
+.chapter-nav__link[aria-current='location'] {
+  color: var(--forest);
+  font-weight: var(--weight-semibold);
+  border-bottom-color: var(--forest);
+}
+
+/* ---- Scene shell ---- */
+
+.scene {
+  padding-block: var(--space-20);
+  border-top: var(--border-width) solid var(--border);
+}
+
+.scene:first-child {
+  border-top: 0;
+}
+
+.scene__header {
+  max-width: 40rem;
+  margin-bottom: var(--space-10);
+}
+
+.scene__title {
+  margin-bottom: var(--space-4);
+  text-wrap: balance;
+}
+
+.scene__lede {
+  font-size: var(--text-md);
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+
+/*
+ * The reveal. Content is fully rendered and readable at all times; this only
+ * moves it a little as it arrives. Note the guard: the shifted state applies
+ * only when the observer has actually reported "not yet", so a browser without
+ * IntersectionObserver never hides anything.
+ */
+.scene[data-revealed='false'] .scene__header,
+.scene[data-revealed='false'] .scene__inner > *:not(.scene__header) {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.scene__inner > *,
+.scene__header {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 600ms var(--ease-out),
+    transform 600ms var(--ease-out);
+}
+
+.scene__inner > *:nth-child(2) {
+  transition-delay: 80ms;
+}
+
+.scene__inner > *:nth-child(3) {
+  transition-delay: 160ms;
+}
+
+/* ---- Prologue ---- */
+
+.scene--prologue {
+  padding-block: var(--space-12) var(--space-16);
+}
+
+@media (min-width: 60rem) {
+  .scene--prologue {
+    padding-block: var(--space-16) var(--space-20);
+  }
+}
+
+.prologue {
+  display: grid;
+  gap: var(--space-12);
+  align-items: center;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 60rem) {
+  .prologue {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  }
+}
+
+.prologue__eyebrow {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--forest);
+  margin-bottom: var(--space-4);
+}
+
+.prologue__title {
+  margin-bottom: var(--space-5);
+  text-wrap: balance;
+}
+
+.prologue__lede {
+  font-size: var(--text-md);
+  color: var(--ink-muted);
+  margin-bottom: var(--space-8);
+  max-width: 34rem;
+  text-wrap: pretty;
+}
+
+.prologue__figure {
+  display: flex;
+  justify-content: center;
+}
+
+.sapling {
+  width: 100%;
+  height: auto;
+}
+
+.sapling--hero {
+  max-width: 24rem;
+}
+
+.sapling--verdict {
+  max-width: 14rem;
+}
+
+/* ---- Form error ---- */
+
+.form-error {
+  margin-top: var(--space-4);
+  min-height: 1.5rem;
+  font-size: var(--text-xs);
+  color: var(--danger);
+  font-weight: var(--weight-medium);
+  max-width: 36rem;
+}
+
+.form-error:empty {
+  margin-top: 0;
+  min-height: 0;
+}
+
+/* ---- Scanning ---- */
+
+.scanning__url {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+
+.steps {
+  list-style: none;
+  margin: 0 0 var(--space-8);
+  padding: 0;
+  max-width: 44rem;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  overflow: hidden;
+}
+
+.steps__item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--space-2) var(--space-3);
+  align-items: baseline;
+  padding: var(--space-3) var(--space-5);
+  border-top: var(--border-width) solid var(--border);
+}
+
+.steps__item:first-child {
+  border-top: 0;
+}
+
+.steps__mark {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background-color: var(--border-strong);
+  align-self: center;
+}
+
+.steps__item[data-status='ok'] .steps__mark {
+  background-color: var(--forest);
+}
+
+.steps__item[data-status='error'] .steps__mark {
+  background-color: var(--danger);
+}
+
+.steps__item[data-status='running'] .steps__mark {
+  background-color: var(--forest);
+  animation: steps-pulse 1200ms var(--ease-out) infinite;
+}
+
+@keyframes steps-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.steps__label {
+  color: var(--ink);
+}
+
+.steps__status {
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.steps__time {
+  font-family: var(--font-mono);
+}
+
+.steps__detail {
+  grid-column: 2 / -1;
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+/* ---- Reveal ---- */
+
+.reveal {
+  display: grid;
+  gap: var(--space-10);
+  grid-template-columns: 1fr;
+  align-items: center;
+}
+
+@media (min-width: 60rem) {
+  .reveal {
+    grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr);
+  }
+}
+
+.reveal__gauges {
+  display: grid;
+  gap: var(--space-6);
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+}
+
+.reveal__tree {
+  text-align: center;
+}
+
+.reveal__tree-caption {
+  margin-top: var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+  max-width: 18rem;
+  margin-inline: auto;
+}
+
+/* ---- Gauge ---- */
+
+.gauge {
+  margin: 0;
+  text-align: center;
+}
+
+.gauge__dial {
+  position: relative;
+  max-width: 10rem;
+  margin-inline: auto;
+}
+
+.gauge__dial svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.gauge__value {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.gauge__caption {
+  margin-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.gauge__label {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--ink);
+}
+
+/*
+ * The spoken score. Visible too: it names the band in words, which is what
+ * keeps the gauge's colour from being the only signal.
+ */
+.gauge__reading {
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+.gauge__detail {
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+/* ---- Facts ---- */
+
+.facts {
+  margin: var(--space-12) 0 0;
+  display: grid;
+  gap: 0;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  overflow: hidden;
+}
+
+.facts__row {
+  padding: var(--space-5) var(--space-6);
+  border-top: var(--border-width) solid var(--border);
+}
+
+.facts__row dt {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--ink-muted);
+  margin-bottom: var(--space-2);
+}
+
+.facts__row dd {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  color: var(--ink);
+}
+
+/* ---- Score explainer ---- */
+
+.reveal__explainers {
+  margin-top: var(--space-8);
+  display: grid;
+  gap: var(--space-3);
+}
+
+.explainer {
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+}
+
+.explainer__summary {
+  padding: var(--space-4) var(--space-5);
+  cursor: pointer;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--forest);
+  /* 44px target (WCAG 2.5.8) without removing the native marker. */
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+}
+
+.explainer__body {
+  padding: 0 var(--space-5) var(--space-5);
+  font-size: var(--text-xs);
+}
+
+.explainer__formula code {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.explainer__ref {
+  color: var(--ink-muted);
+  margin-block: var(--space-2) var(--space-4);
+}
+
+.explainer__table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.explainer__table th,
+.explainer__table td {
+  padding: var(--space-2) var(--space-3);
+  border-top: var(--border-width) solid var(--border);
+  vertical-align: top;
+  font-weight: var(--weight-regular);
+}
+
+.explainer__table thead th,
+.explainer__table tfoot th {
+  font-weight: var(--weight-semibold);
+  color: var(--ink);
+}
+
+.explainer__points {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ---- Screenshot ---- */
+
+.reveal__shot {
+  margin: var(--space-12) 0 0;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  overflow: hidden;
+}
+
+.reveal__shot img {
+  width: 100%;
+  height: auto;
+  /* A long full-page capture must not push the chapter off the screen. */
+  max-height: 32rem;
+  object-fit: cover;
+  object-position: top;
+}
+
+.reveal__shot figcaption {
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+  border-top: var(--border-width) solid var(--border);
+}

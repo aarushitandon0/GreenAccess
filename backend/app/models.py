@@ -306,6 +306,67 @@ class GreenResult(_Model):
 # --------------------------------------------------------------------------- #
 
 
+class ScoreBreakdownItem(_Model):
+    """One line in the "How is this calculated?" popover (MASTERSPEC §9)."""
+
+    label: str
+    #: Signed contribution to the score. Penalties are negative, bonuses
+    #: positive. Kept as a float so the popover can show the unrounded cost.
+    points: float
+    detail: str = ""
+    evidence: list[str] = Field(default_factory=list)
+
+
+class ScoreBreakdown(_Model):
+    """Everything the popover needs to justify one score.
+
+    Addition to MASTERSPEC §5, required by §9: "Every score has a 'How is this
+    calculated?' popover linking to the formula and listing the top
+    contributing items."
+    """
+
+    #: What the score counts down (or up) from. 100 for accessibility.
+    starting_points: float
+    #: Contributions, most significant first.
+    items: list[ScoreBreakdownItem] = Field(default_factory=list)
+    #: The rounded score these items add up to.
+    total: int = Field(default=0, ge=0, le=100)
+    #: Plain-language statement of the formula.
+    formula: str = ""
+    #: Where the formula is specified, e.g. "MASTERSPEC §9.1".
+    spec_ref: str = ""
+
+
+class ScoresBreakdown(_Model):
+    """The three breakdowns carried alongside :class:`Scores`."""
+
+    a11y: ScoreBreakdown
+    carbon: ScoreBreakdown
+    combined: ScoreBreakdown
+
+
+class A11yScore(_Model):
+    """Return type of :func:`app.scoring.a11y.score_a11y`."""
+
+    score: int = Field(ge=0, le=100)
+    breakdown: ScoreBreakdown
+
+
+class CarbonScore(_Model):
+    """Return type of :func:`app.scoring.carbon.score_carbon`."""
+
+    score: int = Field(ge=0, le=100)
+    grade: CarbonGrade
+    breakdown: ScoreBreakdown
+
+
+class CombinedScore(_Model):
+    """Return type of :func:`app.scoring.combined.score_combined`."""
+
+    score: int = Field(ge=0, le=100)
+    breakdown: ScoreBreakdown
+
+
 class Scores(_Model):
     a11y: int = Field(default=0, ge=0, le=100)
     carbon: int = Field(default=0, ge=0, le=100)
@@ -315,6 +376,9 @@ class Scores(_Model):
     #: True until the scoring module exists. Addition to MASTERSPEC §5 so that
     #: a pre-scoring result cannot be mistaken for a computed one.
     is_placeholder: bool = False
+    #: Per-score working, for the "How is this calculated?" popover (§9).
+    #: Optional and defaulted, so a placeholder Scores stays valid without it.
+    breakdown: ScoresBreakdown | None = None
 
 
 class TradeoffFinding(_Model):

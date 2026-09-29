@@ -8,10 +8,14 @@ from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from fastapi import Request
 
 from app.api.events import EventHub
+
+if TYPE_CHECKING:
+    from app.api.fixes import PatchRunner
 from app.api.ratelimit import SlidingWindowLimiter
 from app.api.runner import ScanRunner
 from app.config import Settings
@@ -32,6 +36,7 @@ class AppState:
     runner: ScanRunner
     limiter: SlidingWindowLimiter
     preflight: Preflight
+    patches: PatchRunner
 
 
 def get_state(request: Request) -> AppState:

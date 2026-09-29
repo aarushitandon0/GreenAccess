@@ -122,6 +122,11 @@ class ScanRunner:
     def is_active(self, scan_id: str) -> bool:
         return scan_id in self._tasks
 
+    @property
+    def slots(self) -> asyncio.Semaphore:
+        """The MAX_CONCURRENT_SCANS limit, shared with patch re-scans."""
+        return self._slots
+
     # -- control ---------------------------------------------------------- #
 
     async def submit(self, scan: Scan, weights: Weights) -> None:

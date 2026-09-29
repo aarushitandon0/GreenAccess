@@ -17,23 +17,20 @@ assets are missing, so the unit suite still runs anywhere.
 
 from __future__ import annotations
 
-import importlib.util
-import os
-from collections.abc import Iterator
 from pathlib import Path
-from types import ModuleType
 
 import pytest
 
 from app.config import Settings
 from app.models import ScanResult
 from app.scanner.pipeline import run_scan
+from tests.demo_support import GENERATED
+from tests.demo_support import chromium_available as _chromium_available
 
 pytestmark = pytest.mark.integration
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEMO_ROOT = REPO_ROOT / "demo-site"
-GENERATED = DEMO_ROOT / "assets" / "generated"
 
 DEMO_PORT = 8081
 TRACKER_PORT = 8082
@@ -43,71 +40,6 @@ DEMO_URL = f"http://localhost:{DEMO_PORT}/"
 TOTAL_BYTES_MIN = 2_000_000
 TOTAL_BYTES_MAX = 2_400_000
 BYTE_TOLERANCE = 0.10
-
-
-def _load_server_module() -> ModuleType:
-    spec = importlib.util.spec_from_file_location("demo_server_it", DEMO_ROOT / "server.py")
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-def _assets_present() -> bool:
-    return (GENERATED / "hero.mp4").exists() and (GENERATED / "article-01.jpg").exists()
-
-
-def _chromium_available() -> bool:
-    from playwright.sync_api import sync_playwright
-
-    try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(
-                headless=True,
-                executable_path=os.environ.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE") or None,
-            )
-            browser.close()
-        return True
-    except Exception:  # noqa: BLE001
-        return False
-
-
-@pytest.fixture(scope="module")
-def demo_servers() -> Iterator[None]:
-    """Run both demo hosts on their real ports for the duration of the module."""
-    if not _assets_present():
-        pytest.skip("demo assets missing; run `python scripts/make_demo_assets.py`")
-
-    demo_server = _load_server_module()
-    servers = []
-    try:
-        servers.append(
-            demo_server.build_server(
-                port=DEMO_PORT, root=DEMO_ROOT, compress=False, strip_prefix="", quiet=True
-            )
-        )
-        servers.append(
-            demo_server.build_server(
-                port=TRACKER_PORT,
-                root=DEMO_ROOT / "third-party",
-                compress=False,
-                strip_prefix="t",
-                quiet=True,
-            )
-        )
-    except OSError as exc:
-        for server in servers:
-            server.server_close()
-        pytest.skip(f"demo ports are already in use: {exc}")
-
-    for server in servers:
-        demo_server.serve_forever_in_thread(server)
-    try:
-        yield None
-    finally:
-        for server in servers:
-            server.shutdown()
-            server.server_close()
 
 
 @pytest.fixture(scope="module")

@@ -14,7 +14,7 @@ import pytest
 
 from app.models import Scan, ScanStatus, TradeoffType
 from tests.api_support import ALL_STEPS, make_settings, read_events
-from tests.test_demo_integration import DEMO_URL, _chromium_available, demo_servers  # noqa: F401
+from tests.test_demo_integration import DEMO_URL, _chromium_available
 
 pytestmark = [pytest.mark.integration, pytest.mark.browser]
 
@@ -30,7 +30,7 @@ def chromium() -> None:
 async def test_demo_scan_through_the_api(
     tmp_path: Path,
     chromium: None,
-    demo_servers: None,  # noqa: F811
+    demo_servers: None,
 ) -> None:
     import httpx
 

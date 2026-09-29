@@ -32,7 +32,7 @@ from app.security.ssrf import ValidatedUrl, validate_url
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["MAX_REDIRECT_HOPS", "PREFLIGHT_TIMEOUT_S", "preflight_redirects"]
+__all__ = ["MAX_REDIRECT_HOPS", "PREFLIGHT_TIMEOUT_S", "pinned_request", "preflight_redirects"]
 
 #: Hops followed before the pre-flight stops looking. Anything longer is left
 #: to the browser guard, which checks every hop however long the chain.
@@ -46,8 +46,12 @@ _REDIRECT_STATUSES: Final[frozenset[int]] = frozenset({301, 302, 303, 307, 308})
 _USER_AGENT: Final[str] = "GreenAccessBot/0.1 (redirect pre-flight)"
 
 
-def _pinned_request(hop: ValidatedUrl, timeout_s: float) -> httpx.Request:
-    """A GET for `hop` that connects to its validated address, not a fresh lookup."""
+def pinned_request(hop: ValidatedUrl, timeout_s: float) -> httpx.Request:
+    """A GET for `hop` that connects to its validated address, not a fresh lookup.
+
+    Public so the patcher's asset fetcher (:mod:`app.security.fetch`) pins its
+    connections the same way this pre-flight does.
+    """
     parts = urlsplit(hop.url)
     headers = {"Host": parts.netloc, "User-Agent": _USER_AGENT}
     extensions: dict[str, object] = {"timeout": httpx.Timeout(timeout_s).as_dict()}
@@ -73,7 +77,7 @@ async def _next_location(
     would hide exactly the obfuscated addresses this check exists to catch.
     The raw header goes to :func:`~app.security.ssrf.validate_url` instead.
     """
-    response = await transport.handle_async_request(_pinned_request(hop, timeout_s))
+    response = await transport.handle_async_request(pinned_request(hop, timeout_s))
     try:
         if response.status_code in _REDIRECT_STATUSES:
             return response.headers.get("location")

@@ -75,3 +75,54 @@ def local_site() -> Iterator[Callable[[Routes], str]]:
     for server in servers:
         server.shutdown()
         server.server_close()
+
+
+# --------------------------------------------------------------------------- #
+# The Daily Herald on its real ports, for the integration tests
+# --------------------------------------------------------------------------- #
+
+
+@pytest.fixture(scope="module")
+def demo_servers() -> Iterator[None]:
+    """Run both demo hosts on their real ports for the duration of a module."""
+    from tests.demo_support import (
+        DEMO_PORT,
+        DEMO_ROOT,
+        TRACKER_PORT,
+        assets_present,
+        load_server_module,
+    )
+
+    if not assets_present():
+        pytest.skip("demo assets missing; run `python scripts/make_demo_assets.py`")
+
+    demo_server = load_server_module()
+    servers = []
+    try:
+        servers.append(
+            demo_server.build_server(
+                port=DEMO_PORT, root=DEMO_ROOT, compress=False, strip_prefix="", quiet=True
+            )
+        )
+        servers.append(
+            demo_server.build_server(
+                port=TRACKER_PORT,
+                root=DEMO_ROOT / "third-party",
+                compress=False,
+                strip_prefix="t",
+                quiet=True,
+            )
+        )
+    except OSError as exc:
+        for server in servers:
+            server.server_close()
+        pytest.skip(f"demo ports are already in use: {exc}")
+
+    for server in servers:
+        demo_server.serve_forever_in_thread(server)
+    try:
+        yield None
+    finally:
+        for server in servers:
+            server.shutdown()
+            server.server_close()

@@ -22,6 +22,7 @@ and child combinators. ``cssselect`` is not a dependency of this project.
 from __future__ import annotations
 
 import re
+import weakref
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
 from typing import Final
@@ -66,16 +67,53 @@ class SelectorError(ValueError):
 # --------------------------------------------------------------------------- #
 
 
+#: HTML5 void elements libxml2's HTML4 parser does not know are void. It
+#: nests following content inside them and prints an end tag for them.
+_HTML5_VOID: Final[frozenset[str]] = frozenset({"source", "track", "wbr", "embed"})
+_HTML5_VOID_END: Final[re.Pattern[str]] = re.compile(
+    r"</(?:source|track|wbr|embed)\s*>", re.IGNORECASE
+)
+_DOCTYPE: Final[re.Pattern[str]] = re.compile(
+    r"^\ufeff?\s*(?:<!--.*?-->\s*)*(<!doctype[^>]*>)", re.IGNORECASE | re.DOTALL
+)
+
+#: The doctype each parsed document really had (None: it had none). lxml
+#: invents an HTML 4.0 Transitional doctype when a page has none, and writing
+#: that back would switch the browser's rendering mode.
+_ORIGINAL_DOCTYPE: weakref.WeakKeyDictionary[etree._Element, str | None] = (
+    weakref.WeakKeyDictionary()
+)
+
+
+def _unwrap_void(root: etree._Element) -> None:
+    """Move anything libxml2 put inside a void element back after it."""
+    for el in list(root.iter(*_HTML5_VOID)):
+        children = list(el)
+        text = el.text
+        el.text = None
+        anchor = el
+        if text:
+            el.tail = text + (el.tail or "")
+        for child in children:
+            anchor.addnext(child)
+            anchor = child
+
+
 def parse_document(html: str) -> etree._ElementTree:
-    """Parse a whole document, keeping its doctype."""
+    """Parse a whole document, keeping its doctype exactly (or its absence)."""
     root = lxml.html.document_fromstring(html)
+    _unwrap_void(root)
+    match = _DOCTYPE.match(html)
+    _ORIGINAL_DOCTYPE[root] = match.group(1) if match else None
     return root.getroottree()
 
 
 def serialise_document(tree: etree._ElementTree) -> str:
-    doctype = tree.docinfo.doctype or "<!DOCTYPE html>"
-    body = lxml.html.tostring(tree.getroot(), encoding="unicode", method="html")
-    return f"{doctype}\n{body}\n"
+    root = tree.getroot()
+    doctype = _ORIGINAL_DOCTYPE.get(root, tree.docinfo.doctype)
+    body = lxml.html.tostring(root, encoding="unicode", method="html")
+    body = _HTML5_VOID_END.sub("", body)
+    return f"{doctype}\n{body}\n" if doctype else f"{body}\n"
 
 
 def iter_elements(root: etree._Element) -> Iterator[etree._Element]:
@@ -327,7 +365,10 @@ def _split_list(selector: str) -> list[str]:
 
 def select(tree: etree._ElementTree, selector: str) -> list[etree._Element]:
     """Elements matching `selector`, document order. Raises SelectorError."""
-    chains = [_parse_selector(part) for part in _split_list(selector)]
+    parts = _split_list(selector)
+    if not parts:
+        raise SelectorError("empty selector")
+    chains = [_parse_selector(part) for part in parts]
     return [
         el for el in iter_elements(tree.getroot()) if any(_matches_chain(el, c) for c in chains)
     ]

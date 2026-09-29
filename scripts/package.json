@@ -1,0 +1,12 @@
+{
+  "name": "greenaccess-scripts",
+  "private": true,
+  "type": "module",
+  "description": "Generates carbon fixtures from CO2.js. See gen_co2_fixtures.mjs.",
+  "scripts": {
+    "gen:co2": "node gen_co2_fixtures.mjs"
+  },
+  "dependencies": {
+    "@tgwf/co2": "0.19.0"
+  }
+}

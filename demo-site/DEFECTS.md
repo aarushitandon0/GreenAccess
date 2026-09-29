@@ -4,8 +4,10 @@ This file is the **source of truth** for the demo-site integration tests
 (MASTERSPEC §15). Every defect below is deliberate. If you change the demo site,
 change this table in the same commit, or the tests will disagree with reality.
 
-Measured on the generated assets at 2,212,133 bytes first load, viewport
-1366×768 (MASTERSPEC §6.1).
+Measured on the generated assets at 2,320,779 bytes first load, viewport
+1366×768 (MASTERSPEC §6.1). That weight yields 0.671 g CO2e per view under the
+Sustainable Web Design v3 model, which is carbon grade **E** — inside the E/F
+band MASTERSPEC §11 targets.
 
 Byte costs are **estimates** produced by the formulas in MASTERSPEC §7.3, not
 measurements of a real saving. Tests assert ranges, never exact bytes.
@@ -37,7 +39,7 @@ threshold. `trap_container` should resolve to `#promo`.
 
 | ID | Where | Expected detector (§7.3) | Est. byte cost |
 |---|---|---|---|
-| `VIDEO-AUTOPLAY-01` | `.hero__video` — `autoplay loop muted preload="auto"`, no poster | `autoplay_media` | ~892,000 (full media bytes) |
+| `VIDEO-AUTOPLAY-01` | `.hero__video` — `autoplay loop muted preload="auto"`, no poster | `autoplay_media` | ~1,001,000 (full media bytes) |
 | `IMG-OVERSIZE-01` | 8 `.card__image` — natural 3000×2000, rendered 400×260 | `oversized_image` | ~648,000 total (~81,000 each) |
 | `IMG-EAGER-01` | every image below the first viewport, all `loading="eager"` | `eager_below_fold` | ~1,077,000 (deferred, not removed) |
 | `IMG-DIM-01` | all 10 `img` elements — no `width`/`height` attributes | `no_dimensions` | 0 (layout-shift note) |
@@ -68,12 +70,17 @@ Measured with `python scripts/demo_page_weight.py` against a running demo:
 | Kind | Bytes |
 |---|---|
 | img | 1,076,971 |
-| media | 892,139 |
+| media | 1,000,785 |
 | font | 203,528 |
 | js | 15,302 |
 | html | 13,259 |
 | css | 10,934 |
-| **total** | **2,212,133** (2.21 MB, 22 requests) |
+| **total** | **2,320,779** (2.32 MB, 22 requests) |
+
+At that weight the Sustainable Web Design v3 model gives **0.671 g CO2e per
+view**, i.e. carbon grade **E**. The D/E boundary sits at 0.656 g, which is
+2,268,119 bytes — so the demo is deliberately kept above that line as well as
+inside the 2.0–2.4 MB window.
 
 MASTERSPEC §11 requires 2.0–2.4 MB. Regenerate with
 `python scripts/make_demo_assets.py --force`; the generator binary-searches each
@@ -91,5 +98,8 @@ Kept out so the demo stays realistic rather than a checklist:
 ## Scoring expectations
 
 MASTERSPEC §11 targets a **before** state of roughly 30–45 accessibility and a
-carbon grade of E or F. Those are checked once the scoring module exists; this
-phase only asserts detection, not scores.
+carbon grade of E or F.
+
+The carbon side already holds: 2,320,779 bytes gives 0.671 g/view, grade **E**.
+The accessibility score is checked once the scoring module exists; this phase
+asserts detection only.

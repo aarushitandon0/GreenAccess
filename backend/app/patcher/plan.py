@@ -60,15 +60,27 @@ def fix_id(kind: str, target_key: str) -> str:
 
 
 def save_plan(work_dir: Path, plan: FixPlan, source_html: str) -> None:
+    """Persist the plan and the exact source it was generated against.
+
+    The source is written as bytes, which is load-bearing rather than tidiness.
+    Text mode translates newlines on the way out and again on the way in, and
+    the two are not inverses: a page already containing ``\\r\\n`` is written as
+    ``\\r\\r\\n`` and read back as ``\\n\\n``. The round trip then changes the
+    content, ``load_plan``'s digest stops matching, and every patch on Windows
+    fails with "the saved page source does not match its fix plan". Going
+    through bytes keeps the digest a statement about the page rather than about
+    the platform.
+    """
     work_dir.mkdir(parents=True, exist_ok=True)
-    (work_dir / SOURCE_FILE).write_text(source_html, encoding="utf-8")
+    (work_dir / SOURCE_FILE).write_bytes(source_html.encode("utf-8"))
     (work_dir / PLAN_FILE).write_text(plan.model_dump_json(indent=2), encoding="utf-8")
 
 
 def load_plan(work_dir: Path) -> tuple[FixPlan, str] | None:
     try:
         raw = json.loads((work_dir / PLAN_FILE).read_text(encoding="utf-8"))
-        source = (work_dir / SOURCE_FILE).read_text(encoding="utf-8")
+        # Read verbatim, for the reason save_plan gives.
+        source = (work_dir / SOURCE_FILE).read_bytes().decode("utf-8")
     except FileNotFoundError:
         return None
     plan = FixPlan.model_validate(raw)

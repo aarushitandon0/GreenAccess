@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import gzip
 import mimetypes
+import socket
 import sys
 import threading
 from functools import partial
@@ -139,6 +140,12 @@ class DemoRequestHandler(SimpleHTTPRequestHandler):
     server_quiet = False
 
 
+class _IPv6ThreadingHTTPServer(ThreadingHTTPServer):
+    """A threading HTTP server on IPv6, for the ``::1`` that `localhost` names."""
+
+    address_family = socket.AF_INET6
+
+
 def build_server(
     *, port: int, root: Path, compress: bool, strip_prefix: str, quiet: bool
 ) -> ThreadingHTTPServer:
@@ -162,9 +169,23 @@ def build_server(
     # page never finishes loading -- curl survives it only because it makes one
     # request and closes.
     #
-    # Bind to 127.0.0.1 rather than 0.0.0.0: this server has no business being
+    # Bind loopback rather than 0.0.0.0: this server has no business being
     # reachable from the network.
-    server = ThreadingHTTPServer(("127.0.0.1", port), handler_class)  # type: ignore[arg-type]
+    #
+    # Prefer IPv6 loopback. `localhost` resolves to ::1 before 127.0.0.1 on
+    # Windows, and the SSRF guard deliberately pins a request to the single
+    # address it validated instead of falling back to the next one -- falling
+    # back is precisely the hole that makes DNS rebinding work. Chromium's happy
+    # eyeballs papers over an IPv4-only server during a scan, so the page scans
+    # fine and then the patcher's plain HTTP fetch of the same URL fails with
+    # "all connection attempts failed". Listening where the name actually points
+    # fixes it at the source instead of spreading IPv4 literals through the
+    # config. Falls back to IPv4 where IPv6 is unavailable.
+    server: ThreadingHTTPServer
+    try:
+        server = _IPv6ThreadingHTTPServer(("::1", port), handler_class)  # type: ignore[arg-type]
+    except OSError:
+        server = ThreadingHTTPServer(("127.0.0.1", port), handler_class)  # type: ignore[arg-type]
     server.daemon_threads = True
     return server
 

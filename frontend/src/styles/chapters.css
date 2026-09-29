@@ -1,0 +1,611 @@
+/*
+ * The data chapters: accessibility, carbon, trade-offs, fixes and after.
+ *
+ * Depends on tokens.css, base.css and scenes.css. Adds no colour of its own —
+ * every value resolves to a token the contrast gate has checked in all three
+ * scopes, which is what lets the trade-off chapter sit on a dark surface
+ * without a separate palette.
+ *
+ * Where a card's edge is coloured, the same distinction is also written as a
+ * word inside the card. Colour is never the only carrier of meaning here
+ * (WCAG 1.4.1).
+ */
+
+.scene--data .scene__inner > * + *,
+.scene--after .scene__inner > * + * {
+  margin-top: var(--space-12);
+}
+
+.scene__sub {
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  margin-bottom: var(--space-5);
+}
+
+.empty {
+  padding: var(--space-6);
+  border: var(--border-width) dashed var(--border-strong);
+  border-radius: var(--radius);
+  color: var(--ink-muted);
+}
+
+.muted {
+  color: var(--ink-muted);
+}
+
+.note--block {
+  display: block;
+  padding: var(--space-4) var(--space-5);
+  border-left: 3px solid var(--forest);
+  background-color: var(--leaf);
+  color: var(--ink);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+/* -------------------------------------------------------------- violations */
+
+.violation-groups {
+  display: grid;
+  gap: var(--space-10);
+}
+
+.violation-group__title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-2);
+  border-bottom: var(--border-width) solid var(--border);
+}
+
+.violation-group__count,
+.findings__count {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--ink-muted);
+}
+
+.violation-list,
+.finding-list,
+.detection-list,
+.fix-list,
+.host-list,
+.chip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.violation-list {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.violation {
+  padding: var(--space-5) var(--space-6);
+  background-color: var(--surface);
+  border: var(--border-width) solid var(--border);
+  border-left: 4px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+
+/* The severity is also a word inside the card; the edge only reinforces it. */
+.violation[data-impact="critical"],
+.violation[data-impact="serious"] {
+  border-left-color: var(--danger);
+}
+
+.violation[data-impact="moderate"] {
+  border-left-color: var(--amber-text-strong);
+}
+
+.violation__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.violation__impact {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+}
+
+.violation__count {
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+.violation__title {
+  margin-bottom: var(--space-2);
+}
+
+.violation__rule code,
+.violation__selector code,
+.detection__evidence code,
+.host code,
+.fix__kind code,
+.fix__target code {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+.violation__rule {
+  color: var(--ink-muted);
+  margin-bottom: var(--space-3);
+}
+
+.violation__nodes summary,
+.finding__evidence summary,
+.fix__diff summary {
+  cursor: pointer;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--forest);
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+}
+
+.violation__list {
+  list-style: none;
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.violation__why {
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+  white-space: pre-wrap;
+}
+
+.violation__link {
+  margin-top: var(--space-3);
+  font-size: var(--text-xs);
+}
+
+/* ---------------------------------------------------------- keyboard card */
+
+.keyboard-card {
+  padding: var(--space-6);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+}
+
+.keyboard-card__title {
+  margin-bottom: var(--space-2);
+}
+
+.keyboard-card__note {
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  margin-bottom: var(--space-5);
+}
+
+.facts--inline {
+  margin-top: 0;
+}
+
+.facts__aside {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+/* -------------------------------------------------------------- bytes bar */
+
+.bytes,
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: var(--text-xs);
+}
+
+.bytes__caption,
+.data-table caption {
+  text-align: left;
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  padding-bottom: var(--space-4);
+}
+
+.bytes th,
+.bytes td,
+.data-table th,
+.data-table td {
+  padding: var(--space-3);
+  border-top: var(--border-width) solid var(--border);
+  vertical-align: middle;
+  font-weight: var(--weight-regular);
+}
+
+.bytes thead th,
+.bytes tfoot th,
+.data-table thead th {
+  font-weight: var(--weight-semibold);
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.bytes__plot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 12rem;
+}
+
+.bytes__track {
+  flex: 1;
+  height: 10px;
+  background-color: var(--leaf);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+/* A thin mark with a 4px rounded data-end, anchored to the baseline. */
+.bytes__fill {
+  display: block;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  background-color: var(--forest);
+}
+
+.bytes__share {
+  width: 3ch;
+  text-align: right;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.bytes__value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.data-table {
+  display: block;
+  overflow-x: auto;
+}
+
+/* ------------------------------------------------------ detections, hosts */
+
+.detection-list,
+.fix-list {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.detection,
+.fix {
+  padding: var(--space-5);
+  background-color: var(--surface);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius);
+}
+
+.detection__title,
+.fix__description {
+  margin-bottom: var(--space-2);
+}
+
+.detection__saving {
+  font-size: var(--text-xs);
+  color: var(--forest);
+  font-weight: var(--weight-medium);
+  margin-bottom: var(--space-2);
+}
+
+.detection__evidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.detection__more {
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+.host-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.host {
+  padding: var(--space-1) var(--space-3);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-pill);
+}
+
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* ------------------------------------------------------------- trade-offs */
+
+.scene-wrap--cinema {
+  background-color: #0d0f0e;
+}
+
+.findings {
+  display: grid;
+  gap: var(--space-12);
+}
+
+.findings__heading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-2);
+  border-bottom: var(--border-width) solid var(--border-strong);
+}
+
+.finding-list {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+}
+
+.finding {
+  padding: var(--space-6);
+  background-color: var(--surface);
+  border: var(--border-width) solid var(--border);
+  border-top: 3px solid var(--forest);
+  border-radius: var(--radius);
+}
+
+.finding[data-type="tension"] {
+  border-top-color: var(--amber-fill);
+}
+
+.finding__badge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--forest);
+  margin-bottom: var(--space-3);
+}
+
+.finding[data-type="tension"] .finding__badge {
+  color: var(--amber-fill);
+}
+
+.finding[data-type="tension"] .panel__bullet {
+  background-color: var(--amber-fill);
+}
+
+.finding__title {
+  margin-bottom: var(--space-3);
+}
+
+.finding__explanation {
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  margin-bottom: var(--space-5);
+}
+
+.finding__effects {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0 0 var(--space-3);
+}
+
+.finding__effects dt {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--forest);
+  margin-bottom: var(--space-1);
+}
+
+.finding__effects dd {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--ink);
+}
+
+.finding__evidence ul {
+  display: grid;
+  gap: var(--space-2);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.finding__evidence code {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------------ fixes */
+
+.fix[data-manual="true"] {
+  border-style: dashed;
+}
+
+.fix__head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.fix__accept {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  min-height: 2.75rem;
+  cursor: pointer;
+}
+
+.fix__accept input {
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: var(--forest);
+}
+
+.fix__manual {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--amber-text-strong);
+}
+
+.fix__target {
+  color: var(--ink-muted);
+  margin-bottom: var(--space-2);
+}
+
+.diff {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 48rem) {
+  .diff {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.diff__side h5 {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+  margin-bottom: var(--space-2);
+}
+
+.diff pre {
+  margin: 0;
+  padding: var(--space-3);
+  background-color: var(--bg);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  font-size: var(--text-xs);
+}
+
+.fixes-manual {
+  margin-top: var(--space-10);
+}
+
+/* ------------------------------------------------------------------ after */
+
+.deltas {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+}
+
+.delta {
+  padding: var(--space-5);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--surface);
+  border-left: 4px solid var(--border-strong);
+}
+
+/* Direction is stated for assistive technology too; this is reinforcement. */
+.delta[data-improved="true"] {
+  border-left-color: var(--forest);
+}
+
+.delta[data-improved="false"] {
+  border-left-color: var(--danger);
+}
+
+.delta__value {
+  display: block;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.delta__label {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+  margin-top: var(--space-1);
+}
+
+.after__shots {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 48rem) {
+  .after__shots {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.after__download {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+}
+
+.detection__title {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.detection__count {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-regular);
+  color: var(--ink-muted);
+}
+
+.detection__items summary {
+  cursor: pointer;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--forest);
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+}
+
+.detection__sublist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-4);
+}
+
+.detection__summary {
+  font-size: var(--text-xs);
+  margin-bottom: var(--space-2);
+}

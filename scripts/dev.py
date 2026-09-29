@@ -55,7 +55,13 @@ RESET = "\033[0m"
 #: ALLOWED_LOCAL_HOSTS list, so this is that list, used when none is set.
 #: localhost:8000 is the backend itself: the patch re-scan visits the patched
 #: copy it serves at /patched (MASTERSPEC §8.3).
-DEV_ALLOWED_LOCAL_HOSTS = "localhost:8081,localhost:8082,localhost:8000"
+#: The demo servers listen on ::1, which is where `localhost` points first, so
+#: they are named here as `localhost` and the demo's tracker host stays a
+#: distinct origin the way MASTERSPEC 11 intends. The backend itself is named by
+#: IPv4 literal because uvicorn binds 127.0.0.1: the patch re-scan fetches the
+#: patched copy from it, and the SSRF guard pins the one address it validated
+#: rather than falling back to another.
+DEV_ALLOWED_LOCAL_HOSTS = "localhost:8081,localhost:8082,127.0.0.1:8000"
 
 
 @dataclass(frozen=True)
@@ -73,25 +79,50 @@ def _python() -> str:
     return str(VENV_PYTHON) if VENV_PYTHON.exists() else sys.executable
 
 
+def _backend_command(python: str) -> list[str]:
+    """Uvicorn's argv for the dev backend.
+
+    ``--reload`` is dropped on Windows, and the scanner is the reason. Uvicorn
+    picks its event loop with ``asyncio_loop_factory(use_subprocess=...)``, and
+    reload mode sets ``use_subprocess=True``, which on Windows selects
+    ``SelectorEventLoop``. That loop raises ``NotImplementedError`` from
+    ``create_subprocess_exec``, so Playwright can never launch a browser and
+    every scan fails in ``load`` with an internal error.
+
+    Reloading still works everywhere else, including the Docker image the
+    project actually targets, which is Linux and unaffected. On Windows the
+    trade is hot reload for a backend that can scan; restart `make dev` after
+    changing backend code.
+    """
+    command = [
+        python,
+        "-m",
+        "uvicorn",
+        "app.main:app",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8000",
+    ]
+    if not IS_WINDOWS:
+        command.append("--reload")
+    return command
+
+
 def services() -> list[Service]:
     python = _python()
     return [
         Service(
             name="backend",
-            command=[
-                python,
-                "-m",
-                "uvicorn",
-                "app.main:app",
-                "--host",
-                "127.0.0.1",
-                "--port",
-                "8000",
-                "--reload",
-            ],
+            command=_backend_command(python),
             cwd=REPO_ROOT / "backend",
             group="app",
-            env_defaults=(("ALLOWED_LOCAL_HOSTS", DEV_ALLOWED_LOCAL_HOSTS),),
+            env_defaults=(
+                ("ALLOWED_LOCAL_HOSTS", DEV_ALLOWED_LOCAL_HOSTS),
+                # Uvicorn binds 127.0.0.1, so the patched copy has to be
+                # advertised at that address for the re-scan to reach it.
+                ("PATCHED_BASE_URL", "http://127.0.0.1:8000/patched"),
+            ),
         ),
         Service(
             name="frontend",

@@ -26,7 +26,17 @@
    in the family of the brand palette so the drawing belongs to the product.
    -------------------------------------------------------------------------- */
 
+/*
+ * Re-apply the ink at the scope root.
+ *
+ * Redefining `--ink` inside a scope does not change a `color` that was already
+ * computed further up: `body { color: var(--ink) }` resolves to the light
+ * theme's ink and that value is what descendants inherit. Setting `color` here
+ * makes the cinema ink the one that cascades into the scope.
+ */
 [data-scope='cinema'] {
+  color: var(--ink);
+
   --terrain-water: #33625f;
   --terrain-sand: #cfc5a8;
   --terrain-land: #35502f;

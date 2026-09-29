@@ -50,12 +50,20 @@ COLOURS = {
 RESET = "\033[0m"
 
 
+#: The demo hosts the backend may scan in development. The SSRF guard blocks
+#: localhost by default; CLAUDE.md allows dev hosts only through an explicit
+#: ALLOWED_LOCAL_HOSTS list, so this is that list, used when none is set.
+DEV_ALLOWED_LOCAL_HOSTS = "localhost:8081,localhost:8082"
+
+
 @dataclass(frozen=True)
 class Service:
     name: str
     command: list[str]
     cwd: Path
     group: str
+    #: Extra environment for this service, applied only where not already set.
+    env_defaults: tuple[tuple[str, str], ...] = ()
 
 
 def _python() -> str:
@@ -81,6 +89,7 @@ def services() -> list[Service]:
             ],
             cwd=REPO_ROOT / "backend",
             group="app",
+            env_defaults=(("ALLOWED_LOCAL_HOSTS", DEV_ALLOWED_LOCAL_HOSTS),),
         ),
         Service(
             name="frontend",
@@ -155,9 +164,13 @@ def main() -> int:
     try:
         for service in selected:
             try:
+                env = dict(os.environ)
+                for key, value in service.env_defaults:
+                    env.setdefault(key, value)
                 process = subprocess.Popen(
                     service.command,
                     cwd=service.cwd,
+                    env=env,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     text=True,

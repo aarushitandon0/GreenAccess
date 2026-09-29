@@ -3,10 +3,11 @@
 These are the contract between the scanner, the API and the frontend. The
 TypeScript mirror lives in ``frontend/src/lib/types.ts`` (CLAUDE.md).
 
-One addition to the spec: :class:`Scores` carries ``is_placeholder``. The
-scoring module does not exist yet, and CLAUDE.md forbids presenting invented
-numbers as real, so a result produced before scoring exists says so in the
-payload itself rather than quietly shipping zeros that look computed.
+Additions to the spec, each marked where it is defined: :class:`Scores`
+carries ``is_placeholder`` (so a result that was never scored cannot pass for
+one that was) and per-score breakdowns; :class:`Scan` carries ``error``;
+:class:`ErrorCode` has four API codes beyond §12; and the API response models
+at the end give every §12 endpoint a typed body.
 """
 
 from __future__ import annotations
@@ -90,7 +91,11 @@ class StepStatus(StrEnum):
 
 
 class ErrorCode(StrEnum):
-    """Error codes from MASTERSPEC §12."""
+    """Error codes from MASTERSPEC §12, plus four the API needs.
+
+    The last four are additions to §12, approved for Phase 2: §12 names a rate
+    limit, per-scan lookups and a cancel button (§13) but no code for them.
+    """
 
     URL_BLOCKED = "URL_BLOCKED"
     TIMEOUT = "TIMEOUT"
@@ -98,6 +103,14 @@ class ErrorCode(StrEnum):
     NAV_FAILED = "NAV_FAILED"
     LLM_UNAVAILABLE = "LLM_UNAVAILABLE"
     PATCH_FAILED = "PATCH_FAILED"
+    #: 429: more than the per-IP scan allowance (§12: 10/min/IP).
+    RATE_LIMITED = "RATE_LIMITED"
+    #: 404: no scan, screenshot or route with that id.
+    NOT_FOUND = "NOT_FOUND"
+    #: 422: a request body or parameter failed validation (not a URL problem).
+    INVALID_REQUEST = "INVALID_REQUEST"
+    #: The scan was cancelled before it finished.
+    CANCELLED = "CANCELLED"
 
 
 class _Model(BaseModel):
@@ -428,6 +441,22 @@ class PatchInfo(_Model):
 
 
 # --------------------------------------------------------------------------- #
+# Errors (MASTERSPEC §12)
+# --------------------------------------------------------------------------- #
+
+
+class ApiError(_Model):
+    code: ErrorCode
+    message: str
+
+
+class ApiErrorEnvelope(_Model):
+    """The API error shape from MASTERSPEC §12: ``{error: {code, message}}``."""
+
+    error: ApiError
+
+
+# --------------------------------------------------------------------------- #
 # Results
 # --------------------------------------------------------------------------- #
 
@@ -459,6 +488,10 @@ class Scan(_Model):
     before: ScanResult | None = None
     after: ScanResult | None = None
     patch: PatchInfo | None = None
+    #: Why the scan failed, when ``status`` is ``error``. Addition to
+    #: MASTERSPEC §5 (approved in Phase 2) so the reason outlives the SSE
+    #: stream, e.g. across a server restart.
+    error: ApiError | None = None
 
 
 # --------------------------------------------------------------------------- #
@@ -475,12 +508,60 @@ class StepEvent(_Model):
     detail: str = ""
 
 
-class ApiError(_Model):
-    code: ErrorCode
-    message: str
+class DoneEvent(_Model):
+    """Payload of the SSE ``done`` event: the scan finished and was saved."""
+
+    scan_id: str
+    status: ScanStatus
 
 
-class ApiErrorEnvelope(_Model):
-    """The API error shape from MASTERSPEC §12: ``{error: {code, message}}``."""
+# --------------------------------------------------------------------------- #
+# API responses (MASTERSPEC §12)
+# --------------------------------------------------------------------------- #
 
-    error: ApiError
+
+class ScanCreated(_Model):
+    """``POST /api/scans`` response: ``{scan_id}``."""
+
+    scan_id: str
+
+
+class DemoInfo(_Model):
+    """``GET /api/demo`` response: where the Daily Herald is served."""
+
+    url: str
+
+
+class HistoryEntry(_Model):
+    """One row of ``GET /api/history``. Scores are null until a scan is done."""
+
+    id: str
+    url: str
+    host: str
+    status: ScanStatus
+    created_at: datetime
+    a11y: int | None = None
+    carbon: int | None = None
+    combined: int | None = None
+    carbon_grade: CarbonGrade | None = None
+    grams_per_view: float | None = None
+
+
+class TrendPoint(_Model):
+    """One point on a domain's sparkline: a finished scan's combined score."""
+
+    scan_id: str
+    created_at: datetime
+    combined: int
+
+
+class HistoryResponse(_Model):
+    """``GET /api/history?host=`` response: "list + trend" (MASTERSPEC §12).
+
+    ``scans`` is newest first. ``trends`` maps each host in ``scans`` to its
+    finished scans' combined scores, oldest first, ready for a sparkline.
+    """
+
+    host: str | None = None
+    scans: list[HistoryEntry] = Field(default_factory=list)
+    trends: dict[str, list[TrendPoint]] = Field(default_factory=dict)

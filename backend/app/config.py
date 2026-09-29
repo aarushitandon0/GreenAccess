@@ -5,6 +5,12 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from functools import lru_cache
+from pathlib import Path
+
+#: Where runtime files live: screenshots now, patched sites later. Resolved
+#: against the backend directory, so it is the same wherever the process is
+#: started from; in Docker that is /app/data, the volume docker-compose mounts.
+DEFAULT_DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
 
 def _csv(raw: str) -> tuple[str, ...]:
@@ -40,6 +46,12 @@ class Settings:
     demo_fallback: bool = False
     public_base_url: str = "http://localhost:5173"
     demo_url: str = "http://localhost:8081"
+    data_dir: Path = DEFAULT_DATA_DIR
+
+    @property
+    def screenshot_dir(self) -> Path:
+        """Scan screenshots, one sub-directory per scan id."""
+        return self.data_dir / "screenshots"
 
     @classmethod
     def from_env(cls) -> Settings:

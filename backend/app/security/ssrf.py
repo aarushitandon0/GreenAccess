@@ -32,6 +32,7 @@ them. See :class:`ValidatedUrl.resolved_ips`.
 
 from __future__ import annotations
 
+import asyncio
 import ipaddress
 import re
 import socket
@@ -41,8 +42,10 @@ from typing import Final
 from urllib.parse import urlsplit
 
 __all__ = [
+    "IN_BROWSER_SCHEMES",
     "UrlBlocked",
     "ValidatedUrl",
+    "check_browser_request",
     "make_request_guard",
     "parse_ip_literal",
     "validate_url",
@@ -420,13 +423,40 @@ def make_request_guard(
     """
 
     async def guard(route, request) -> None:  # noqa: ANN001 - Playwright types
-        try:
-            validate_url(request.url, allowed_local_hosts=allowed_local_hosts)
-        except UrlBlocked as blocked:
+        reason = await check_browser_request(request.url, allowed_local_hosts=allowed_local_hosts)
+        if reason is not None:
             if on_block is not None:
-                on_block(request.url, blocked.reason)
+                on_block(request.url, reason)
             await route.abort("blockedbyclient")
             return
         await route.continue_()
 
     return guard
+
+
+#: Schemes a page may use that never leave the browser, so there is no
+#: address to check. Anything else that is not http(s) is refused.
+IN_BROWSER_SCHEMES: Final[frozenset[str]] = frozenset({"data", "blob"})
+
+
+async def check_browser_request(
+    url: str,
+    *,
+    allowed_local_hosts: tuple[str, ...] | frozenset[str] | None = None,
+) -> str | None:
+    """Decide one browser request: None to let it through, else the reason to block.
+
+    Shared by the Playwright route guard (first hop of every request) and the
+    CDP ``Fetch`` guard in :mod:`app.scanner.browser` (every redirect hop,
+    which Playwright's route handler never sees). DNS resolution is blocking,
+    so it runs in a worker thread rather than stalling the event loop that is
+    also serving other scans and their SSE streams.
+    """
+    scheme = urlsplit(url).scheme.lower()
+    if scheme in IN_BROWSER_SCHEMES:
+        return None
+    try:
+        await asyncio.to_thread(validate_url, url, allowed_local_hosts=allowed_local_hosts)
+    except UrlBlocked as blocked:
+        return blocked.reason
+    return None

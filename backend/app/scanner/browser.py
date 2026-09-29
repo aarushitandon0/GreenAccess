@@ -24,6 +24,7 @@ from typing import Any
 from playwright.async_api import (
     Browser,
     BrowserContext,
+    CDPSession,
     Page,
     Playwright,
     Response,
@@ -33,7 +34,7 @@ from playwright.async_api import Error as PlaywrightError
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 
 from app.scanner.network import NetworkCollector
-from app.security.ssrf import make_request_guard
+from app.security.ssrf import check_browser_request, make_request_guard
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +108,9 @@ class BrowserSession:
         self._browser: Browser | None = None
         self._context: BrowserContext | None = None
         self._page: Page | None = None
+        self._cdp: CDPSession | None = None
+        #: In-flight redirect-guard checks, kept referenced until they finish.
+        self._guard_tasks: set[asyncio.Task[None]] = set()
 
     # -- lifecycle -------------------------------------------------------- #
 
@@ -148,6 +152,8 @@ class BrowserSession:
         return self
 
     async def __aexit__(self, *exc: object) -> None:
+        for task in list(self._guard_tasks):
+            task.cancel()
         for closer in (
             getattr(self._context, "close", None),
             getattr(self._browser, "close", None),
@@ -159,6 +165,9 @@ class BrowserSession:
                 await closer()
 
     def _record_blocked(self, url: str, reason: str) -> None:
+        # Both guards see a first hop, so the same block can be reported twice.
+        if (url, reason) in self.blocked_requests:
+            return
         logger.info("blocked request %s: %s", url, reason)
         self.blocked_requests.append((url, reason))
 
@@ -192,7 +201,41 @@ class BrowserSession:
 
             session.on(event, make_handler(event))
 
+        # Playwright's route handler is only called for the first URL of a
+        # redirect chain, so without this a public page could 302 the browser
+        # to a private or metadata address unchecked. CDP Fetch pauses every
+        # hop, redirects included, and each one is re-validated before it is
+        # allowed onto the network (CLAUDE.md: "re-check after redirects").
         self._cdp = session
+        session.on("Fetch.requestPaused", self._on_request_paused)
+        await session.send(
+            "Fetch.enable", {"patterns": [{"urlPattern": "*", "requestStage": "Request"}]}
+        )
+
+    def _on_request_paused(self, params: dict[str, Any]) -> None:
+        """CDP event callback. The decision needs DNS, so it runs as a task."""
+        task = asyncio.create_task(self._resolve_paused(params))
+        self._guard_tasks.add(task)
+        task.add_done_callback(self._guard_tasks.discard)
+
+    async def _resolve_paused(self, params: dict[str, Any]) -> None:
+        request_id = params.get("requestId", "")
+        url = params.get("request", {}).get("url", "")
+        reason = await check_browser_request(url, allowed_local_hosts=self.allowed_local_hosts)
+        if reason is not None:
+            self._record_blocked(url, reason)
+        method, payload = (
+            ("Fetch.continueRequest", {"requestId": request_id})
+            if reason is None
+            else ("Fetch.failRequest", {"requestId": request_id, "errorReason": "BlockedByClient"})
+        )
+        if self._cdp is None:  # pragma: no cover - set before Fetch is enabled
+            return
+        try:
+            await self._cdp.send(method, payload)
+        except PlaywrightError as exc:
+            # The page or context closed while the check ran; nothing to resume.
+            logger.debug("could not resolve paused request %s: %s", url, exc)
 
     def _check_byte_cap(self) -> None:
         """Abort once the page exceeds the weight cap (MASTERSPEC §6.1)."""
@@ -217,6 +260,13 @@ class BrowserSession:
         except PlaywrightTimeoutError as exc:
             raise ScanAborted("TIMEOUT", f"navigation to {url} timed out") from exc
         except PlaywrightError as exc:
+            if "ERR_BLOCKED_BY_CLIENT" in str(exc) and self.blocked_requests:
+                # The document itself, or a hop it redirected to, failed the
+                # SSRF guard. That is a blocked URL, not a navigation failure.
+                blocked_url, reason = self.blocked_requests[-1]
+                raise ScanAborted(
+                    "URL_BLOCKED", f"{url} led to a blocked address {blocked_url}: {reason}"
+                ) from exc
             raise ScanAborted("NAV_FAILED", f"could not load {url}: {exc}") from exc
 
         if response is None:

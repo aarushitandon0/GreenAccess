@@ -92,9 +92,7 @@ PAGE_FACT_DETECTIONS: Final[dict[str, str]] = {
         "No same-origin stylesheet contains a prefers-color-scheme rule and "
         "no color-scheme declaration is present, so the page has no dark mode."
     ),
-    "video_no_captions": (
-        "A video element with no track element of kind captions or subtitles."
-    ),
+    "video_no_captions": ("A video element with no track element of kind captions or subtitles."),
     "lazy_above_fold": (
         "An image inside the first viewport carrying loading=lazy, which "
         "delays content the user is already looking at."
@@ -111,14 +109,20 @@ REQUIRED_DETECTIONS: Final[tuple[str, ...]] = tuple(
 # --------------------------------------------------------------------------- #
 
 
-def human_bytes(count: int) -> str:
-    """Format a byte count for a card. Decimal units, matching the SWD model."""
+def human_bytes(count: int, *, precise: bool = False) -> str:
+    """Format a byte count for a card. Decimal units, matching the SWD model.
+
+    `precise` widens the megabyte format from two decimals to three. The
+    captions finding needs it: at two decimals a video and that same video
+    plus a 2 KB caption track both print as "1.00 MB", which would hide the
+    very comparison the card exists to make.
+    """
     magnitude = abs(count)
     if magnitude < 1_000:
         return f"{count} B"
     if magnitude < 1_000_000:
         return f"{count / 1_000:.1f} KB"
-    return f"{count / 1_000_000:.2f} MB"
+    return f"{count / 1_000_000:.3f} MB" if precise else f"{count / 1_000_000:.2f} MB"
 
 
 def _detection(result: ScanResult, name: str) -> Detection | None:
@@ -185,7 +189,11 @@ def text_in_image(result: ScanResult) -> DetectorHit | None:
 
 def autoplay_media(result: ScanResult) -> DetectorHit | None:
     """Autoplaying video or heavy animated GIFs (MASTERSPEC §7.3)."""
-    media = [item for item in result.carbon.autoplay_media if item.autoplay or item.kind == "animated_gif"]
+    media = [
+        item
+        for item in result.carbon.autoplay_media
+        if item.autoplay or item.kind == "animated_gif"
+    ]
     detection = _detection(result, "autoplay_media")
     if not media and detection is None:
         return None
@@ -262,8 +270,10 @@ def third_party_widgets(result: ScanResult) -> DetectorHit | None:
         bytes_delta=saving,
         facts={
             "count": str(third_party.requests),
+            "plural": "" if third_party.requests == 1 else "s",
             "hosts": ", ".join(evidence) or "other domains",
             "host_count": str(len(third_party.hosts)),
+            "host_plural": "" if len(third_party.hosts) == 1 else "s",
         },
     )
 
@@ -315,14 +325,17 @@ def captions_bytes(result: ScanResult) -> DetectorHit | None:
     matched = [
         item
         for item in result.carbon.autoplay_media
-        if item.kind == "video" and (item.selector in detection.evidence or item.url in detection.evidence)
+        if item.kind == "video"
+        and (item.selector in detection.evidence or item.url in detection.evidence)
     ]
     video_bytes = sum(item.bytes for item in matched) or sum(
         item.bytes for item in result.carbon.autoplay_media if item.kind == "video"
     )
 
     caption_bytes = WEBVTT_BYTES_PER_VIDEO * video_count
-    share = f"{caption_bytes / video_bytes * 100:.2f}%" if video_bytes > 0 else "an unknown share of"
+    share = (
+        f"{caption_bytes / video_bytes * 100:.2f}%" if video_bytes > 0 else "an unknown share of"
+    )
 
     return DetectorHit(
         evidence=targets,
@@ -331,8 +344,8 @@ def captions_bytes(result: ScanResult) -> DetectorHit | None:
             "count": str(video_count),
             "plural": "" if video_count == 1 else "s",
             "caption_bytes": human_bytes(caption_bytes),
-            "video_bytes": human_bytes(video_bytes),
-            "net_bytes": human_bytes(video_bytes + caption_bytes),
+            "video_bytes": human_bytes(video_bytes, precise=True),
+            "net_bytes": human_bytes(video_bytes + caption_bytes, precise=True),
             "share": share,
         },
     )
@@ -434,5 +447,5 @@ DETECTOR_FACTS: Final[dict[str, frozenset[str]]] = {
     "lazy_above_fold": frozenset({"count"}),
     "no_reduced_motion": frozenset({"count"}),
     "text_in_image": frozenset({"count", "plural"}),
-    "third_party_widgets": frozenset({"count", "hosts", "host_count"}),
+    "third_party_widgets": frozenset({"count", "plural", "hosts", "host_count", "host_plural"}),
 }

@@ -26,7 +26,7 @@ import sys
 import threading
 from functools import partial
 from http import HTTPStatus
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -141,7 +141,7 @@ class DemoRequestHandler(SimpleHTTPRequestHandler):
 
 def build_server(
     *, port: int, root: Path, compress: bool, strip_prefix: str, quiet: bool
-) -> HTTPServer:
+) -> ThreadingHTTPServer:
     if not root.is_dir():
         raise SystemExit(f"Root directory does not exist: {root}")
 
@@ -156,12 +156,20 @@ def build_server(
     )
     DemoRequestHandler.server_quiet = quiet
 
+    # Threading is not optional here. This handler speaks HTTP/1.1 with
+    # keep-alive, and a browser opens several parallel connections and holds
+    # them open. A single-threaded HTTPServer blocks on the first one and the
+    # page never finishes loading -- curl survives it only because it makes one
+    # request and closes.
+    #
     # Bind to 127.0.0.1 rather than 0.0.0.0: this server has no business being
     # reachable from the network.
-    return HTTPServer(("127.0.0.1", port), handler_class)  # type: ignore[arg-type]
+    server = ThreadingHTTPServer(("127.0.0.1", port), handler_class)  # type: ignore[arg-type]
+    server.daemon_threads = True
+    return server
 
 
-def serve_forever_in_thread(server: HTTPServer) -> threading.Thread:
+def serve_forever_in_thread(server: ThreadingHTTPServer) -> threading.Thread:
     """Run `server` on a daemon thread. Used by the smoke tests."""
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()

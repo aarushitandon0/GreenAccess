@@ -1,0 +1,156 @@
+[
+  {
+    "id": "text_in_image",
+    "type": "synergy",
+    "title": "Text baked into images",
+    "detector": "text_in_image",
+    "params": {},
+    "a11y_effect": "Screen readers cannot read words that only exist as pixels. The text also cannot be resized, reflowed, selected, searched or translated, and it blurs at high zoom.",
+    "carbon_effect": {
+      "bytes_fn": "detection:text_in_image_suspected",
+      "note": "Real HTML text weighs a couple of kilobytes; the banner it replaces weighs orders of magnitude more."
+    },
+    "fix_id": "text_in_image",
+    "explanation_template": "Suspected text baked into the pixels of {count} image{plural}. Moving those words into real HTML {bytes_phrase}, and at the same time makes them readable by screen readers, resizable, selectable and translatable. Both goals point the same way here."
+  },
+  {
+    "id": "autoplay_media",
+    "type": "synergy",
+    "title": "Media that plays on its own",
+    "detector": "autoplay_media",
+    "params": {},
+    "a11y_effect": "Motion that starts without being asked can trigger vestibular symptoms and pulls focus from the content. WCAG 2.2.2 expects anything moving for more than five seconds to be pausable.",
+    "carbon_effect": {
+      "bytes_fn": "detection:autoplay_media",
+      "note": "A poster image plus controls downloads a few tens of kilobytes instead of the whole media file, and only for visitors who press play."
+    },
+    "fix_id": "autoplay_video",
+    "explanation_template": "Autoplay is set on {count} media element{plural}. Replacing it with a poster image and visible controls {bytes_phrase} for every visitor who never presses play, and hands control of the motion back to the person using the page."
+  },
+  {
+    "id": "no_reduced_motion",
+    "type": "synergy",
+    "title": "Animation with no reduced-motion escape",
+    "detector": "no_reduced_motion",
+    "params": {},
+    "a11y_effect": "People who get migraines, nausea or dizziness from movement have told the browser so through their operating system. Without a prefers-reduced-motion rule the page ignores them.",
+    "carbon_effect": {
+      "bytes_fn": "zero",
+      "note": "This one saves no transfer bytes. It saves processor and GPU work on the visitor's device, which is where the Sustainable Web Design model puts the majority of a page view's energy."
+    },
+    "fix_id": "reduced_motion",
+    "explanation_template": "This page carries {count} animation or transition rule{plural} and never checks prefers-reduced-motion, so the movement runs even for visitors whose operating system has asked for it to stop. Adding the media query is a few lines of CSS and gives those readers a still page."
+  },
+  {
+    "id": "eager_below_fold",
+    "type": "synergy",
+    "title": "Below-the-fold images loaded eagerly",
+    "detector": "eager_below_fold",
+    "params": {},
+    "a11y_effect": "Everything below the fold competes for bandwidth with the content in view, so the first screen takes longer to become readable and usable. That hurts most on slow connections and on devices where a screen reader is waiting for the page to settle.",
+    "carbon_effect": {
+      "bytes_fn": "detection:eager_below_fold",
+      "note": "These bytes are deferred rather than removed. A visitor who scrolls the whole page still downloads them; one who does not, never does."
+    },
+    "fix_id": "lazy_load",
+    "explanation_template": "This page loads {count} image{plural} eagerly below the first screen. Deferring them with loading=lazy {bytes_phrase} for a visitor who does not scroll that far, and lets the first screen finish sooner for everyone."
+  },
+  {
+    "id": "third_party_widgets",
+    "type": "synergy",
+    "title": "Third-party scripts and widgets",
+    "detector": "third_party_widgets",
+    "params": {},
+    "a11y_effect": "Widgets injected by another domain are outside your control: their focus order, labelling and contrast are whatever the vendor shipped, and they frequently trap keyboard focus or appear as unlabelled controls.",
+    "carbon_effect": {
+      "bytes_fn": "detection:third_party_scripts",
+      "note": "Third-party code often pulls further requests of its own, so the measured bytes are a floor rather than the full cost."
+    },
+    "fix_id": "third_party_remove",
+    "explanation_template": "This page makes {count} request{plural} to {host_count} other registrable domain{host_plural} ({hosts}). Removing or deferring that code {bytes_phrase}, and takes back control of markup you are accountable for but cannot edit."
+  },
+  {
+    "id": "div_soup_widgets",
+    "type": "synergy",
+    "title": "Clickable elements that are not buttons",
+    "detector": "div_soup_widgets",
+    "params": {},
+    "a11y_effect": "A div with an onclick handler is not focusable, is not announced as a control, and does not respond to Enter or Space. Keyboard and screen-reader users simply cannot operate it.",
+    "carbon_effect": {
+      "bytes_fn": "detection:div_soup_widgets",
+      "note": "A native button brings focus handling, keyboard activation and roles for free, so the hand-written script that emulated them can go."
+    },
+    "fix_id": "manual_review",
+    "explanation_template": "This page has {count} clickable element{plural} built from divs or spans rather than buttons or links. Swapping them for native elements makes the controls focusable, operable by Enter and Space, and announceable by screen readers, and lets the hand-written keyboard and focus code go ({bytes_phrase}). This one needs a developer: the markup change is not safe to automate."
+  },
+  {
+    "id": "dark_mode",
+    "type": "tension",
+    "title": "Dark mode: energy saving versus readability",
+    "detector": "dark_mode",
+    "params": {},
+    "a11y_effect": "Genuinely split. People with photophobia, migraine or concussion recovery often need a dark theme to read at all. People with astigmatism and some low-vision conditions get halation, where light text on a dark field smears, and read a light theme far more easily. Neither group is a minority you can design away.",
+    "carbon_effect": {
+      "bytes_fn": "constant:DARK_MODE_CSS_BYTES",
+      "note": "Adding a theme costs bytes rather than saving them. The energy argument for dark mode is about OLED screens, where dark pixels draw less power, and that saving is on the visitor's device, not in transfer."
+    },
+    "fix_id": "dark_mode_tokens",
+    "explanation_template": "This page has no prefers-color-scheme handling, so every visitor gets the light theme whatever their system asks for. A dark theme is a real trade-off rather than a straight win. On an OLED screen dark pixels draw measurably less power, and for readers with photophobia, migraine or light sensitivity a dark theme is the difference between reading the page and closing it. For readers with astigmatism, though, light text on a dark background halates and smears, and a forced dark theme makes the page harder to read, not easier. The resolution is not to pick a side: honour prefers-color-scheme so each visitor gets what their system already says they want, and add a visible toggle so anyone can override it. Use #121212 rather than pure black with off-white text near #E8E8E8; the softer contrast reduces halation while still meeting AA. Expect this to cost roughly {css_bytes} of extra CSS and script, about {grams_abs} per view on the estimate, and to be worth it."
+  },
+  {
+    "id": "captions_bytes",
+    "type": "tension",
+    "title": "Captions add bytes, and are worth them",
+    "detector": "captions_bytes",
+    "params": {},
+    "a11y_effect": "Without captions, deaf and hard-of-hearing visitors get nothing from the video, and neither does anyone watching with the sound off, in a noisy place, or in a second language. WCAG 1.2.2 requires captions for prerecorded audio.",
+    "carbon_effect": {
+      "bytes_fn": "constant:WEBVTT_BYTES_PER_VIDEO",
+      "note": "WebVTT is plain text. The estimate used here is 2 KB per video, which covers roughly a minute of dialogue; the real file depends on how much is said."
+    },
+    "fix_id": "manual_review",
+    "explanation_template": "No caption track on {count} video{plural} here. Adding one costs bytes rather than saving them, and the point of this card is to show how few. A WebVTT track is plain text: about {caption_bytes} per video on our estimate, against {video_bytes} of video already being shipped. The page's video payload goes from {video_bytes} to {net_bytes}, an increase of {share}. That is the entire carbon cost of making the video usable by deaf and hard-of-hearing visitors, and it is a rounding error next to the media it describes. Captions also need writing, so this is a person's job rather than a generated fix."
+  },
+  {
+    "id": "lazy_above_fold",
+    "type": "tension",
+    "title": "Lazy loading applied above the fold",
+    "detector": "lazy_above_fold",
+    "params": {},
+    "a11y_effect": "An image the visitor is already looking at should not wait for a second round trip. Deferring it delays the largest contentful paint, leaves layout shifting under the reader, and can leave a screen-reader user hearing about an image that has not arrived.",
+    "carbon_effect": {
+      "bytes_fn": "zero",
+      "note": "Nothing is saved. The bytes are fetched either way; lazy loading only changes when. Above the fold it changes when for the worse."
+    },
+    "fix_id": "lazy_load",
+    "explanation_template": "Inside the first screen, this page marks {count} image{plural} loading=lazy. This is the carbon fix applied one step too far: below the fold it is a genuine saving; above it, it saves nothing at all, because the visitor is already looking at the image and the browser fetches it regardless. The delta is zero bytes and the cost is a slower first paint. Remove the attribute from anything in the initial viewport and keep it everywhere below."
+  },
+  {
+    "id": "high_res_zoom",
+    "type": "tension",
+    "title": "Image compression versus zoom",
+    "detector": "high_res_zoom",
+    "params": {},
+    "a11y_effect": "WCAG 1.4.4 expects content to survive 200% zoom, and plenty of people browse at that magnification or on a 2x display. An image with no resolution headroom left turns to mush for exactly the readers who most need to enlarge it.",
+    "carbon_effect": {
+      "bytes_fn": "zero",
+      "note": "This finding exists to stop a saving being taken, not to claim one. Leaving these images alone costs nothing extra; downscaling them further would save bytes at a real cost to readability."
+    },
+    "fix_id": "image_compress",
+    "explanation_template": "Resolution headroom is already below {factor}x on {count} image{plural}, so the compression fix must skip those images. Downscaling an image to exactly its rendered size looks fine at 100% on a 1x screen and falls apart at 200% zoom or on any high-density display, which is precisely where readers with low vision are. Keep {factor}x the rendered width as the floor, take the saving on the genuinely oversized images instead, and accept zero bytes saved here."
+  },
+  {
+    "id": "font_subsetting",
+    "type": "tension",
+    "title": "Font subsetting versus the words people are called",
+    "detector": "font_subsetting",
+    "params": {},
+    "a11y_effect": "A subset that drops a glyph does not fail loudly. The character falls back to a system font mid-word, or renders as a box, which is jarring to read and can make a name unreadable. Names with diacritics, currency symbols and any second script are the usual casualties.",
+    "carbon_effect": {
+      "bytes_fn": "zero",
+      "note": "Dropping unused weights is a safe saving and the scanner's font_bloat detector already counts it. How much a character-range subset would save depends on which ranges the page truly needs, so no number is claimed here."
+    },
+    "fix_id": "manual_review",
+    "explanation_template": "This page ships {count} font file{plural} totalling {font_bytes}, enough that subsetting will come up. Trimming unused weights and styles is safe and worth doing. Trimming character ranges is where the tension sits: a latin-only subset saves more bytes and then breaks the moment someone's name carries an accent, a price appears in a second currency, or a quotation arrives in another script, and the fallback happens silently mid-word. Cut weights first, keep the ranges your content and your readers' names actually use, and always declare a sensible system fallback so a missing glyph degrades rather than disappears."
+  }
+]

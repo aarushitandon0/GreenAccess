@@ -69,7 +69,7 @@ _SEGMENTS: Final[tuple[tuple[str, float], ...]] = (
 
 def segment_shares() -> dict[str, float]:
     """The four energy shares, for surfacing in ``CarbonResult.assumptions``."""
-    return {name: share for name, share in _SEGMENTS}
+    return dict(_SEGMENTS)
 
 
 def energy_per_byte_by_component(transfer_bytes: float) -> dict[str, float]:
@@ -171,9 +171,7 @@ def per_visit(
 
 def grams_return_visit(transfer_bytes: float, *, green: bool = False) -> float:
     """Grams for a single returning visitor, who re-downloads only a fraction."""
-    return per_byte(
-        transfer_bytes * PERCENTAGE_OF_DATA_LOADED_ON_SUBSEQUENT_LOAD, green=green
-    )
+    return per_byte(transfer_bytes * PERCENTAGE_OF_DATA_LOADED_ON_SUBSEQUENT_LOAD, green=green)
 
 
 def rating(grams: float) -> str:

@@ -17,7 +17,6 @@ import pytest
 from app.scanner.keyboard import FocusStop, crawl, detect_trap
 
 
-
 # --------------------------------------------------------------------------- #
 # Pure cycle detection
 # --------------------------------------------------------------------------- #

@@ -338,7 +338,9 @@ def validate_url(
     # Both the bare host and host:port forms are accepted on the list.
     if host in allow_list or f"{host}:{port}" in allow_list:
         literal = parse_ip_literal(host)
-        resolved = (str(literal),) if literal is not None else _safe_resolve_for_override(host, port)
+        resolved = (
+            (str(literal),) if literal is not None else _safe_resolve_for_override(host, port)
+        )
         return ValidatedUrl(
             url=url,
             scheme=scheme,

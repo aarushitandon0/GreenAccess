@@ -71,6 +71,7 @@ def _top_domain(host: str) -> str:
         value = parsed.registered_domain
     return value or ""
 
+
 # MASTERSPEC §6.2 type mapping from the CDP resourceType.
 _TYPE_MAP: dict[str, ResourceType] = {
     "Document": ResourceType.HTML,

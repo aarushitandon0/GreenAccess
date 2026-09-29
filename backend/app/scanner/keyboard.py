@@ -57,6 +57,8 @@ class FocusStop:
     key: str
     has_visible_focus: bool
     is_body: bool
+    #: Selector of the element containing this control, used to name a trap.
+    container: str = ""
 
 
 # Collect every focusable element, so we can tell "trapped" from "that is all
@@ -147,15 +149,32 @@ _DESCRIBE_ACTIVE_JS = """
     // If blur/focus is not permitted, fall back to the style checks alone.
   }
 
-  const box = el.getBoundingClientRect();
   const selector = selectorFor(el);
+
+  // The element that holds this control. A trap is a property of a container
+  // (a modal, a widget), so reporting "button#promo-yes" is less useful than
+  // reporting "div#promo". Walk up to the nearest dialog, or the nearest
+  // ancestor carrying an id, falling back to the direct parent.
+  let container = el.parentElement;
+  let hop = el.parentElement;
+  let hops = 0;
+  while (hop && hops < 5) {
+    const role = hop.getAttribute && hop.getAttribute('role');
+    if (role === 'dialog' || role === 'alertdialog' || hop.id) { container = hop; break; }
+    hop = hop.parentElement;
+    hops += 1;
+  }
 
   return {
     isBody: false,
     selector: selector,
+    container: container ? selectorFor(container) : '',
     tag: el.tagName,
-    key: selector + '@' + Math.round(box.x) + ',' + Math.round(box.y) +
-         ',' + Math.round(box.width) + ',' + Math.round(box.height),
+    // Identity is the selector path alone. It must NOT include the bounding
+    // box: Tab scrolls the page to reveal each control, so a viewport-relative
+    // box makes one element look like several and breaks cycle detection.
+    // The path (id, or an nth-of-type chain) is already unique per element.
+    key: selector,
     hasVisibleFocus: hasOutline || hasShadowRing || changedWhenBlurred,
   };
 }
@@ -189,9 +208,15 @@ def detect_trap(stops: list[FocusStop], total_focusable: int) -> tuple[bool, str
         if total_focusable <= len(cycle_members):
             continue
 
-        container = _common_ancestor_selector(
-            [stop.selector for stop in stops if stop.key in cycle_members]
-        )
+        members = [stop for stop in stops if stop.key in cycle_members]
+
+        # If every trapped control reports the same container, that is the
+        # answer. Otherwise fall back to the longest shared selector prefix.
+        containers = {stop.container for stop in members if stop.container}
+        if len(containers) == 1:
+            return True, containers.pop()
+
+        container = _common_ancestor_selector([stop.selector for stop in members])
         return True, container
 
     return False, None
@@ -222,8 +247,9 @@ async def crawl(page: Page, *, max_presses: int = MAX_TAB_PRESSES) -> KeyboardRe
 
     # Start from a known place, so the first Tab lands on the first stop.
     try:
-        await page.evaluate("() => { document.body.setAttribute('tabindex','-1');"
-                            " document.body.focus(); }")
+        await page.evaluate(
+            "() => { document.body.setAttribute('tabindex','-1'); document.body.focus(); }"
+        )
     except PlaywrightError as exc:
         logger.warning("could not focus body: %s", exc)
 
@@ -250,6 +276,7 @@ async def crawl(page: Page, *, max_presses: int = MAX_TAB_PRESSES) -> KeyboardRe
                 key=str(described.get("key") or ""),
                 has_visible_focus=bool(described.get("hasVisibleFocus")),
                 is_body=bool(described.get("isBody")),
+                container=str(described.get("container") or ""),
             )
         )
 

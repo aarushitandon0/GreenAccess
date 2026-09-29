@@ -83,10 +83,12 @@ weight:
 	$(PY) scripts/demo_page_weight.py
 
 # ---------------------------------------------------------------- scan -----
-# Implemented in the scanner phase.
+# Scans URL=<url> and prints steps, scores and trade-offs. The demo site lives
+# on localhost, which the SSRF guard blocks by default, so the two demo hosts
+# are allow-listed explicitly rather than by disabling the guard.
 
 scan:
-	@echo "make scan: not implemented yet (scanner phase). URL=$(URL)"
+	cd backend && ../$(PY) -m app.cli scan $(URL) --allow-local localhost:8081 --allow-local localhost:8082
 
 e2e:
 	@echo "make e2e: not implemented yet (frontend phase)"

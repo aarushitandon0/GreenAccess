@@ -19,7 +19,8 @@ and conventions are in [CLAUDE.md](CLAUDE.md).
 | 0 — Bootstrap, design tokens, demo site | done |
 | 1 — Scanner core, scoring, trade-off engine, CLI | done |
 | 2 — Backend API: scans, SSE progress, persistence, history | done |
-| 3+ — UI, fixes, patching | not started |
+| 3 — LLM fixes, patcher, real re-scan (backend) | done; see "Fixes and patching" |
+| 4+ — UI | not started |
 
 ## Quick start
 
@@ -104,6 +105,10 @@ The backend serves MASTERSPEC §12 on `:8000` (interactive docs at `/docs`).
 | POST | `/api/scans/{id}/cancel` | Cancels a queued or running scan |
 | GET | `/api/history?host=` | Recent scans, plus a combined-score trend per host |
 | GET | `/api/demo` | The Daily Herald's URL |
+| POST | `/api/scans/{id}/fixes` | Generates fixes → `{scan_id, fixes, ai_usage}`. SSE step `fixes`. |
+| POST | `/api/scans/{id}/patch` | `{accepted_fix_ids}` → `202 {scan_id, events_after}`; builds, serves and re-scans. SSE steps `patch`, `rescan`. |
+| GET | `/api/scans/{id}/patch.zip` | Patched HTML, `greenaccess-patch.css`, optimised images, `CHANGES.md` |
+| GET | `/patched/{id}/…` | The patched copy, static only, with a restrictive CSP |
 
 Every error is `{"error": {"code", "message"}}`. Codes: `URL_BLOCKED`, `TIMEOUT`,
 `PAGE_TOO_LARGE`, `NAV_FAILED`, `LLM_UNAVAILABLE`, `PATCH_FAILED` from the spec, plus
@@ -119,8 +124,46 @@ id=$(curl -s -X POST localhost:8000/api/scans -H 'content-type: application/json
 curl -N localhost:8000/api/scans/$id/events
 ```
 
-`make dev` allows the two demo hosts through `ALLOWED_LOCAL_HOSTS` unless you set it
-yourself.
+Each phase on the event stream (scan, fixes, patch + re-scan) ends with its own
+`done` or `error`; follow just the new one with `?after=<events_after>`.
+
+`make dev` allows the two demo hosts and the backend itself (`localhost:8000`, which
+serves the patched copy the re-scan visits) through `ALLOWED_LOCAL_HOSTS` unless you
+set it yourself.
+
+## Fixes and patching
+
+`POST /fixes` maps every finding to a MASTERSPEC §8.1 fix kind. Deterministic fixes
+(contrast colours, lazy loading, WebP re-encoding, autoplay, reduced motion, heading
+levels, page language) need no AI. The LLM (Anthropic API, model from
+`ANTHROPIC_MODEL`) writes alt text for the 6 heaviest images (vision, ≤768 px),
+accessible names, and transcribes text baked into allow-listed demo banners. It only
+ever sees one element, at most two parent levels, and nearby text.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | unset | Needed for live AI fixes. The API is billed separately from a Claude.ai plan. |
+| `ANTHROPIC_MODEL` | `claude-opus-5` | Model for fix generation |
+| `LLM_OFFLINE` | `1` | Serve only cached answers; set `0` to allow live calls |
+| `LLM_CACHE_DIR` | `backend/.llm_cache` | Writable answer cache (the committed demo cache is always read too) |
+| `PATCHED_BASE_URL` | `http://localhost:8000/patched` | Where the re-scan finds the patched copy; its host must be in `ALLOWED_LOCAL_HOSTS` |
+
+Without a key, or offline with no cached answer, AI-assisted fixes fall back to
+values derived from the page (`ai_generated: false`) or are listed as
+"manual fix needed", and `ai_usage.unavailable_reason` says why. Every AI value is
+labelled "AI-generated, review before use", and `ai_usage` separates live calls and
+billed tokens from cached ones.
+
+`POST /patch` applies the accepted fixes to a copy of the page, serves it under
+`/patched/{id}/`, re-scans it with the same pipeline, and stores the result as
+`after`. The patch never removes content (except allow-listed demo trackers and
+banners replaced by their own text), lazy-loads only images measured below the fold,
+and keeps an optimised image only if it is actually smaller.
+
+```bash
+make demo-record   # live run with ANTHROPIC_API_KEY; records the LLM cache + demo fixtures
+make demo-replay   # the same loop with LLM_OFFLINE=1, served from the committed cache
+```
 
 ## Repository layout
 

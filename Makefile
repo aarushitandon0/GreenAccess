@@ -16,7 +16,8 @@ endif
 URL ?= http://localhost:8081
 
 .PHONY: help install dev demo test test-backend test-frontend lint lint-backend \
-        lint-frontend contrast assets weight scan types e2e dogfood build clean
+        lint-frontend contrast assets weight scan types e2e dogfood build clean \
+        demo-record demo-replay
 
 help:
 	@echo "GreenAccess targets:"
@@ -31,6 +32,8 @@ help:
 	@echo "  types      regenerate frontend/src/lib/types.ts from backend/app/models.py"
 	@echo "  e2e        Playwright end-to-end run against the demo site"
 	@echo "  dogfood    scan GreenAccess's own frontend"
+	@echo "  demo-record  scan -> fixes -> patch -> re-scan the demo with the live LLM; record cache"
+	@echo "  demo-replay  the same loop with LLM_OFFLINE=1, from the committed cache"
 
 # ---------------------------------------------------------------- setup ----
 
@@ -97,6 +100,16 @@ scan:
 
 types:
 	$(PY) scripts/gen_ts_types.py
+
+# ------------------------------------------------------------ fix loop ----
+# The full loop against the demo site, through the real API. demo-record needs
+# ANTHROPIC_API_KEY and writes backend/app/fixtures/{llm_cache/,demo_scan_*.json}.
+
+demo-record:
+	cd backend && GA_RECORD_DEMO=1 LLM_OFFLINE=0 ../$(PY) -m pytest -q -s -rxX tests/test_patch_integration.py
+
+demo-replay:
+	cd backend && LLM_OFFLINE=1 ../$(PY) -m pytest -q -s -rxX tests/test_patch_integration.py
 
 e2e:
 	@echo "make e2e: not implemented yet (frontend phase)"

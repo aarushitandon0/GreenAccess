@@ -422,7 +422,28 @@ a {
   align-items: center;
 }
 
-/* Defect CHAT-CLOSE-01: icon-only control, no accessible name. */
+/* Defect CHAT-CLOSE-01: icon-only control, no accessible name at all. */
+.icon-x {
+  display: block;
+  width: 14px;
+  height: 14px;
+  position: relative;
+}
+
+.icon-x::before,
+.icon-x::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 0;
+  width: 2px;
+  height: 14px;
+  background: #ffffff;
+}
+
+.icon-x::before { transform: rotate(45deg); }
+.icon-x::after { transform: rotate(-45deg); }
+
 .chat__close {
   background: none;
   border: none;

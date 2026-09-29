@@ -16,7 +16,7 @@ endif
 URL ?= http://localhost:8081
 
 .PHONY: help install dev demo test test-backend test-frontend lint lint-backend \
-        lint-frontend contrast assets weight scan e2e dogfood build clean
+        lint-frontend contrast assets weight scan types e2e dogfood build clean
 
 help:
 	@echo "GreenAccess targets:"
@@ -28,6 +28,7 @@ help:
 	@echo "  assets     regenerate the Daily Herald media assets"
 	@echo "  weight     measure the demo site's first-load transfer size"
 	@echo "  scan       run the scanner CLI against URL=<url>"
+	@echo "  types      regenerate frontend/src/lib/types.ts from backend/app/models.py"
 	@echo "  e2e        Playwright end-to-end run against the demo site"
 	@echo "  dogfood    scan GreenAccess's own frontend"
 
@@ -83,14 +84,19 @@ weight:
 	$(PY) scripts/demo_page_weight.py
 
 # ---------------------------------------------------------------- scan -----
-# Prints the ScanResult JSON on stdout and step progress on stderr. The demo
-# site and its tracker host are private addresses, so this target allow-lists
-# exactly those two, and only when ALLOWED_LOCAL_HOSTS is not already set. The
-# SSRF guard itself stays on: every other private address is still blocked.
+# Scans URL=<url> and prints steps, scores and trade-offs. The demo site lives
+# on localhost, which the SSRF guard blocks by default, so the two demo hosts
+# are allow-listed explicitly rather than by disabling the guard.
 
-scan: export ALLOWED_LOCAL_HOSTS ?= localhost:8081,localhost:8082
 scan:
-	@cd backend && ../$(PY) -m app.cli scan $(URL)
+	cd backend && ../$(PY) -m app.cli scan $(URL) --allow-local localhost:8081 --allow-local localhost:8082
+
+# ---------------------------------------------------------------- types ----
+# The frontend's API types are generated from the pydantic models; a backend
+# test fails if the committed file is stale.
+
+types:
+	$(PY) scripts/gen_ts_types.py
 
 e2e:
 	@echo "make e2e: not implemented yet (frontend phase)"

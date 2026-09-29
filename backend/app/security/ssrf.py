@@ -18,11 +18,13 @@ What this module enforces:
 * **IPv6 embeddings are unwrapped.** ``::ffff:127.0.0.1`` (IPv4-mapped), 6to4,
   Teredo and NAT64 all carry an IPv4 address inside an IPv6 one.
 * **Redirects are re-validated.** The first hop being public says nothing about
-  the second. Playwright's route handler never sees redirect hops, so the scan
-  browser runs behind :class:`app.security.egress_proxy.EgressProxy`, which
-  re-runs :func:`validate_url` on every connection, redirects included.
-  :func:`make_request_guard` is an additional first layer on requests the page
-  starts.
+  the second. Playwright's route handler never sees redirect hops, so the
+  scan browser checks every hop with a CDP ``Fetch`` guard
+  (:mod:`app.scanner.browser`) and also runs behind
+  :class:`app.security.egress_proxy.EgressProxy`, which re-runs
+  :func:`validate_url` on every connection, including ones a page-level CDP
+  session never sees (out-of-process iframes, workers).
+  :func:`make_request_guard` is the first layer on requests the page starts.
 
 Local development hosts are permitted **only** by naming them in
 ``ALLOWED_LOCAL_HOSTS`` (MASTERSPEC §17). There is no flag that switches the
@@ -36,6 +38,7 @@ those, never re-resolving.
 
 from __future__ import annotations
 
+import asyncio
 import ipaddress
 import re
 import socket
@@ -45,8 +48,10 @@ from typing import Final
 from urllib.parse import urlsplit
 
 __all__ = [
+    "IN_BROWSER_SCHEMES",
     "UrlBlocked",
     "ValidatedUrl",
+    "check_browser_request",
     "make_request_guard",
     "parse_ip_literal",
     "validate_url",
@@ -414,9 +419,9 @@ def make_request_guard(
     that fail validation, recording them for the scan report.
 
     It does **not** see redirect hops: Playwright follows a 302 without calling
-    the route handler again. Redirects (and every other connection) are
-    enforced by :class:`app.security.egress_proxy.EgressProxy`, which the scan
-    browser is launched behind. Use both.
+    the route handler again. Redirects are enforced by the CDP ``Fetch`` guard
+    in :mod:`app.scanner.browser` and, at the network level, by
+    :class:`app.security.egress_proxy.EgressProxy`. Use all three.
 
     Usage::
 
@@ -429,13 +434,40 @@ def make_request_guard(
     """
 
     async def guard(route, request) -> None:  # noqa: ANN001 - Playwright types
-        try:
-            validate_url(request.url, allowed_local_hosts=allowed_local_hosts)
-        except UrlBlocked as blocked:
+        reason = await check_browser_request(request.url, allowed_local_hosts=allowed_local_hosts)
+        if reason is not None:
             if on_block is not None:
-                on_block(request.url, blocked.reason)
+                on_block(request.url, reason)
             await route.abort("blockedbyclient")
             return
         await route.continue_()
 
     return guard
+
+
+#: Schemes a page may use that never leave the browser, so there is no
+#: address to check. Anything else that is not http(s) is refused.
+IN_BROWSER_SCHEMES: Final[frozenset[str]] = frozenset({"data", "blob"})
+
+
+async def check_browser_request(
+    url: str,
+    *,
+    allowed_local_hosts: tuple[str, ...] | frozenset[str] | None = None,
+) -> str | None:
+    """Decide one browser request: None to let it through, else the reason to block.
+
+    Shared by the Playwright route guard (first hop of every request) and the
+    CDP ``Fetch`` guard in :mod:`app.scanner.browser` (every redirect hop,
+    which Playwright's route handler never sees). DNS resolution is blocking,
+    so it runs in a worker thread rather than stalling the event loop that is
+    also serving other scans and their SSE streams.
+    """
+    scheme = urlsplit(url).scheme.lower()
+    if scheme in IN_BROWSER_SCHEMES:
+        return None
+    try:
+        await asyncio.to_thread(validate_url, url, allowed_local_hosts=allowed_local_hosts)
+    except UrlBlocked as blocked:
+        return blocked.reason
+    return None

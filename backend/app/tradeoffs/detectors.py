@@ -109,22 +109,41 @@ REQUIRED_DETECTIONS: Final[tuple[str, ...]] = tuple(
 # --------------------------------------------------------------------------- #
 
 
-def human_bytes(count: int) -> str:
-    """Format a byte count for a card. Decimal units, matching the SWD model."""
+def human_bytes(count: int, *, precise: bool = False) -> str:
+    """Format a byte count for a card. Decimal units, matching the SWD model.
+
+    `precise` widens the megabyte format from two decimals to three. The
+    captions finding needs it: at two decimals a video and that same video
+    plus a 2 KB caption track both print as "1.00 MB", which would hide the
+    very comparison the card exists to make.
+    """
     magnitude = abs(count)
     if magnitude < 1_000:
         return f"{count} B"
     if magnitude < 1_000_000:
         return f"{count / 1_000:.1f} KB"
-    return f"{count / 1_000_000:.2f} MB"
+    return f"{count / 1_000_000:.3f} MB" if precise else f"{count / 1_000_000:.2f} MB"
 
 
 def _detection(result: ScanResult, name: str) -> Detection | None:
-    """The first scanner detection with this name, if the scanner recorded one."""
-    for detection in result.carbon.detections:
-        if detection.detector == name:
-            return detection
-    return None
+    """Every scanner detection with this name, merged into one, or None.
+
+    The carbon detectors emit one detection per offending element (one per
+    banner, one per below-the-fold image), so a rule must see all of them:
+    savings are summed and evidence is concatenated in scan order.
+    """
+    matches = [d for d in result.carbon.detections if d.detector == name]
+    if not matches:
+        return None
+    if len(matches) == 1:
+        return matches[0]
+    return Detection(
+        detector=name,
+        summary=matches[0].summary,
+        estimated_saving_bytes=sum(d.estimated_saving_bytes for d in matches),
+        evidence=[item for d in matches for item in d.evidence],
+        saves_bytes=any(d.saves_bytes for d in matches),
+    )
 
 
 def _images_with(result: ScanResult, issue: ImageIssueKind) -> list[ImageIssue]:
@@ -264,8 +283,10 @@ def third_party_widgets(result: ScanResult) -> DetectorHit | None:
         bytes_delta=saving,
         facts={
             "count": str(third_party.requests),
+            "plural": "" if third_party.requests == 1 else "s",
             "hosts": ", ".join(evidence) or "other domains",
             "host_count": str(len(third_party.hosts)),
+            "host_plural": "" if len(third_party.hosts) == 1 else "s",
         },
     )
 
@@ -336,8 +357,8 @@ def captions_bytes(result: ScanResult) -> DetectorHit | None:
             "count": str(video_count),
             "plural": "" if video_count == 1 else "s",
             "caption_bytes": human_bytes(caption_bytes),
-            "video_bytes": human_bytes(video_bytes),
-            "net_bytes": human_bytes(video_bytes + caption_bytes),
+            "video_bytes": human_bytes(video_bytes, precise=True),
+            "net_bytes": human_bytes(video_bytes + caption_bytes, precise=True),
             "share": share,
         },
     )
@@ -439,5 +460,5 @@ DETECTOR_FACTS: Final[dict[str, frozenset[str]]] = {
     "lazy_above_fold": frozenset({"count"}),
     "no_reduced_motion": frozenset({"count"}),
     "text_in_image": frozenset({"count", "plural"}),
-    "third_party_widgets": frozenset({"count", "hosts", "host_count"}),
+    "third_party_widgets": frozenset({"count", "plural", "hosts", "host_count", "host_plural"}),
 }

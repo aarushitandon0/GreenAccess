@@ -4,7 +4,7 @@ This file is the **source of truth** for the demo-site integration tests
 (MASTERSPEC §15). Every defect below is deliberate. If you change the demo site,
 change this table in the same commit, or the tests will disagree with reality.
 
-Measured on the generated assets at 2,320,437 bytes first load, viewport
+Measured on the generated assets at 2,320,779 bytes first load, viewport
 1366×768 (MASTERSPEC §6.1). That weight yields 0.671 g CO2e per view under the
 Sustainable Web Design v3 model, which is carbon grade **E** — inside the E/F
 band MASTERSPEC §11 targets.
@@ -17,16 +17,16 @@ measurements of a real saving. Tests assert ranges, never exact bytes.
 | ID | Where | Expected to be caught by | Est. byte cost |
 |---|---|---|---|
 | `HTML-LANG-01` | `index.html` — `<html>` has no `lang` | axe `html-has-lang` | 0 |
-| `LANDMARK-01` | `index.html` — `div.masthead` / `div.wrap` / `div.footer` instead of `header`/`main`/`footer`; no skip link | axe `region` (15 nodes). axe 4.13 passes `landmark-one-main` on this page, so `region` is the rule that catches it | 0 |
+| `LANDMARK-01` | `index.html` — `div.masthead` / `div.wrap` / `div.footer` instead of `header`/`main`/`footer`; no skip link | axe `region`, `landmark-one-main` | 0 |
 | `HEADING-ORDER-01` | `.hero__overlay` — `h1` followed directly by `h4`; all card titles are `h4` | axe `heading-order` | 0 |
 | `IMG-ALT-01` | 6 of 8 `.card__image` elements plus `banner-subscribe.png` have no `alt` (7 nodes) | axe `image-alt` | 0 |
 | `LINK-NAME-01` | `.nav__icon` — icon-only link containing an empty `span` | axe `link-name` | 0 |
-| `CHAT-CLOSE-01` | `.chat__close` — icon-only button whose `×` glyph is `aria-hidden`, leaving no accessible name. (A bare `×` text node would name it "×", which axe accepts; that is why the glyph is hidden.) | axe `button-name` | 0 |
-| `FORM-LABEL-01` | `.newsletter__form` — `name`, `email`, `edition` and `terms` controls have no `<label>` or `aria-label` (4 controls) | axe `label` (`#terms-box`) and `select-name` (`edition`): 2 nodes. axe 4.13 accepts the `placeholder` on `name`/`email` as a fallback accessible name, so those two are not flagged | 0 |
+| `CHAT-CLOSE-01` | `.chat__close` — `×` button with no accessible name | axe `button-name` | 0 |
+| `FORM-LABEL-01` | `.newsletter__form` — `name`, `email`, `edition` and `terms` controls have no label of any kind (4 nodes) | axe `label`, `select-name` | 0 |
 | `CONTRAST-01` | `.fine-print` (#B8B8B8 on #FFF ≈ 1.9:1), `.masthead__date` (#B0B0B0 ≈ 2.1:1), `.card__meta` (#B4B4B4 ≈ 2.0:1) | axe `color-contrast` | 0 |
 | `DIV-BUTTON-01` | `.pager__btn` ×3 and `.tag` ×4 — clickable `div`s with `onclick`, no `tabindex`, no keyboard handler | trade-off detector `div_soup_widgets`; one has `role="button"` so axe may also flag it | 0 |
 | `FOCUS-01` | `.nav a { outline: none }` — focus indicator removed with no replacement | keyboard crawl `focus_visible_missing_count` | 0 |
-| `TRAP-01` | `#promo` — `js/main.js` cancels every Tab press once focus is inside, cycling 3 controls forever; no Escape handler | keyboard crawl `trap_detected`, `trap_container` = `div#promo` | 0 |
+| `TRAP-01` | `#promo` — `js/main.js` cancels every Tab press once focus is inside, cycling 3 controls forever; no Escape handler | keyboard crawl `trap_detected` | 0 |
 
 ### Notes on the keyboard trap
 
@@ -40,14 +40,14 @@ threshold. `trap_container` should resolve to `#promo`.
 | ID | Where | Expected detector (§7.3) | Est. byte cost |
 |---|---|---|---|
 | `VIDEO-AUTOPLAY-01` | `.hero__video` — `autoplay loop muted preload="auto"`, no poster | `autoplay_media` | ~1,001,000 (full media bytes) |
-| `IMG-OVERSIZE-01` | 8 `.card__image` — natural 3000×2000, rendered 400×260 (the detector also flags `banner-subscribe.png`; see below) | `oversized_image` | ~648,000 for the 8 articles (~81,000 each); ~675,000 with the banner |
-| `IMG-EAGER-01` | every image below the first viewport, all `loading="eager"`: `article-03`…`article-08` and `banner-subscribe.png` (7 images; `banner-sale`, `article-01` and `article-02` start inside the first 768 px) | `eager_below_fold` | ~723,000 (deferred, not removed) |
+| `IMG-OVERSIZE-01` | 8 `.card__image` — natural 3000×2000, rendered 400×260 | `oversized_image` | ~648,000 total (~81,000 each) |
+| `IMG-EAGER-01` | every image below the first viewport, all `loading="eager"` | `eager_below_fold` | ~1,077,000 (deferred, not removed) |
 | `IMG-DIM-01` | all 10 `img` elements — no `width`/`height` attributes | `no_dimensions` | 0 (layout-shift note) |
 | `IMG-TEXT-01` | `banner-sale.jpg` — 1600×400, text baked in, 175-char `alt` duplicating it | `text_in_image_suspected` | ~184,000 (bytes − ~2 KB of text) |
 | `IMG-TEXT-02` | `banner-subscribe.png` — 1600×400, text baked in, no `alt` | `text_in_image_suspected` | ~192,000 |
 | `THIRD-PARTY-01` | 4 tracker scripts from `localhost:8082` | `third_party_scripts` | ~9,200 |
 | `FONT-BLOAT-01` | 4 woff2 files (203,528 bytes); the two `latin-ext` subsets add no coverage this page renders | `font_bloat` (>3 files **and** >150 KB) | ~144,000 (fonts − 60 KB) |
-| `UNCOMPRESSED-01` | `index.html`, `css/main.css`, `js/main.js` and the 4 trackers served with no `Content-Encoding` | `uncompressed_text` flags 6: `social.js` (1,718 bytes) is under the §7.3 2 KB threshold | ~26,000 (~70% of ~37,400 decoded) |
+| `UNCOMPRESSED-01` | `index.html`, `css/main.css`, `js/main.js` and the 4 trackers served with no `Content-Encoding` | `uncompressed_text` | ~28,000 (~70% of ~39,500 decoded) |
 | `MOTION-01` | `css/main.css` — 5 `@keyframes` animations plus `.tag` transitions, and no `prefers-reduced-motion` rule anywhere | `no_reduced_motion` | 0 (CPU note) |
 
 ### Which images are oversized
@@ -59,12 +59,9 @@ pixels. Applying the §7.3 formula with the ×2 DPR allowance:
 saving = bytes × (1 − (400×2 / 3000)²) = bytes × 0.929
 ```
 
-The two banners are 1600 px natural and are `text_in_image_suspected` cases.
-`banner-sale.jpg` sits in the full-width `.wrap` and renders at 820 px, so
-`1600 ≤ 820×2` and it is **not** oversized. `banner-subscribe.png` sits inside
-`.main-column`, which is only 746 px wide at a 1366 px viewport, so
-`1600 > 746×2` and it **is** flagged, with a small saving:
-`bytes × (1 − (1492/1600)²) ≈ 13%` (~25,000 bytes).
+The two banners are **not** expected to trip `oversized_image`: they are
+1600 px natural and render up to 820 px, so `(820×2/1600)² > 1` and the formula
+floors at 0. They are `text_in_image_suspected` cases instead.
 
 ## First-load byte budget
 
@@ -72,17 +69,13 @@ Measured with `python scripts/demo_page_weight.py` against a running demo:
 
 | Kind | Bytes |
 |---|---|
-| img | 1,076,978 |
+| img | 1,076,971 |
 | media | 1,000,785 |
 | font | 203,528 |
 | js | 15,302 |
-| html | 13,485 |
-| css | 10,359 |
-| **total** | **2,320,437** (2.32 MB, 22 requests) |
-
-Measured on an LF checkout (`.gitattributes` enforces `eol=lf`); a CRLF
-working copy adds one byte per line to the text files. The scanner's transfer
-total is ~5 KB higher because it also counts response headers.
+| html | 13,259 |
+| css | 10,934 |
+| **total** | **2,320,779** (2.32 MB, 22 requests) |
 
 At that weight the Sustainable Web Design v3 model gives **0.671 g CO2e per
 view**, i.e. carbon grade **E**. The D/E boundary sits at 0.656 g, which is
@@ -107,6 +100,6 @@ Kept out so the demo stays realistic rather than a checklist:
 MASTERSPEC §11 targets a **before** state of roughly 30–45 accessibility and a
 carbon grade of E or F.
 
-The carbon side already holds: 2,320,437 bytes gives 0.671 g/view, grade **E**.
+The carbon side already holds: 2,320,779 bytes gives 0.671 g/view, grade **E**.
 The accessibility score is checked once the scoring module exists; this phase
 asserts detection only.

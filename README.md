@@ -17,8 +17,9 @@ and conventions are in [CLAUDE.md](CLAUDE.md).
 | Phase | State |
 |---|---|
 | 0 — Bootstrap, design tokens, demo site | done |
-| 1 — Scanner core + CLI | in progress |
-| 2+ — Scoring, trade-offs, API, UI, fixes | not started |
+| 1 — Scanner core, scoring, trade-off engine, CLI | done |
+| 2 — Backend API: scans, SSE progress, persistence, history | done |
+| 3+ — UI, fixes, patching | not started |
 
 ## Quick start
 
@@ -43,22 +44,10 @@ docker compose up --build
 | `make lint` | ruff, the WCAG contrast gate, `tsc --noEmit`, eslint |
 | `make assets` | Regenerates the demo's images and hero video |
 | `make weight` | Measures the demo's first-load transfer size |
-| `make scan URL=…` | Scans one URL: step progress on stderr, `ScanResult` JSON on stdout. Defaults to the demo (`http://localhost:8081`) and allow-lists only `localhost:8081,localhost:8082` unless `ALLOWED_LOCAL_HOSTS` is already set. Exits 2 with a `URL_BLOCKED` error envelope for a blocked URL. Also: `cd backend && python -m app.cli scan <url> --out scan.json` |
+| `make scan URL=…` | Scanner CLI: steps, scores, trade-offs |
+| `make types` | Regenerates `frontend/src/lib/types.ts` from `backend/app/models.py` |
 | `make e2e` | Playwright end-to-end run |
 | `make dogfood` | Scans GreenAccess's own frontend |
-
-`make test` includes browser tests and a full scan of the demo site, so it needs
-the generated demo assets (`make assets`) and a Chromium that matches the pinned
-Playwright (`python -m playwright install chromium`). The demo integration test
-reuses a running `make demo`, or starts the demo on :8081/:8082 itself.
-
-If your machine already has a Chromium build that differs from the one the
-pinned Playwright expects (some CI images and sandboxes do), point the scanner
-and tests at it instead of upgrading Playwright:
-
-```bash
-export PLAYWRIGHT_CHROMIUM_EXECUTABLE=/path/to/chrome
-```
 
 ## The demo site
 
@@ -102,6 +91,37 @@ Carbon values are **estimates**, and are labelled as such everywhere they appear
 Accessibility results are **automated checks only** — they never amount to a claim
 of WCAG conformance.
 
+## API
+
+The backend serves MASTERSPEC §12 on `:8000` (interactive docs at `/docs`).
+
+| Method | Path | |
+|---|---|---|
+| POST | `/api/scans` | `{url, weights?}` → `202 {scan_id}`. 10 per minute per IP. |
+| GET | `/api/scans/{id}/events` | SSE: `step`, then `done` or `error`. Replays from the start; resumes with `Last-Event-ID`. |
+| GET | `/api/scans/{id}` | The full scan, including `error` if it failed |
+| GET | `/api/scans/{id}/screenshot?state=before` | Full-page PNG |
+| POST | `/api/scans/{id}/cancel` | Cancels a queued or running scan |
+| GET | `/api/history?host=` | Recent scans, plus a combined-score trend per host |
+| GET | `/api/demo` | The Daily Herald's URL |
+
+Every error is `{"error": {"code", "message"}}`. Codes: `URL_BLOCKED`, `TIMEOUT`,
+`PAGE_TOO_LARGE`, `NAV_FAILED`, `LLM_UNAVAILABLE`, `PATCH_FAILED` from the spec, plus
+`RATE_LIMITED`, `NOT_FOUND`, `INVALID_REQUEST` and `CANCELLED`.
+
+Scans run as background tasks, at most `MAX_CONCURRENT_SCANS` at once (the rest
+queue), each limited to `SCAN_TIMEOUT_S` once it starts. Results are stored in
+SQLite (`DATABASE_URL`) and screenshots under `backend/data/screenshots/`.
+
+```bash
+id=$(curl -s -X POST localhost:8000/api/scans -H 'content-type: application/json' \
+      -d '{"url":"http://localhost:8081"}' | python -c 'import json,sys;print(json.load(sys.stdin)["scan_id"])')
+curl -N localhost:8000/api/scans/$id/events
+```
+
+`make dev` allows the two demo hosts through `ALLOWED_LOCAL_HOSTS` unless you set it
+yourself.
+
 ## Repository layout
 
 ```
@@ -117,9 +137,19 @@ docs/
 
 All user-supplied URLs pass through `backend/app/security/ssrf.py` before any browser
 or HTTP call: scheme allow-list, DNS resolution with every A/AAAA record checked,
-and blocks on private, loopback, link-local and cloud-metadata ranges. The scan
+and blocks on private, loopback, link-local and cloud-metadata ranges, re-validated
+after every redirect. Redirects are checked twice: `POST /api/scans` follows the chain
+itself (connecting only to the address it just validated, so DNS rebinding cannot
+swap it) and answers `URL_BLOCKED` before queuing anything; then, during the scan, a
+CDP `Fetch` interceptor re-validates every hop the browser takes, because
+Playwright's own route handler never sees redirects. Underneath both, the scan
 browser runs behind a per-scan egress proxy (`backend/app/security/egress_proxy.py`)
-that re-validates every connection, including every redirect hop (which Playwright's
-route handler never sees), and connects only to the address it validated, so DNS
-rebinding cannot swap the target. Local demo hosts are permitted only via an explicit
-`ALLOWED_LOCAL_HOSTS` list, never by disabling the guard.
+that re-validates every connection and connects only to the address it validated:
+that closes the DNS-rebinding window a `Fetch` continue leaves, and covers
+connections a page-level CDP session never sees (out-of-process iframes, workers).
+Local demo hosts are permitted only via an explicit `ALLOWED_LOCAL_HOSTS` list,
+never by disabling the guard.
+
+If your machine's Chromium build differs from the one the pinned Playwright expects
+(some CI images and sandboxes), point the scanner and tests at it instead of
+upgrading Playwright: `export PLAYWRIGHT_CHROMIUM_EXECUTABLE=/path/to/chrome`.

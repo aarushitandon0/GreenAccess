@@ -57,12 +57,8 @@ class FocusStop:
     key: str
     has_visible_focus: bool
     is_body: bool
-    #: Selectors of the element's ancestors, outermost first (html excluded),
-    #: used to name the container that holds a trap.
-    ancestors: tuple[str, ...] = ()
-    #: Selector of the nearest dialog-like ancestor (``dialog``,
-    #: ``role=dialog|alertdialog``, ``aria-modal=true``), or "".
-    dialog: str = ""
+    #: Selector of the element containing this control, used to name a trap.
+    container: str = ""
 
 
 # Collect every focusable element, so we can tell "trapped" from "that is all
@@ -153,25 +149,32 @@ _DESCRIBE_ACTIVE_JS = """
     // If blur/focus is not permitted, fall back to the style checks alone.
   }
 
-  const box = el.getBoundingClientRect();
   const selector = selectorFor(el);
 
-  const ancestors = [];
-  for (let node = el.parentElement; node && node !== document.documentElement;
-       node = node.parentElement) {
-    ancestors.unshift(selectorFor(node));
+  // The element that holds this control. A trap is a property of a container
+  // (a modal, a widget), so reporting "button#promo-yes" is less useful than
+  // reporting "div#promo". Walk up to the nearest dialog, or the nearest
+  // ancestor carrying an id, falling back to the direct parent.
+  let container = el.parentElement;
+  let hop = el.parentElement;
+  let hops = 0;
+  while (hop && hops < 5) {
+    const role = hop.getAttribute && hop.getAttribute('role');
+    if (role === 'dialog' || role === 'alertdialog' || hop.id) { container = hop; break; }
+    hop = hop.parentElement;
+    hops += 1;
   }
-  const dialog = el.parentElement && el.parentElement.closest(
-    'dialog, [role="dialog"], [role="alertdialog"], [aria-modal="true"]');
 
   return {
     isBody: false,
     selector: selector,
-    ancestors: ancestors,
-    dialog: dialog ? selectorFor(dialog) : '',
+    container: container ? selectorFor(container) : '',
     tag: el.tagName,
-    key: selector + '@' + Math.round(box.x) + ',' + Math.round(box.y) +
-         ',' + Math.round(box.width) + ',' + Math.round(box.height),
+    // Identity is the selector path alone. It must NOT include the bounding
+    // box: Tab scrolls the page to reveal each control, so a viewport-relative
+    // box makes one element look like several and breaks cycle detection.
+    // The path (id, or an nth-of-type chain) is already unique per element.
+    key: selector,
     hasVisibleFocus: hasOutline || hasShadowRing || changedWhenBlurred,
   };
 }
@@ -205,34 +208,18 @@ def detect_trap(stops: list[FocusStop], total_focusable: int) -> tuple[bool, str
         if total_focusable <= len(cycle_members):
             continue
 
-        container = _trap_container([stop for stop in stops if stop.key in cycle_members])
+        members = [stop for stop in stops if stop.key in cycle_members]
+
+        # If every trapped control reports the same container, that is the
+        # answer. Otherwise fall back to the longest shared selector prefix.
+        containers = {stop.container for stop in members if stop.container}
+        if len(containers) == 1:
+            return True, containers.pop()
+
+        container = _common_ancestor_selector([stop.selector for stop in members])
         return True, container
 
     return False, None
-
-
-def _trap_container(cycle: list[FocusStop]) -> str | None:
-    """Name the element that holds the trapped cycle.
-
-    Preference order: a dialog-like ancestor shared by every stop in the cycle
-    (that is what a user would call "the modal"); else the nearest common DOM
-    ancestor; else, for stops recorded without ancestry, the shared prefix of
-    their selectors.
-    """
-    if not cycle:
-        return None
-    dialogs = {stop.dialog for stop in cycle}
-    if len(dialogs) == 1 and "" not in dialogs:
-        return dialogs.pop()
-    if all(stop.ancestors for stop in cycle):
-        shared: list[str] = []
-        for parts in zip(*(stop.ancestors for stop in cycle), strict=False):
-            if len(set(parts)) != 1:
-                break
-            shared.append(parts[0])
-        if shared:
-            return shared[-1]
-    return _common_ancestor_selector([stop.selector for stop in cycle])
 
 
 def _common_ancestor_selector(selectors: list[str]) -> str | None:
@@ -289,8 +276,7 @@ async def crawl(page: Page, *, max_presses: int = MAX_TAB_PRESSES) -> KeyboardRe
                 key=str(described.get("key") or ""),
                 has_visible_focus=bool(described.get("hasVisibleFocus")),
                 is_body=bool(described.get("isBody")),
-                ancestors=tuple(str(a) for a in (described.get("ancestors") or [])),
-                dialog=str(described.get("dialog") or ""),
+                container=str(described.get("container") or ""),
             )
         )
 

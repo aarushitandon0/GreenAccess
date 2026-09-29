@@ -44,7 +44,6 @@ from urllib.parse import urlparse
 
 import tldextract
 
-from app.carbon.constants import COMPRESSION_SAVING_RATIO, UNCOMPRESSED_MIN_BYTES
 from app.models import (
     FontSummary,
     ResourceType,
@@ -85,6 +84,12 @@ _TYPE_MAP: dict[str, ResourceType] = {
 
 # Types the uncompressed_text detector considers (MASTERSPEC §7.3).
 TEXT_TYPES = frozenset({ResourceType.HTML, ResourceType.CSS, ResourceType.JS})
+
+# MASTERSPEC §7.3: only flag text resources above this decoded size.
+UNCOMPRESSED_MIN_BYTES = 2_048
+
+# MASTERSPEC §7.3: a compressed text resource typically sheds about 70%.
+COMPRESSION_SAVING_RATIO = 0.70
 
 _COMPRESSED_ENCODINGS = frozenset({"gzip", "br", "deflate", "zstd", "compress"})
 

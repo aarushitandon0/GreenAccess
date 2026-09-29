@@ -8,15 +8,17 @@
  * its tab bar becomes the sticky chapter nav. No score, model or endpoint
  * changes; only the arrangement does.
  *
- * Chapters appear as their data does. Before a scan there is only the
- * prologue; the later chapters are added as the pipeline produces what they
- * describe, which is why nothing here renders a placeholder score.
+ * Chapters appear as their data does. Before a scan there is the pinned
+ * opening and the console; the later chapters are added as the pipeline
+ * produces what they describe, which is why nothing here renders a placeholder
+ * score.
  */
 
 import { useEffect, useMemo, useState } from 'react'
 
 import { ChapterNav, type Chapter } from './components/ChapterNav'
-import { Prologue } from './scenes/Prologue'
+import { Begin } from './scenes/Begin'
+import { Opening } from './scenes/Opening'
 import { Reveal } from './scenes/Reveal'
 import { Scanning } from './scenes/Scanning'
 import { getDemo } from './lib/api'
@@ -50,8 +52,11 @@ export function App(): JSX.Element {
   const scored = result !== null && !result.scores.is_placeholder
 
   const chapters = useMemo<Chapter[]>(() => {
-    const list: Chapter[] = [{ id: 'prologue-title', label: 'Start' }]
-    if (started) list.push({ id: 'scanning-title', label: 'Scan' })
+    const list: Chapter[] = [
+      { id: 'opening', label: 'Opening' },
+      { id: 'begin', label: 'Scan' },
+    ]
+    if (started) list.push({ id: 'scanning-title', label: 'Progress' })
     if (scored) list.push({ id: 'verdict', label: 'Verdict' })
     return list
   }, [started, scored])
@@ -62,25 +67,41 @@ export function App(): JSX.Element {
         Skip to main content
       </a>
 
-      <header className="site-header">
-        <div className="container site-header__inner">
-          <a className="brand" href="/">
+      {/*
+        The header floats over the pinned opening rather than pushing it down:
+        the first chapter is full-bleed, and a bar above it would break that.
+      */}
+      {/*
+        Scoped to the cinema palette because it sits on the dark opening: the
+        tokens resolve to the values the contrast gate verifies for that scope,
+        rather than to light-theme ink on a dark landscape.
+      */}
+      <header className="site-header site-header--float" data-scope="cinema">
+        <div className="site-header__inner">
+          <a className="brand" href="#opening">
             <span className="brand__mark" aria-hidden="true">
               GA
             </span>
             GreenAccess
           </a>
           <nav aria-label="Primary">
-            <span className="chip chip--leaf">Automated checks</span>
+            {/*
+              A real anchor, so the reader can reach the form without scrolling
+              the whole opening. The chapter is a story, not a toll gate.
+            */}
+            <a className="site-header__action" href="#begin">
+              Scan a site
+            </a>
           </nav>
         </div>
       </header>
 
-      {/* The chapter nav only earns its space once there is more than one. */}
-      {chapters.length > 1 ? <ChapterNav chapters={chapters} /> : null}
+      <main className="main main--story" id="main" tabIndex={-1}>
+        <Opening />
 
-      <main className="main" id="main" tabIndex={-1}>
-        <Prologue
+        {chapters.length > 2 ? <ChapterNav chapters={chapters} /> : null}
+
+        <Begin
           onScan={scan.start}
           demoUrl={demoUrl}
           busy={busy}

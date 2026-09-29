@@ -62,7 +62,7 @@ describe('App', () => {
     await renderApp()
     const headings = screen.getAllByRole('heading', { level: 1 })
     expect(headings).toHaveLength(1)
-    expect(headings[0]).toHaveTextContent('How inclusive and how green is your website?')
+    expect(headings[0]).toHaveTextContent('Pages cost more than they look.')
   })
 
   it('has a skip link that targets the main landmark', async () => {
@@ -146,8 +146,27 @@ describe('App', () => {
     expect(fetchMock.mock.calls.some(([url]) => String(url) === '/api/scans')).toBe(false)
   })
 
-  it('shows no chapter nav before there is more than one chapter', async () => {
+  it('shows no chapter nav until a scan has produced chapters to navigate', async () => {
     await renderApp()
     expect(screen.queryByRole('navigation', { name: 'Chapters' })).not.toBeInTheDocument()
+  })
+
+  it('lets the reader reach the scan form without scrolling the opening', async () => {
+    await renderApp()
+    // The opening is a story, not a toll gate: a real anchor jumps past it.
+    expect(screen.getByRole('link', { name: /scan a site/i })).toHaveAttribute('href', '#begin')
+    expect(document.querySelector('#begin')).not.toBeNull()
+  })
+
+  it('keeps no focusable control inside the pinned opening', async () => {
+    await renderApp()
+    const opening = document.querySelector('#opening')
+    expect(opening).not.toBeNull()
+    // Panels in a pinned chapter dim as the reader passes them. A control that
+    // is invisible but still tabbable would be a real defect (WCAG 2.4.7).
+    const focusable = opening!.querySelectorAll(
+      'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    )
+    expect(focusable).toHaveLength(0)
   })
 })

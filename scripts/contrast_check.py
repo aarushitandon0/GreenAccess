@@ -185,7 +185,23 @@ def load_themes() -> dict[str, dict[str, str]]:
             f"explicit dark block disagree on: {', '.join(sorted(drift))}"
         )
 
-    return {"light": light, "dark": dark}
+    # The cinema scope is a dark surface applied inside a page of either theme,
+    # so it is checked as a theme in its own right. Its values must not drift
+    # from the dark block: a pair that passes in dark mode but not in a dark
+    # section of a light page would be a real, shippable defect.
+    cinema_overrides = _declarations(_block(css, "[data-scope="))
+    cinema_drift = {
+        key
+        for key in set(cinema_overrides) | set(dark_overrides)
+        if cinema_overrides.get(key) != dark_overrides.get(key)
+    }
+    if cinema_drift:
+        raise SystemExit(
+            "tokens.css: the cinema scope and the dark theme disagree on: "
+            f"{', '.join(sorted(cinema_drift))}"
+        )
+
+    return {"light": light, "dark": dark, "cinema": {**light, **cinema_overrides}}
 
 
 # --------------------------------------------------------------------------- #

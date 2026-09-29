@@ -1,10 +1,12 @@
 /**
- * Chapter one: the question, and the field that answers it.
+ * Chapter two: the console. Where the reader hands over a URL.
  *
- * Single responsibility: state what GreenAccess measures and take a URL.
+ * Single responsibility: take a URL and start a scan.
  *
- * This is MASTERSPEC §13 screen 1, told as the opening of the narrative rather
- * than as a separate page. It holds the document's only `h1`.
+ * This is MASTERSPEC §13 screen 1's form, lifted out of the pinned opening.
+ * Interactive controls do not belong in a chapter whose content dims as the
+ * reader scrolls past it, so the form gets a section of its own that is always
+ * fully visible and fully operable.
  */
 
 import { useId, useState } from 'react'
@@ -14,7 +16,7 @@ import { useCountUp } from '../lib/motion'
 import { useInView } from '../lib/scroll'
 import type { ApiError } from '../lib/types'
 
-export interface PrologueProps {
+export interface BeginProps {
   /** Start a scan for this URL. */
   onScan: (url: string) => void
   /** Where the Daily Herald demo is served, once `GET /api/demo` has answered. */
@@ -45,15 +47,13 @@ function explain(error: ApiError): string {
   }
 }
 
-export function Prologue({ onScan, demoUrl, busy, error }: PrologueProps): JSX.Element {
+export function Begin({ onScan, demoUrl, busy, error }: BeginProps): JSX.Element {
   const fieldId = useId()
   const hintId = useId()
   const errorId = useId()
   const [url, setUrl] = useState('')
   const [ref, inView] = useInView<HTMLDivElement>({ threshold: 0.2 })
-  // The opening tree is at rest, not at a score: nothing has been measured yet.
-  // It grows for real, from the real figures, in the reveal chapter.
-  const heroGrowth = useCountUp(100, inView, 1800)
+  const growth = useCountUp(100, inView, 1800)
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>): void {
     event.preventDefault()
@@ -64,19 +64,21 @@ export function Prologue({ onScan, demoUrl, busy, error }: PrologueProps): JSX.E
   }
 
   return (
-    <section className="scene scene--prologue" aria-labelledby="prologue-title">
-      <div className="container prologue">
-        <div className="prologue__text">
-          <p className="prologue__eyebrow">Accessibility and carbon, measured together</p>
+    <section className="scene scene--begin" id="begin" aria-labelledby="begin-title">
+      <div className="container begin">
+        <div className="begin__text">
+          <p className="scene__eyebrow">
+            <span className="panel__bullet" aria-hidden="true" />
+            Start a scan
+          </p>
 
-          <h1 className="prologue__title" id="prologue-title">
+          <h2 className="begin__title" id="begin-title">
             How inclusive and how green is your website?
-          </h1>
+          </h2>
 
-          <p className="prologue__lede">
-            Most tools measure one or the other. The interesting part is where they meet: the
-            fixes that help both at once, and the handful that genuinely pull against each
-            other. Paste a URL and scroll.
+          <p className="scene__lede">
+            One page per scan. GreenAccess loads it in a real browser, runs the accessibility
+            rule set, crawls it with the Tab key, and weighs every byte it requests.
           </p>
 
           <form className="scan-form" onSubmit={handleSubmit} noValidate>
@@ -108,9 +110,8 @@ export function Prologue({ onScan, demoUrl, busy, error }: PrologueProps): JSX.E
             </button>
 
             {/*
-              The demo is a scan like any other, not a link away from the app:
-              it runs the same pipeline against the Daily Herald so the numbers
-              it produces are real. Disabled until GET /api/demo has answered.
+              The demo runs the same pipeline against the Daily Herald, so the
+              numbers it produces are real. Disabled until GET /api/demo answers.
             */}
             <button
               className="button button--secondary"
@@ -123,9 +124,9 @@ export function Prologue({ onScan, demoUrl, busy, error }: PrologueProps): JSX.E
           </form>
 
           {/*
-            Errors are announced. `role="alert"` is assertive on purpose: a
-            failed scan means the reader is waiting for something that is not
-            coming, and should not have to discover that by scrolling.
+            `role="alert"` is assertive on purpose: a failed scan means the
+            reader is waiting for something that is not coming, and should not
+            have to discover that by scrolling.
           */}
           <p className="form-error" id={errorId} role="alert">
             {error ? explain(error) : ''}
@@ -138,8 +139,8 @@ export function Prologue({ onScan, demoUrl, busy, error }: PrologueProps): JSX.E
           </p>
         </div>
 
-        <div className="prologue__figure" ref={ref}>
-          <Sapling growth={heroGrowth / 100} className="sapling--hero" />
+        <div className="begin__figure" ref={ref}>
+          <Sapling growth={growth / 100} className="sapling--hero" />
         </div>
       </div>
     </section>

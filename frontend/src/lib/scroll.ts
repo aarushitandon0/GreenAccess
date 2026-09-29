@@ -185,3 +185,131 @@ export function useActiveStep(count: number): [React.RefObject<HTMLDivElement>, 
 
   return [ref, active]
 }
+
+/**
+ * Drive scroll animation through a CSS custom property.
+ *
+ * This is the engine behind every scroll-linked visual in the narrative, and it
+ * deliberately does not use React state. Setting state on scroll would re-render
+ * a whole chapter on every frame; writing one custom property on one element
+ * lets the style engine do the rest, and descendants animate by reading the
+ * variable in `calc()`. A scene with two hundred moving parts still costs one
+ * property write per frame.
+ *
+ * The variable is a unitless 0-1 number: 0 when the element's top edge reaches
+ * the bottom of the viewport, 1 when its bottom edge reaches the top.
+ *
+ * Under reduced motion the variable is pinned to its resting value and no
+ * listener is attached, so every scroll-linked effect resolves to its finished
+ * state and stays there.
+ */
+export function useScrollVar<T extends HTMLElement>(
+  name = '--p',
+  options: { reduced?: boolean; restingValue?: number } = {},
+): React.RefObject<T> {
+  const { reduced = false, restingValue = 1 } = options
+  const ref = useRef<T>(null)
+
+  useEffect(() => {
+    const element = ref.current
+    if (element === null || typeof window === 'undefined') {
+      return
+    }
+
+    if (reduced) {
+      element.style.setProperty(name, String(restingValue))
+      return
+    }
+
+    let frame = 0
+
+    const measure = (): void => {
+      frame = 0
+      const rect = element.getBoundingClientRect()
+      const viewport = window.innerHeight
+      const span = rect.height + viewport
+      const progress = span <= 0 ? 1 : (viewport - rect.top) / span
+      const clamped = progress < 0 ? 0 : progress > 1 ? 1 : progress
+      element.style.setProperty(name, clamped.toFixed(4))
+    }
+
+    const onScroll = (): void => {
+      if (frame === 0) {
+        frame = window.requestAnimationFrame(measure)
+      }
+    }
+
+    measure()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll, { passive: true })
+    return () => {
+      if (frame !== 0) {
+        window.cancelAnimationFrame(frame)
+      }
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
+  }, [name, reduced, restingValue])
+
+  return ref
+}
+
+/**
+ * The same, measured while an element is pinned by `position: sticky`.
+ *
+ * A sticky figure does not move, so its own rect cannot say how far the reader
+ * has travelled. The progress that matters is the *container's*: 0 when its top
+ * reaches the top of the viewport (the figure has just pinned) and 1 when its
+ * bottom does (the figure is about to unpin). That is the figure's whole life
+ * on screen, which is exactly the range a pinned scene animates over.
+ */
+export function useStickyProgress<T extends HTMLElement>(
+  name = '--p',
+  options: { reduced?: boolean; restingValue?: number } = {},
+): React.RefObject<T> {
+  const { reduced = false, restingValue = 1 } = options
+  const ref = useRef<T>(null)
+
+  useEffect(() => {
+    const element = ref.current
+    if (element === null || typeof window === 'undefined') {
+      return
+    }
+
+    if (reduced) {
+      element.style.setProperty(name, String(restingValue))
+      return
+    }
+
+    let frame = 0
+
+    const measure = (): void => {
+      frame = 0
+      const rect = element.getBoundingClientRect()
+      // Distance the container travels while the figure stays pinned.
+      const travel = rect.height - window.innerHeight
+      const progress = travel <= 0 ? 1 : -rect.top / travel
+      const clamped = progress < 0 ? 0 : progress > 1 ? 1 : progress
+      element.style.setProperty(name, clamped.toFixed(4))
+    }
+
+    const onScroll = (): void => {
+      if (frame === 0) {
+        frame = window.requestAnimationFrame(measure)
+      }
+    }
+
+    measure()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll, { passive: true })
+    return () => {
+      if (frame !== 0) {
+        window.cancelAnimationFrame(frame)
+      }
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
+  }, [name, reduced, restingValue])
+
+  return ref
+}

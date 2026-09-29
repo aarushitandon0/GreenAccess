@@ -159,3 +159,40 @@
   --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.5), 0 6px 16px rgba(0, 0, 0, 0.45);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.55), 0 16px 48px rgba(0, 0, 0, 0.5);
 }
+
+/*
+ * Cinema scope: a dark "analysis" surface on an otherwise light page.
+ *
+ * The narrative's full-bleed chapters are dark whatever theme the reader is in
+ * — the page under scan is being examined, and the examining surface is dark so
+ * the subject carries the light. Applied with `data-scope="cinema"`.
+ *
+ * Every value here is identical to the dark theme's, so the pairs
+ * scripts/contrast_check.py already verifies hold inside this scope too. The
+ * script loads it as a third theme and checks it directly; the values must not
+ * drift from the dark block above.
+ */
+[data-scope='cinema'] {
+  color-scheme: dark;
+
+  --bg: #121212;
+  --surface: #1c1c1c;
+  --ink: #e8e8e8;
+  --ink-muted: #a7b4ac;
+  --forest: #7fc79b;
+  --forest-strong: #a5dcb8;
+  --leaf: #16281d;
+  --amber-fill: #f2b84b;
+  --amber-text: #7a4e00;
+  --amber-text-strong: #6b4400;
+  --danger: #f0989d;
+  --border: #2e2e2e;
+  --border-strong: #707070;
+
+  --on-forest: #0e1a13;
+  --on-danger: #2a0d0f;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.5), 0 6px 16px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.55), 0 16px 48px rgba(0, 0, 0, 0.5);
+}

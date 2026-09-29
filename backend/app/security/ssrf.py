@@ -18,16 +18,20 @@ What this module enforces:
 * **IPv6 embeddings are unwrapped.** ``::ffff:127.0.0.1`` (IPv4-mapped), 6to4,
   Teredo and NAT64 all carry an IPv4 address inside an IPv6 one.
 * **Redirects are re-validated.** The first hop being public says nothing about
-  the second. :func:`make_request_guard` re-runs validation on every navigation
-  and every redirect Playwright reports.
+  the second. Playwright's route handler never sees redirect hops, so the scan
+  browser runs behind :class:`app.security.egress_proxy.EgressProxy`, which
+  re-runs :func:`validate_url` on every connection, redirects included.
+  :func:`make_request_guard` is an additional first layer on requests the page
+  starts.
 
 Local development hosts are permitted **only** by naming them in
 ``ALLOWED_LOCAL_HOSTS`` (MASTERSPEC §17). There is no flag that switches the
 guard off.
 
-The resolve-then-connect gap (DNS rebinding) is narrowed but not closed here:
-:func:`validate_url` returns the addresses it validated so a caller may pin to
-them. See :class:`ValidatedUrl.resolved_ips`.
+The resolve-then-connect gap (DNS rebinding) is closed by pinning:
+:func:`validate_url` returns the addresses it validated
+(:class:`ValidatedUrl.resolved_ips`) and the egress proxy connects to exactly
+those, never re-resolving.
 """
 
 from __future__ import annotations
@@ -338,7 +342,9 @@ def validate_url(
     # Both the bare host and host:port forms are accepted on the list.
     if host in allow_list or f"{host}:{port}" in allow_list:
         literal = parse_ip_literal(host)
-        resolved = (str(literal),) if literal is not None else _safe_resolve_for_override(host, port)
+        resolved = (
+            (str(literal),) if literal is not None else _safe_resolve_for_override(host, port)
+        )
         return ValidatedUrl(
             url=url,
             scheme=scheme,
@@ -403,9 +409,14 @@ def make_request_guard(
     """Build a Playwright route handler that re-validates every request.
 
     MASTERSPEC §4 validates the URL once before the browser starts. That is not
-    enough on its own: the page can redirect, and can issue subresource requests
-    to anywhere. This handler runs on every request the context makes, so a
-    302 to ``http://169.254.169.254/`` is aborted rather than followed.
+    enough on its own: the page can issue subresource requests to anywhere.
+    This handler runs on every request the page *starts* and aborts the ones
+    that fail validation, recording them for the scan report.
+
+    It does **not** see redirect hops: Playwright follows a 302 without calling
+    the route handler again. Redirects (and every other connection) are
+    enforced by :class:`app.security.egress_proxy.EgressProxy`, which the scan
+    browser is launched behind. Use both.
 
     Usage::
 

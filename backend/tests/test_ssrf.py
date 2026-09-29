@@ -44,7 +44,7 @@ FAKE_DNS: dict[str, list[str]] = {
 def stub_dns(monkeypatch: pytest.MonkeyPatch) -> None:
     """Replace getaddrinfo with the FAKE_DNS table."""
 
-    def fake_getaddrinfo(host, port, *args, **kwargs):  # noqa: ANN001, ANN202
+    def fake_getaddrinfo(host, port, *args, **kwargs):
         addresses = FAKE_DNS.get(host.lower().rstrip("."))
         if addresses is None:
             raise socket.gaierror(socket.EAI_NONAME, "Name or service not known")

@@ -433,11 +433,42 @@ class SkippedFix(_Model):
     reason: str
 
 
+class AiUsage(_Model):
+    """What the fix generator spent on the LLM (MASTERSPEC §8.2).
+
+    Addition to MASTERSPEC §5, required by §8.2: "Report the AI's own cost
+    honestly: number of calls and tokens". Live and cached work are counted
+    separately so a cached demo run never looks like a free live one.
+    """
+
+    model: str = ""
+    #: Requests actually sent to the API in this run, retries included.
+    live_calls: int = 0
+    #: Answers served from the disk cache instead of the API.
+    cached_calls: int = 0
+    #: Requests that failed (timeout, API error, invalid JSON after retry).
+    failed_calls: int = 0
+    #: Live or cached calls that carried an image (MASTERSPEC §8.2: N=6).
+    vision_calls: int = 0
+    #: Tokens billed in this run (live calls only).
+    input_tokens: int = 0
+    output_tokens: int = 0
+    #: Tokens the cached answers cost when they were first generated.
+    cached_input_tokens: int = 0
+    cached_output_tokens: int = 0
+    #: ``LLM_OFFLINE`` was set: only cached answers could be used.
+    offline: bool = False
+    #: Why AI fixes could not be generated, when they could not.
+    unavailable_reason: str | None = None
+
+
 class PatchInfo(_Model):
     fixes: list[Fix] = Field(default_factory=list)
     zip_path: str | None = None
     patched_url: str | None = None
     skipped: list[SkippedFix] = Field(default_factory=list)
+    #: The LLM spend behind ``fixes``. Addition to MASTERSPEC §5 (see AiUsage).
+    ai_usage: AiUsage | None = None
 
 
 # --------------------------------------------------------------------------- #
@@ -524,6 +555,36 @@ class ScanCreated(_Model):
     """``POST /api/scans`` response: ``{scan_id}``."""
 
     scan_id: str
+
+
+class FixesResponse(_Model):
+    """``POST /api/scans/{id}/fixes`` response.
+
+    MASTERSPEC §12 names the body ``[Fix]``; it is wrapped so the AI usage the
+    phase requires travels with the fixes it paid for.
+    """
+
+    scan_id: str
+    fixes: list[Fix] = Field(default_factory=list)
+    ai_usage: AiUsage = Field(default_factory=AiUsage)
+
+
+class PatchRequest(_Model):
+    """``POST /api/scans/{id}/patch`` body (MASTERSPEC §12)."""
+
+    accepted_fix_ids: list[str] = Field(default_factory=list, max_length=500)
+
+
+class PatchAccepted(_Model):
+    """``POST /api/scans/{id}/patch`` response: the job was queued.
+
+    Progress arrives on the scan's event stream. ``events_after`` is the last
+    event id before this job, so a client can follow only the new events with
+    ``GET /api/scans/{id}/events?after=<events_after>``.
+    """
+
+    scan_id: str
+    events_after: int = 0
 
 
 class DemoInfo(_Model):

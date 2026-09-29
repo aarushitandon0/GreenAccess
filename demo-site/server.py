@@ -26,7 +26,7 @@ import sys
 import threading
 from functools import partial
 from http import HTTPStatus
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import HTTPServer, SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -158,7 +158,14 @@ def build_server(
 
     # Bind to 127.0.0.1 rather than 0.0.0.0: this server has no business being
     # reachable from the network.
-    return HTTPServer(("127.0.0.1", port), handler_class)  # type: ignore[arg-type]
+    #
+    # Threaded, because the handler speaks HTTP/1.1 with keep-alive: a real
+    # browser holds one connection open and opens more in parallel, and a
+    # single-threaded server would sit on the first connection while every
+    # other request (and so the page load) stalls.
+    server = ThreadingHTTPServer(("127.0.0.1", port), handler_class)  # type: ignore[arg-type]
+    server.daemon_threads = True
+    return server
 
 
 def serve_forever_in_thread(server: HTTPServer) -> threading.Thread:

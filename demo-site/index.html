@@ -292,12 +292,14 @@
 
     <!--
       Defect CHAT-CLOSE-01: a chat widget whose close control is an icon-only
-      button with no accessible name.
+      button with no accessible name. The glyph is aria-hidden, as icon fonts
+      and SVG icons usually are, so nothing is left to name the button. (A bare
+      "&times;" text node would give it the name "x", which axe accepts.)
     -->
     <div class="chat" id="chat">
       <div class="chat__head">
         <span>Herald Assistant</span>
-        <button class="chat__close" onclick="closeChat()">&times;</button>
+        <button class="chat__close" onclick="closeChat()"><span aria-hidden="true">&times;</span></button>
       </div>
       <div class="chat__body">
         <p class="chat__msg">Hello! Can I help you find a story?</p>

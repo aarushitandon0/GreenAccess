@@ -9,6 +9,7 @@ validates input, applies the rate limit and SSRF guard, and shapes responses.
     GET  /api/scans/{id}/events      -> SSE: step, done, error
     GET  /api/scans/{id}/screenshot  -> PNG (?state=before|after)
     POST /api/scans/{id}/cancel      -> Scan  (addition to §12, for §13's cancel button)
+    GET  /api/badge/{id}.svg         -> SVG
     GET  /api/history                -> HistoryResponse (?host=)
     GET  /api/demo                   -> DemoInfo
 """
@@ -26,6 +27,7 @@ from fastapi import APIRouter, Depends, Header, Query, Request, Response
 from fastapi.responses import FileResponse
 from sse_starlette import EventSourceResponse, ServerSentEvent
 
+from app.api.badge import render_badge
 from app.api.errors import ApiException
 from app.api.events import ScanEvent
 from app.api.ratelimit import SCANS_PER_MINUTE
@@ -266,6 +268,49 @@ async def cancel_scan(scan_id: str, state: State) -> Scan:
     await _load(state, scan_id)
     await state.runner.cancel(scan_id)
     return await _load(state, scan_id)
+
+
+# --------------------------------------------------------------------------- #
+# Badge
+# --------------------------------------------------------------------------- #
+
+
+@router.get(
+    "/badge/{scan_id}.svg",
+    response_class=Response,
+    responses={200: {"content": {"image/svg+xml": {}}}, **_errors(404)},
+    summary="Embeddable result badge",
+)
+async def badge(scan_id: str, state: State) -> Response:
+    """The scan's scores as a self-contained SVG, for embedding elsewhere.
+
+    Served from the ``before`` result: the badge describes the site as it is,
+    not as it would be after applying a patch the owner may never apply. A
+    scan still running, failed, or scored only with a placeholder has nothing
+    honest to show, so it is a 404 rather than an empty or provisional badge.
+    """
+    scan = await _load(state, scan_id)
+    result = scan.before
+    if result is None or result.scores.is_placeholder:
+        raise ApiException(ErrorCode.NOT_FOUND, f"scan {scan_id!r} has no scored result yet")
+
+    svg = render_badge(
+        result.scores,
+        grams_per_view=result.carbon.grams_per_view,
+        host=scan.host,
+        scanned_at=scan.created_at,
+    )
+    return Response(
+        content=svg,
+        media_type="image/svg+xml",
+        headers={
+            # A scan's scores never change once it is done, so the badge for a
+            # given id is immutable. Embedding sites should cache it.
+            "Cache-Control": "public, max-age=3600",
+            "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
 
 
 # --------------------------------------------------------------------------- #

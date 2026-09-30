@@ -65,6 +65,10 @@ class Settings:
     llm_cache_dir: Path = DEFAULT_LLM_CACHE_DIR
     #: Read-only cache committed with the demo run (MASTERSPEC §16).
     llm_fixture_cache_dir: Path = DEFAULT_LLM_FIXTURE_CACHE_DIR
+    #: A built frontend to serve from this process, for single-origin
+    #: deployments. None means look beside the backend for frontend/dist and
+    #: serve nothing if it is absent, which is what local development wants.
+    static_dir: Path | None = None
 
     @property
     def screenshot_dir(self) -> Path:
@@ -107,6 +111,11 @@ class Settings:
                 "PATCHED_BASE_URL", "http://localhost:8000/patched"
             ).rstrip("/"),
             llm_cache_dir=Path(os.environ.get("LLM_CACHE_DIR") or DEFAULT_LLM_CACHE_DIR),
+            static_dir=(
+                Path(raw_static)
+                if (raw_static := os.environ.get("GREENACCESS_STATIC_DIR", "").strip())
+                else None
+            ),
         )
 
 

@@ -25,6 +25,7 @@ from app.api.fixes import router as fixes_router
 from app.api.ratelimit import SlidingWindowLimiter
 from app.api.runner import JobFactory, ScanRunner, pipeline_job
 from app.api.scans import router as scans_router
+from app.api.spa import mount_frontend
 from app.api.state import AppState, Preflight
 from app.config import Settings, get_settings
 from app.db.repository import ScanRepository
@@ -122,6 +123,9 @@ def create_app(
             "version": APP_VERSION,
             "engines": engine_versions(),
         }
+
+    # Last, because it mounts at the root and would shadow the routers above.
+    mount_frontend(app, resolved.static_dir)
 
     return app
 

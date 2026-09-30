@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import os
 import signal
+import socket
 import subprocess
 import sys
 import threading
@@ -70,8 +71,41 @@ class Service:
     command: list[str]
     cwd: Path
     group: str
+    #: The port this service listens on, checked before anything is started.
+    port: int
     #: Extra environment for this service, applied only where not already set.
     env_defaults: tuple[tuple[str, str], ...] = ()
+
+
+def _port_is_taken(port: int) -> bool:
+    """True if something is already listening on `port` on the loopback.
+
+    Both loopback families are tried because the services here do not agree:
+    uvicorn binds 127.0.0.1 while the demo servers answer on ::1, which is
+    where `localhost` points first. Connecting is a surer test than binding,
+    which SO_REUSEADDR and dual-stack sockets both make ambiguous.
+    """
+    for family, address in ((socket.AF_INET, "127.0.0.1"), (socket.AF_INET6, "::1")):
+        try:
+            with socket.socket(family, socket.SOCK_STREAM) as probe:
+                probe.settimeout(0.3)
+                if probe.connect_ex((address, port)) == 0:
+                    return True
+        except OSError:
+            continue  # No IPv6 on this host, say; the other family still answers.
+    return False
+
+
+def _check_ports(selected: list[Service]) -> list[Service]:
+    """The selected services whose port is already in use.
+
+    Checked up front rather than discovered on the way down. Starting four
+    processes and then dying on the one that could not bind leaves a confusing
+    mess: the survivors are killed on the way out, while whatever already held
+    the port keeps answering, so the stack looks half alive and the real cause
+    ("port 8000 is taken") is a single line in the middle of a combined log.
+    """
+    return [service for service in selected if _port_is_taken(service.port)]
 
 
 def _python() -> str:
@@ -117,6 +151,7 @@ def services() -> list[Service]:
             command=_backend_command(python),
             cwd=REPO_ROOT / "backend",
             group="app",
+            port=8000,
             env_defaults=(
                 ("ALLOWED_LOCAL_HOSTS", DEV_ALLOWED_LOCAL_HOSTS),
                 # Uvicorn binds 127.0.0.1, so the patched copy has to be
@@ -129,12 +164,14 @@ def services() -> list[Service]:
             command=[NPM, "run", "dev"],
             cwd=REPO_ROOT / "frontend",
             group="app",
+            port=5173,
         ),
         Service(
             name="demo-site",
             command=[python, "demo-site/server.py", "--port", "8081", "--quiet"],
             cwd=REPO_ROOT,
             group="demo",
+            port=8081,
         ),
         Service(
             name="demo-trackers",
@@ -152,6 +189,7 @@ def services() -> list[Service]:
             ],
             cwd=REPO_ROOT,
             group="demo",
+            port=8082,
         ),
     ]
 
@@ -186,6 +224,21 @@ def main() -> int:
     if not selected:
         print(f"No services matched {sorted(wanted)}", file=sys.stderr)
         return 2
+
+    taken = _check_ports(selected)
+    if taken:
+        print("Cannot start: these ports are already in use.\n", file=sys.stderr)
+        for service in taken:
+            print(f"  {service.port}  needed by {service.name}", file=sys.stderr)
+        print(
+            "\nUsually a previous `make dev` that did not shut down. Stop it, or"
+            " find the process holding the port:\n"
+            "  Windows      Get-NetTCPConnection -LocalPort <port> -State Listen\n"
+            "  macOS, Linux lsof -nP -iTCP:<port> -sTCP:LISTEN\n"
+            "\nNothing was started.",
+            file=sys.stderr,
+        )
+        return 1
 
     use_colour = not args.no_colour and sys.stdout.isatty()
     running: list[tuple[Service, subprocess.Popen[str]]] = []

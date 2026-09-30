@@ -17,7 +17,7 @@ URL ?= http://localhost:8081
 
 .PHONY: help install dev demo test test-backend test-frontend lint lint-backend \
         lint-frontend contrast assets weight scan types e2e dogfood build clean \
-        demo-record demo-replay
+        demo-record demo-replay public public-down
 
 help:
 	@echo "GreenAccess targets:"
@@ -38,6 +38,8 @@ help:
 	@echo "  image-run    run that image on :8000 with a local data volume"
 	@echo "  deploy       fly deploy the application (see docs/DEPLOYMENT.md)"
 	@echo "  deploy-demo  fly deploy the Daily Herald and its tracker host"
+	@echo "  public       free public HTTPS URL, no card: production image + tunnel"
+	@echo "  public-down  stop the public stack"
 
 # ---------------------------------------------------------------- setup ----
 
@@ -152,3 +154,19 @@ deploy:
 deploy-demo: assets
 	fly deploy demo-site --config demo-site/fly.trackers.toml
 	fly deploy demo-site --config demo-site/fly.toml
+
+# -------------------------------------------------------------- public -----
+# A free public URL with no credit card. Every no-card free tier is too small
+# for this app (a real Chromium, about 2 GB of RAM), so instead of hosting it
+# elsewhere this runs the production image here and publishes it through a
+# Cloudflare quick tunnel. The script starts the tunnel first, because the
+# issued URL has to become PATCHED_BASE_URL before the app starts. Ctrl-C
+# stops both. See docs/DEPLOYMENT.md.
+#
+# `make assets` first for the same reason as deploy-demo: the generated media
+# is gitignored and the demo image would otherwise ship without it.
+public: assets
+	$(PY) scripts/public_tunnel.py
+
+public-down:
+	docker compose -f docker-compose.public.yml down

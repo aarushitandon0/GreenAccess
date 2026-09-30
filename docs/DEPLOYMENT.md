@@ -360,3 +360,99 @@ That runs on Render, Railway, a VPS with `docker compose`, or anything else that
 can do those four things. Serverless platforms cannot: Playwright needs a real
 browser and a writable filesystem, and SSE needs a connection that outlives a
 function invocation.
+
+---
+
+## 9. Free hosting, with no credit card
+
+Fly requires a card before `fly apps create` will run at all, and so does every
+other host that could actually run this image. That is not an oversight on their
+part: section 8's four requirements put this application above every no-card free
+tier that exists.
+
+| Host | Why it does not work |
+|---|---|
+| Render free | 512 MB of memory; Chromium will not boot |
+| Railway, Koyeb, Northflank, Zeabur | card required |
+| Cloud Run, Oracle Always Free | usage is free, but the account needs a card |
+| PythonAnywhere free | no Docker, and outbound traffic is whitelist-only, so scanning cannot work |
+| Vercel, Netlify, GitHub Pages | static or serverless only: no browser, no long-lived SSE |
+| Back4App free containers | 256 MB |
+| Heroku, Glitch, Deta | free tiers discontinued |
+
+So the free option is not to host the app elsewhere, but to run the production
+image here and publish it through a Cloudflare quick tunnel, which is free, needs
+no account and no card, and issues a real HTTPS URL.
+
+```bash
+make public        # builds if needed, opens the tunnel, prints the URL
+make public-down   # stop the stack (Ctrl-C on `make public` does this too)
+```
+
+`scripts/public_tunnel.py` starts the tunnel *before* the stack, on purpose. The
+URL cloudflared issues has to become `PATCHED_BASE_URL`, because that value is
+handed to the visitor's browser in the After chapter, and the container's own
+loopback is not reachable from outside. `docker-compose.public.yml` runs the
+production image, so the UI and the API are one origin, which is what a single
+tunnel can serve; `docker-compose.yml` cannot be used here because its Vite dev
+server is a second origin on :5173.
+
+The stack listens on host port 8100, not 8000, so `make dev` can keep running
+alongside it. Override with `PUBLIC_PORT`.
+
+### What this gives up, and what it gains
+
+It gives up permanence: the URL works only while `make public` is running, and a
+quick tunnel gets a new random hostname each time. For a judged demo or a link
+shared during a call that is usually enough; for a URL in a submission that
+someone opens next week, it is not.
+
+It gains two things over the Fly deployment.
+
+**Third-party detection actually works.** On `fly.dev` both demo apps share one
+registrable domain, so defect `THIRD-PARTY-01` goes undetected (see
+`demo-site/fly.trackers.toml`). Here the demo hosts are bare Docker service
+names with no registrable domain, so the scanner compares them by `host:port`,
+finds them different, and attributes the tracker bytes correctly. Measured on
+2026-09-30: 10,289 third-party bytes found, and 10 trade-off findings.
+
+**Storage persists.** The `public-data` volume survives restarts, so patched URLs
+and scan history keep resolving. Free hosts' ephemeral disks would not.
+
+### Verified through the tunnel
+
+The full loop was run end to end against the public URL on 2026-09-30, not just
+the health endpoint:
+
+| | Before | After |
+|---|---|---|
+| Accessibility | 0 | 66 |
+| Carbon | 38 (grade E) | 91 (grade A) |
+| Combined | 19 | 79 |
+| Transfer | 2,327,050 bytes over 22 requests | 424,374 bytes |
+
+52 fixes generated, 36 applied automatically and 16 reported as manual, matching
+the fix-kind counts in the README. The patched page returned 200 when fetched
+from outside, so the After chapter's link works for a visitor.
+
+One honest caveat about that after figure. Cloudflare compresses responses it
+proxies, and the re-scan fetches the patched copy through the tunnel, so it
+measured 424,374 bytes where the same patch measured 454,881 over the container's
+loopback. Both are real measurements of a real URL; the tunnel one includes a CDN
+in the path and so flatters the carbon score by about a point. If you are quoting
+a number, quote the loopback one, or say which path it came through.
+
+### Security of a public URL
+
+Anyone with the URL can start scans, rate limited to 10 per minute per IP. Two
+things are worth knowing:
+
+- `ALLOWED_LOCAL_HOSTS` here names only `demo-site:8081`,
+  `demo-third-party:8082` and `localhost:8000`. Those resolve inside the
+  container's own network namespace, so `localhost` is the container, **not your
+  machine**. A visitor cannot use the scanner to reach your host's services.
+- `LLM_OFFLINE` stays `1`. Setting a key on a public URL lets any visitor spend
+  your Anthropic credits, since fix generation needs no authentication.
+
+Windows note: `cloudflared` is a signed binary, so Smart App Control permits it,
+unlike `flyctl`. See the Windows subsection of section 2.

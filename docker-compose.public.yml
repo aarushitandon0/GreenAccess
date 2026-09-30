@@ -1,0 +1,135 @@
+# GreenAccess behind a public tunnel — free hosting with no card.
+#
+# Every no-card free host is too small for this application: it needs a real
+# Chromium and about 2 GB of RAM, and the free tiers that exist cap out well
+# below that. So instead of hosting the app somewhere free, this runs the
+# production image locally and publishes it through a Cloudflare quick tunnel,
+# which is free, needs no account and issues a real HTTPS URL.
+#
+#   make public          # builds, starts the three services, opens the tunnel
+#   make public-down     # stops them
+#
+# The trade-off against docs/DEPLOYMENT.md: the URL lives only while this is
+# running on your machine. In exchange the fidelity is higher than the Fly
+# deployment, because the two demo hosts are bare Docker hostnames with no
+# registrable domain, so the scanner still counts the tracker scripts as third
+# party. On fly.dev it cannot — see the note in demo-site/fly.trackers.toml.
+#
+# Differs from docker-compose.yml, which is the development stack: that one runs
+# the Vite dev server on :5173 as a second origin, which a single tunnel cannot
+# serve. This uses the production image, where app/api/spa.py serves the built
+# UI and the API from one origin on :8000.
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: greenaccess:latest
+    ports:
+      # 8100 on the host, not 8000: `make dev` already holds 8000, and two
+      # listeners on one port is ambiguous about which answers. Override with
+      # PUBLIC_PORT. The tunnel points at whichever this is.
+      - "${PUBLIC_PORT:-8100}:8000"
+    environment:
+      # Offline by default. A public URL with a live key lets any visitor spend
+      # your Anthropic credits: fix generation is one unauthenticated POST away.
+      LLM_OFFLINE: "${LLM_OFFLINE:-1}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      ANTHROPIC_MODEL: "${ANTHROPIC_MODEL:-claude-opus-5}"
+
+      # The SSRF guard blocks private addresses, and these three are private.
+      # They are named explicitly rather than by weakening the guard
+      # (CLAUDE.md, security rules). ssrf.py accepts host:port as well as a
+      # bare host, so the ports are stated to keep the grant narrow:
+      #   demo-site:8081         the page being scanned
+      #   demo-third-party:8082  its tracker scripts
+      #   localhost:8000         this container's own /patched, for the re-scan
+      ALLOWED_LOCAL_HOSTS: "demo-site:8081,demo-third-party:8082,localhost:8000"
+
+      # Reachable by service name inside this network, not from the visitor's
+      # browser. That is fine: the scanner loads the demo server-side.
+      DEMO_URL: "http://demo-site:8081"
+
+      # The re-scan fetches the patched copy as though it were any other site,
+      # and this URL is also handed to the browser in the After chapter. The
+      # loopback default keeps the re-scan working standalone, but it is not
+      # reachable by a visitor, so `make public` overrides it with the tunnel
+      # URL once cloudflared has issued one. Same as the Fly deployment does.
+      PATCHED_BASE_URL: "${PATCHED_BASE_URL:-http://localhost:8000/patched}"
+
+      # Only the CORS allow-list. The UI and the API are one origin here, so
+      # nothing depends on it; set it to the tunnel URL if you care.
+      PUBLIC_BASE_URL: "${PUBLIC_BASE_URL:-http://localhost:8000}"
+
+      # Four slashes: an absolute path, on the volume below.
+      DATABASE_URL: "sqlite:////app/data/greenaccess.db"
+
+      # MASTERSPEC §17.
+      MAX_CONCURRENT_SCANS: "2"
+      SCAN_TIMEOUT_S: "90"
+      NAV_TIMEOUT_S: "30"
+      MAX_PAGE_BYTES: "26214400"
+      DEMO_FALLBACK: "${DEMO_FALLBACK:-0}"
+    volumes:
+      # Unlike every free host's ephemeral disk, this survives restarts, so a
+      # patched URL or a badge handed to someone keeps resolving.
+      - public-data:/app/data
+    # Chromium needs more than Docker's default 64 MB of shared memory or it
+    # crashes on content-heavy pages.
+    shm_size: "1gb"
+    depends_on:
+      - demo-site
+      - demo-third-party
+    restart: unless-stopped
+
+  demo-site:
+    build:
+      context: ./demo-site
+      dockerfile: Dockerfile
+    image: greenaccess-demo:dev
+    # Not published to the host: the scanner reaches it over this network, and
+    # leaving it unpublished keeps it off the tunnel.
+    expose:
+      - "8081"
+    command:
+      - python
+      - server.py
+      - --port
+      - "8081"
+      - --root
+      - /app
+      - --host
+      - 0.0.0.0
+      # index.html hardcodes http://localhost:8082 for its trackers, which
+      # inside the app container would resolve to the app itself and quietly
+      # lose defect THIRD-PARTY-01. Rewrite it to the tracker service.
+      - --tracker-base
+      - http://demo-third-party:8082
+      - --quiet
+    restart: unless-stopped
+
+  demo-third-party:
+    build:
+      context: ./demo-site
+      dockerfile: Dockerfile
+    image: greenaccess-demo:dev
+    expose:
+      - "8082"
+    command:
+      - python
+      - server.py
+      - --port
+      - "8082"
+      - --root
+      - /app/third-party
+      - --host
+      - 0.0.0.0
+      # Given without a leading slash on purpose; see demo-site/server.py.
+      - --strip-prefix
+      - "t"
+      - --quiet
+    restart: unless-stopped
+
+volumes:
+  public-data:

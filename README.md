@@ -258,6 +258,8 @@ detection with its estimated byte saving, and every trade-off finding.
 | `make image-run` | Runs that image on :8000 with a local data volume |
 | `make deploy` | `fly deploy` the application. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
 | `make deploy-demo` | `fly deploy` the Daily Herald and its tracker host |
+| `make public` | Free public HTTPS URL with no credit card: the production image plus a Cloudflare tunnel. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) §9 |
+| `make public-down` | Stop the public stack |
 | `make clean` | Removes generated runtime data |
 | `make e2e` | Not implemented. See [section 18](#18-project-status-and-known-gaps) |
 | `make dogfood` | Not implemented. See [section 18](#18-project-status-and-known-gaps) |

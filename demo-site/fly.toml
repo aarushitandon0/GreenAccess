@@ -29,6 +29,9 @@ primary_region = "sin"
 
 [http_service]
   internal_port = 8081
+  # Named explicitly: once [processes] exists, a service has to say which of
+  # them it fronts.
+  processes = ["app"]
   force_https = true
   # A static fixture: cheap to start, pointless to keep warm. A cold start
   # adds a second or two to the first scan of the day.

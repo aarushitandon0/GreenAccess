@@ -145,6 +145,10 @@ deploy:
 # `make assets` first: the generated media is gitignored and the demo
 # Dockerfile copies it only if present, so skipping it ships a demo with no
 # images and quietly different carbon numbers.
+# The `demo-site` argument is the build context. demo-site/Dockerfile copies
+# server.py, css, js and third-party from the context root, so deploying from
+# here without it fails on "/third-party": not found -- and the root
+# .dockerignore excludes demo-site/ as well. --dockerfile is then redundant.
 deploy-demo: assets
-	fly deploy --config demo-site/fly.trackers.toml --dockerfile demo-site/Dockerfile
-	fly deploy --config demo-site/fly.toml --dockerfile demo-site/Dockerfile
+	fly deploy demo-site --config demo-site/fly.trackers.toml
+	fly deploy demo-site --config demo-site/fly.toml

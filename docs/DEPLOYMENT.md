@@ -62,6 +62,11 @@ find. Both are the same image from `demo-site/`, run with different arguments.
 ## 2. Prerequisites
 
 - A Fly.io account and `flyctl` installed and logged in (`fly auth login`).
+- **A card on the Fly account.** `fly apps create` refuses outright with
+  `We need your payment information to continue!` until billing is set up, so
+  this blocks the very first command in section 3, before any build happens.
+  Add it at `https://fly.io/dashboard/<org>/billing`. The three apps here fit
+  well inside Fly's smallest paid tier, and the two demo apps scale to zero.
 - Docker running locally, or let Fly build remotely with `--remote-only`.
 - The demo's generated media built locally: **`make assets`**. The hero video,
   article JPEGs and banners are gitignored, and `demo-site/Dockerfile` copies
@@ -149,15 +154,24 @@ deployed, so a collision costs nothing but the retry.
 
 ```bash
 fly apps create greenaccess-aarushi-trackers
-fly deploy --config demo-site/fly.trackers.toml --dockerfile demo-site/Dockerfile
+fly deploy demo-site --config demo-site/fly.trackers.toml
 ```
+
+The bare `demo-site` is not decoration. `flyctl deploy [WORKING_DIRECTORY]`
+takes the build context as a positional argument, and `demo-site/Dockerfile`
+copies `server.py`, `css`, `js` and `third-party` from the context root. Deploy
+these two apps from the repository root without it and the build fails on
+`"/third-party": not found`, because the context is then the repository root,
+where the root `.dockerignore` also excludes `demo-site/` outright. With the
+argument present, `--dockerfile` is unnecessary: it defaults to the Dockerfile
+in the working directory.
 
 ### 3.2 The demo site
 
 ```bash
 make assets    # do not skip this
 fly apps create greenaccess-aarushi-demo
-fly deploy --config demo-site/fly.toml --dockerfile demo-site/Dockerfile
+fly deploy demo-site --config demo-site/fly.toml
 ```
 
 Check it serves, and that the tracker URLs were rewritten away from localhost:

@@ -27,6 +27,7 @@
  * schedule once and the stylesheet resolves everything from `--p`.
  */
 
+import { Ambience, type AmbienceProps } from './Ambience'
 import { Scenery, type SceneProp } from './Scenery'
 import { Terrain } from './Terrain'
 
@@ -47,8 +48,10 @@ export interface BackdropScene {
   /** Total pan across the move, in vw / vh. */
   panX: number
   panY: number
-  /** What moves on this landscape. */
+  /** What moves on this landscape with the scroll. */
   props: readonly SceneProp[]
+  /** What moves on it regardless of the scroll: weather, light, pollen. */
+  ambience?: AmbienceProps
 }
 
 export interface BackdropProps {
@@ -105,6 +108,8 @@ export function Backdrop({ scenes }: BackdropProps): JSX.Element {
              */
             fetchPriority={index === 0 ? 'auto' : 'low'}
           />
+
+          {scene.ambience ? <Ambience {...scene.ambience} /> : null}
 
           <Scenery props={scene.props} eager={index === 0} />
         </div>

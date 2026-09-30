@@ -98,6 +98,31 @@ const SCENES: readonly BackdropScene[] = [
     zoomBy: -0.13,
     panX: 5,
     panY: 2.5,
+    ambience: {
+      // Weather crosses right to left over the whole map. The three depths are
+      // what stop it reading as one sheet of cloud sliding past: the low one
+      // is bigger, faster and more solid, the high one small, slow and hazy.
+      clouds: [
+        { y: 12, w: 11, dur: 96, delay: -20, depth: 2.6, alpha: 0.92 },
+        { y: 47, w: 7.5, dur: 132, delay: -74, depth: 1.5, alpha: 0.7 },
+        { y: 74, w: 13, dur: 78, delay: -46, depth: 3.4, alpha: 0.96 },
+      ],
+      // Light on the open water down the middle of the map.
+      glints: [
+        { x: 42, y: 52, w: 16, dur: 13, delay: 0 },
+        { x: 58, y: 72, w: 12, dur: 17, delay: -6 },
+        { x: 30, y: 30, w: 10, dur: 19, delay: -11 },
+      ],
+      // Pollen over the islands either side of the channel.
+      motes: [
+        { x: 78, y: 44, size: 4, dur: 11, delay: 0 },
+        { x: 85, y: 56, size: 3, dur: 14, delay: -5 },
+        { x: 73, y: 62, size: 3, dur: 9, delay: -3 },
+        { x: 90, y: 38, size: 4, dur: 16, delay: -8 },
+        { x: 52, y: 22, size: 3, dur: 12, delay: -2 },
+        { x: 62, y: 84, size: 4, dur: 15, delay: -9 },
+      ],
+    },
     props: [
       // Beat one: the page itself, planted on the island by the signposts.
       { sprite: 'iso-laptop', x: 82, y: 50, w: 13, enter: 0.04, driftY: -1, bob: 6.5 },
@@ -117,6 +142,27 @@ const SCENES: readonly BackdropScene[] = [
     zoomBy: -0.11,
     panX: -5,
     panY: 1.5,
+    ambience: {
+      clouds: [
+        { y: 8, w: 9, dur: 104, delay: -58, depth: 2.2, alpha: 0.85 },
+        { y: 40, w: 12, dur: 84, delay: -12, depth: 3.1, alpha: 0.95 },
+        { y: 82, w: 7, dur: 140, delay: -96, depth: 1.4, alpha: 0.66 },
+      ],
+      glints: [
+        { x: 46, y: 60, w: 15, dur: 15, delay: 0 },
+        { x: 30, y: 78, w: 13, dur: 12, delay: -7 },
+        { x: 60, y: 34, w: 10, dur: 18, delay: -4 },
+      ],
+      // Over the green bank, where the flowers are.
+      motes: [
+        { x: 70, y: 66, size: 4, dur: 10, delay: 0 },
+        { x: 80, y: 74, size: 3, dur: 13, delay: -6 },
+        { x: 88, y: 60, size: 4, dur: 16, delay: -2 },
+        { x: 64, y: 48, size: 3, dur: 12, delay: -9 },
+        { x: 76, y: 86, size: 3, dur: 14, delay: -4 },
+        { x: 92, y: 80, size: 4, dur: 9, delay: -7 },
+      ],
+    },
     props: [
       // The heavy bank at the near end of the bridge, which clears as the fix
       // lands. Kept to the quay at the city's right edge rather than out over

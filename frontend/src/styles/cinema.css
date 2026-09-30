@@ -238,6 +238,168 @@
   object-position: 38% 50%;
 }
 
+/* ---- Ambience: weather, light and pollen (see Ambience.tsx) ----
+
+   None of this is tied to `--p`. It loops, so the landscape keeps breathing
+   while the reader stops to read a beat, and nothing in it arrives or resolves
+   in a way that would compete with the argument for their attention.
+   -------------------------------------------------------------------------- */
+
+.ambience {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* Paint containment only: a cloud that has drifted past the edge stops
+     costing anything, without stripping the layer of its size. */
+  contain: paint;
+}
+
+/* Clouds */
+
+.cloud {
+  position: absolute;
+  top: var(--y);
+  left: 0;
+  right: 0;
+  height: 0;
+  /* Parallax. The crossing itself is on the child, because a keyframe here
+     would replace this transform rather than compose with it. */
+  transform: translate3d(calc(var(--depth) * 1vw * var(--p, 1)), 0, 0);
+}
+
+.cloud__drift {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  animation: cloud-cross var(--dur) linear var(--delay) infinite;
+}
+
+/*
+ * Percentages here are of the drift box, which spans the scene, so the cloud
+ * starts and ends clear of both edges whatever the viewport is.
+ */
+@keyframes cloud-cross {
+  from {
+    transform: translate3d(-24%, 0, 0);
+  }
+  to {
+    transform: translate3d(114%, 0, 0);
+  }
+}
+
+/*
+ * No drop-shadow filter here, and no blur on the shadow below. A filter on an
+ * element that is moving every frame is paint work the compositor cannot skip,
+ * and measured as the difference between 3% and 40% of frames running long.
+ * The shadow is a gradient instead: soft by construction, free to composite.
+ */
+.cloud__art {
+  display: block;
+  width: var(--w);
+  height: auto;
+  opacity: var(--alpha);
+}
+
+/* The shadow the cloud throws on the water, offset down and to the right of
+   it because the artwork is lit from the upper left. */
+.cloud__shadow {
+  position: absolute;
+  top: 56%;
+  left: 5%;
+  width: calc(var(--w) * 1.1);
+  aspect-ratio: 2.2;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(4, 16, 15, 0.38),
+    rgba(4, 16, 15, 0.16) 45%,
+    rgba(4, 16, 15, 0) 72%
+  );
+}
+
+/* Light on the water */
+
+.glint {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--w);
+  aspect-ratio: 2.7;
+  border-radius: 50%;
+  /*
+   * A gradient, not a blurred disc, and no blend mode. `soft-light` reads
+   * beautifully but forces the browser to re-read the backdrop under a moving,
+   * scaling element on every frame; a low-alpha gradient in the water's own
+   * highlight colour gets within a hair of it for nothing. No will-change
+   * either: the animation promotes it, and twenty extra layers is its own cost.
+   */
+  background: radial-gradient(
+    ellipse at center,
+    rgba(186, 232, 226, 0.3),
+    rgba(186, 232, 226, 0.12) 42%,
+    rgba(186, 232, 226, 0) 72%
+  );
+  animation: glint-breathe var(--dur) ease-in-out var(--delay) infinite alternate;
+}
+
+@keyframes glint-breathe {
+  from {
+    transform: translate3d(0, 0, 0) scale(0.88);
+    opacity: 0.3;
+  }
+  to {
+    transform: translate3d(1.8vw, -1vh, 0) scale(1.18);
+    opacity: 0.85;
+  }
+}
+
+/* Pollen over the land */
+
+.mote {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    rgba(240, 248, 228, 0.95),
+    rgba(198, 238, 186, 0.45) 45%,
+    rgba(198, 238, 186, 0) 75%
+  );
+  animation: mote-float var(--dur) ease-in-out var(--delay) infinite alternate;
+}
+
+@keyframes mote-float {
+  from {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.12;
+  }
+  to {
+    transform: translate3d(1.4vw, -4vh, 0);
+    opacity: 0.9;
+  }
+}
+
+/*
+ * Ambient motion carries no meaning, so under reduced motion it stops outright
+ * rather than being left to the blanket rule in base.css — which caps every
+ * animation at a single 1ms iteration and would strand each of these at the
+ * *end* of its loop, with the clouds bunched off the right edge.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .cloud__drift,
+  .glint,
+  .mote {
+    animation: none;
+  }
+
+  .cloud__drift {
+    transform: translate3d(28%, 0, 0);
+  }
+}
+
 /* ---- Scenery: the props that arrive, rise and clear ---- */
 
 .scenery {

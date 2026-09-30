@@ -32,7 +32,13 @@ from app.security.ssrf import ValidatedUrl, validate_url
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["MAX_REDIRECT_HOPS", "PREFLIGHT_TIMEOUT_S", "pinned_request", "preflight_redirects"]
+__all__ = [
+    "MAX_REDIRECT_HOPS",
+    "PREFLIGHT_TIMEOUT_S",
+    "pinned_request",
+    "pinned_send",
+    "preflight_redirects",
+]
 
 #: Hops followed before the pre-flight stops looking. Anything longer is left
 #: to the browser guard, which checks every hop however long the chain.
@@ -46,8 +52,13 @@ _REDIRECT_STATUSES: Final[frozenset[int]] = frozenset({301, 302, 303, 307, 308})
 _USER_AGENT: Final[str] = "GreenAccessBot/0.1 (redirect pre-flight)"
 
 
-def pinned_request(hop: ValidatedUrl, timeout_s: float) -> httpx.Request:
-    """A GET for `hop` that connects to its validated address, not a fresh lookup.
+def pinned_request(
+    hop: ValidatedUrl, timeout_s: float, address: str | None = None
+) -> httpx.Request:
+    """A GET for `hop` that connects to `address`, not to a fresh lookup.
+
+    `address` must be one of `hop.resolved_ips`; it defaults to the first.
+    Prefer :func:`pinned_send`, which tries each of them in turn.
 
     Public so the patcher's asset fetcher (:mod:`app.security.fetch`) pins its
     connections the same way this pre-flight does.
@@ -55,16 +66,44 @@ def pinned_request(hop: ValidatedUrl, timeout_s: float) -> httpx.Request:
     parts = urlsplit(hop.url)
     headers = {"Host": parts.netloc, "User-Agent": _USER_AGENT}
     extensions: dict[str, object] = {"timeout": httpx.Timeout(timeout_s).as_dict()}
-    if not hop.resolved_ips:
+    if address is None and not hop.resolved_ips:
         # Allow-listed dev host that did not resolve; nothing to pin to.
         return httpx.Request("GET", hop.url, headers=headers, extensions=extensions)
 
-    address = hop.resolved_ips[0]
+    address = address if address is not None else hop.resolved_ips[0]
     literal = f"[{address}]" if ":" in address else address
     pinned = urlunsplit((parts.scheme, f"{literal}:{hop.port}", parts.path or "/", parts.query, ""))
     if hop.scheme == "https":
         extensions["sni_hostname"] = hop.host
     return httpx.Request("GET", pinned, headers=headers, extensions=extensions)
+
+
+async def pinned_send(
+    transport: httpx.AsyncBaseTransport, hop: ValidatedUrl, timeout_s: float
+) -> httpx.Response:
+    """GET `hop`, trying each address the guard validated until one answers.
+
+    A name can resolve to several addresses and only some of them be
+    reachable: a dual-stack host whose AAAA record answers first on a machine
+    with no IPv6 route is the everyday case, and `localhost` on Windows is
+    ``::1`` before ``127.0.0.1``. Stopping at the first address would turn that
+    into a connection error, which the callers read as "no verdict" -- the
+    redirect pre-flight would stop looking and the patcher would lose an asset.
+
+    Every candidate is an address `validate_url` already approved, so trying
+    the next one adds no reach; the connection is still never re-resolved.
+    Raises the last :class:`httpx.HTTPError` if none of them connect.
+    """
+    candidates: tuple[str | None, ...] = hop.resolved_ips or (None,)
+    last: httpx.HTTPError | None = None
+    for address in candidates:
+        try:
+            return await transport.handle_async_request(pinned_request(hop, timeout_s, address))
+        except httpx.HTTPError as exc:
+            last = exc
+            logger.debug("pinned request to %s for %s failed: %s", address, hop.url, exc)
+    assert last is not None  # candidates is never empty, so the loop either returned or set this
+    raise last
 
 
 async def _next_location(
@@ -77,7 +116,7 @@ async def _next_location(
     would hide exactly the obfuscated addresses this check exists to catch.
     The raw header goes to :func:`~app.security.ssrf.validate_url` instead.
     """
-    response = await transport.handle_async_request(pinned_request(hop, timeout_s))
+    response = await pinned_send(transport, hop, timeout_s)
     try:
         if response.status_code in _REDIRECT_STATUSES:
             return response.headers.get("location")

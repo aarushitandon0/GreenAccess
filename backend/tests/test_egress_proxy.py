@@ -152,12 +152,25 @@ def test_host_port(target: str, expected: str):
     assert host_port(target) == expected
 
 
-async def test_unreachable_upstream_is_marked_as_a_proxy_error(local_site: Callable):
+def _closed_port() -> int:
+    """A port with nothing listening on it: bound to learn the number, then released.
+
+    Guessing one (a live server's port + 1, say) is not safe: the OS hands out
+    ephemeral ports in sequence, so the next number along is very often the
+    next socket the test itself binds -- including the proxy's own listener,
+    which then answers the forwarded request and decides this test by accident.
+    """
+    with socket.socket() as probe:
+        probe.bind(("127.0.0.1", 0))
+        return int(probe.getsockname()[1])
+
+
+async def test_unreachable_upstream_is_marked_as_a_proxy_error():
     """The scanner must be able to tell the proxy's own 502 from the site's page."""
-    base = local_site({})
-    host, port = base.removeprefix("http://").split(":")
-    dead = f"{host}:{int(port) + 1 if int(port) < 65535 else 1}"
-    async with EgressProxy(allowed_local_hosts=(dead,)) as proxy:
+    async with EgressProxy() as proxy:
+        # Chosen once the proxy holds its own port, so it cannot be that port.
+        dead = f"127.0.0.1:{_closed_port()}"
+        proxy.allowed_local_hosts = (dead,)
         reply = await _exchange(
             proxy, f"GET http://{dead}/ HTTP/1.1\r\nHost: {dead}\r\n\r\n".encode()
         )

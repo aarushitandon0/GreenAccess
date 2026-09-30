@@ -23,7 +23,7 @@ from urllib.parse import urljoin
 
 import httpx
 
-from app.security.redirects import pinned_request
+from app.security.redirects import pinned_send
 from app.security.ssrf import UrlBlocked, validate_url
 
 logger = logging.getLogger(__name__)
@@ -89,9 +89,7 @@ class SafeFetcher:
                         f"{current} is blocked: {blocked.reason}", blocked=True
                     ) from blocked
                 try:
-                    response = await transport.handle_async_request(
-                        pinned_request(hop, self.timeout_s)
-                    )
+                    response = await pinned_send(transport, hop, self.timeout_s)
                 except httpx.HTTPError as exc:
                     raise FetchError(f"could not fetch {current}: {exc}") from exc
                 try:

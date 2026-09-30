@@ -17,7 +17,7 @@ Three Fly applications:
 
 ```
                           ┌──────────────────────────────────────┐
-   visitor ──── https ───►│  greenaccess.fly.dev                 │
+   visitor ──── https ───►│  greenaccess-aarushi.fly.dev         │
                           │                                      │
                           │  one container, one origin:          │
                           │    /            the built React UI   │
@@ -33,16 +33,16 @@ Three Fly applications:
                      per-scan SSRF egress proxy)         │ visits its own
                                   │                      │ public /patched URL
                                   ▼                      ▼
-        ┌───────────────────────────────┐   ┌──────────────────────────┐
-        │ greenaccess-demo.fly.dev      │   │ greenaccess.fly.dev      │
-        │ The Daily Herald, port 8081   │   │ /patched/{scan_id}/...   │
-        └──────────────┬────────────────┘   └──────────────────────────┘
+        ┌──────────────────────────────────────┐  ┌─────────────────────────────┐
+        │ greenaccess-aarushi-demo.fly.dev     │  │ greenaccess-aarushi.fly.dev │
+        │ The Daily Herald, port 8081          │  │ /patched/{scan_id}/...      │
+        └──────────────┬───────────────────────┘  └─────────────────────────────┘
                        │ the page pulls four tracker scripts
                        ▼
-        ┌───────────────────────────────┐
-        │ greenaccess-trackers.fly.dev  │
-        │ fake trackers, port 8082      │
-        └───────────────────────────────┘
+        ┌──────────────────────────────────────┐
+        │ greenaccess-aarushi-trackers.fly.dev │
+        │ fake trackers, port 8082             │
+        └──────────────────────────────────────┘
 ```
 
 **Why one container for the app rather than two.** `frontend/src/lib/api.ts`
@@ -69,6 +69,56 @@ find. Both are the same image from `demo-site/`, run with different arguments.
   Deploy without this step and the hosted demo has no images, which quietly
   changes every carbon number it produces.
 
+### On Windows
+
+Two things bite on a stock Windows 11 machine. Both were hit and worked around
+on 2026-09-30.
+
+**`make` is not installed.** Git Bash and PowerShell both answer
+`command not found`. GNU Make ships with msys64 as `mingw32-make`, and the
+Makefile already branches on `OS=Windows_NT` to select
+`backend/.venv/Scripts/python.exe`, so it works unmodified under that name:
+
+```bash
+/c/msys64/ucrt64/bin/mingw32-make assets
+```
+
+Add `C:\msys64\ucrt64\bin` to PATH to type plain `make`. Failing that, every
+recipe in this Makefile is deliberately a single command, so any target can be
+run directly:
+
+```bash
+backend/.venv/Scripts/python.exe scripts/make_demo_assets.py   # = make assets
+backend/.venv/Scripts/python.exe scripts/demo_page_weight.py   # = make weight
+```
+
+**Smart App Control blocks `flyctl`.** `winget install Fly-io.flyctl` installs
+it successfully, but the binary is unsigned and Windows then refuses to execute
+it: `An Application Control policy has blocked this file`. Confirm the cause:
+
+```powershell
+Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\CI\Policy |
+  Select-Object VerifiedAndReputablePolicyState    # 1 = Smart App Control on
+```
+
+Do **not** switch Smart App Control off to get around this. Once disabled it
+cannot be re-enabled without reinstalling Windows, which is a steep price for a
+deploy tool. Run `flyctl` from WSL instead, where the policy does not apply:
+
+```powershell
+wsl -d Ubuntu -- curl -sSL https://fly.io/install.sh | sh
+wsl -d Ubuntu -- /home/$USER/.fly/bin/flyctl auth login
+```
+
+WSL mounts the repository at `/mnt/c/Users/<you>/...`, so deploys run against
+these same files, and `fly auth login` opens a browser on the Windows side as
+normal. Invoke `wsl` from PowerShell rather than Git Bash: Git Bash rewrites the
+Linux paths inside the command and the call fails with the misleading
+`C:/Program: No such file or directory`.
+
+Running `flyctl` in Docker (`flyio/flyctl`) is the other option, and needs a
+deploy token from the Fly dashboard rather than the browser login flow.
+
 Verify before deploying anything:
 
 ```bash
@@ -81,16 +131,24 @@ make assets      # regenerates demo-site/assets/generated/
 
 ## 3. First deploy, in order
 
-App names on Fly are globally unique, so `greenaccess` is almost certainly
-taken. Pick your own and change it consistently in four places:
+App names on Fly are globally unique, so the committed configs use the base
+name `greenaccess-aarushi`; the undecorated `greenaccess` is almost certainly
+taken. The commands below use those names directly.
+
+To use a different base name, change it consistently in four places:
 `fly.toml` (`app`, `PUBLIC_BASE_URL`, `PATCHED_BASE_URL`, `DEMO_URL`),
 `demo-site/fly.toml` (`app`, `--tracker-base`) and
-`demo-site/fly.trackers.toml` (`app`).
+`demo-site/fly.trackers.toml` (`app`). `fly launch` would also offer to choose a
+name, but it rewrites `fly.toml` from its own template and would discard the
+settings in this one, so use `fly apps create` as below.
+
+A taken name is rejected at `fly apps create`, before anything is built or
+deployed, so a collision costs nothing but the retry.
 
 ### 3.1 The tracker host
 
 ```bash
-fly apps create greenaccess-trackers
+fly apps create greenaccess-aarushi-trackers
 fly deploy --config demo-site/fly.trackers.toml --dockerfile demo-site/Dockerfile
 ```
 
@@ -98,15 +156,15 @@ fly deploy --config demo-site/fly.trackers.toml --dockerfile demo-site/Dockerfil
 
 ```bash
 make assets    # do not skip this
-fly apps create greenaccess-demo
+fly apps create greenaccess-aarushi-demo
 fly deploy --config demo-site/fly.toml --dockerfile demo-site/Dockerfile
 ```
 
 Check it serves, and that the tracker URLs were rewritten away from localhost:
 
 ```bash
-curl -s https://greenaccess-demo.fly.dev/ | grep -o 'src="[^"]*analytics.js"'
-# expect: src="https://greenaccess-trackers.fly.dev/t/analytics.js"
+curl -s https://greenaccess-aarushi-demo.fly.dev/ | grep -o 'src="[^"]*analytics.js"'
+# expect: src="https://greenaccess-aarushi-trackers.fly.dev/t/analytics.js"
 ```
 
 If that still says `http://localhost:8082`, the `--tracker-base` argument in
@@ -116,8 +174,8 @@ scripts to mixed-content blocking.
 ### 3.3 The application
 
 ```bash
-fly apps create greenaccess
-fly volumes create greenaccess_data --app greenaccess --region sin --size 3
+fly apps create greenaccess-aarushi
+fly volumes create greenaccess_data --app greenaccess-aarushi --region sin --size 3
 fly deploy
 ```
 
@@ -128,9 +186,9 @@ URL handed to someone stops resolving the next time you ship.
 ### 3.4 Smoke test
 
 ```bash
-curl -s https://greenaccess.fly.dev/api/health
-curl -s https://greenaccess.fly.dev/api/demo
-curl -s -o /dev/null -w '%{http_code}\n' https://greenaccess.fly.dev/
+curl -s https://greenaccess-aarushi.fly.dev/api/health
+curl -s https://greenaccess-aarushi.fly.dev/api/demo
+curl -s -o /dev/null -w '%{http_code}\n' https://greenaccess-aarushi.fly.dev/
 ```
 
 Then open the site, run the demo scan end to end, generate fixes, apply them and
@@ -190,8 +248,8 @@ page's". `fly.dev` is **not** in the public suffix list bundled with
 `tldextract`, so:
 
 ```
-greenaccess-demo.fly.dev      -> registrable domain "fly.dev"
-greenaccess-trackers.fly.dev  -> registrable domain "fly.dev"
+greenaccess-aarushi-demo.fly.dev      -> registrable domain "fly.dev"
+greenaccess-aarushi-trackers.fly.dev  -> registrable domain "fly.dev"
 ```
 
 Both resolve to the same registrable domain, so on the hosted demo the scanner
@@ -204,8 +262,8 @@ completely unaffected, because hosts with no registrable domain are compared by
 To fix it properly, put the two demo apps on two different registrable domains:
 
 ```bash
-fly certs add dailyherald.example      --app greenaccess-demo
-fly certs add herald-trackers.example  --app greenaccess-trackers
+fly certs add dailyherald.example      --app greenaccess-aarushi-demo
+fly certs add herald-trackers.example  --app greenaccess-aarushi-trackers
 ```
 
 then set `DEMO_URL` to `https://dailyherald.example` and `--tracker-base` in
@@ -233,16 +291,16 @@ stream is longer, and stopping the machine underneath one would drop it.
 ## 6. Operating it
 
 ```bash
-fly logs --app greenaccess
-fly status --app greenaccess
-fly ssh console --app greenaccess
-fly machine restart <id> --app greenaccess
+fly logs --app greenaccess-aarushi
+fly status --app greenaccess-aarushi
+fly ssh console --app greenaccess-aarushi
+fly machine restart <id> --app greenaccess-aarushi
 ```
 
 The volume holds everything the app writes. To see how full it is:
 
 ```bash
-fly ssh console --app greenaccess -C "du -sh /app/data/*"
+fly ssh console --app greenaccess-aarushi -C "du -sh /app/data/*"
 ```
 
 Screenshots and patched copies accumulate, one set per scan, and nothing prunes

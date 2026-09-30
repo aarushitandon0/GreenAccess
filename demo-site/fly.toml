@@ -12,7 +12,7 @@
 # The tracker host is a second app from this same directory; see
 # fly.trackers.toml and the third-party note in docs/DEPLOYMENT.md.
 
-app = "greenaccess-demo"
+app = "greenaccess-aarushi-demo"
 primary_region = "sin"
 
 [build]
@@ -25,7 +25,7 @@ primary_region = "sin"
 # http://localhost:8082 in index.html and would otherwise be blocked as mixed
 # content on an HTTPS host, taking defect THIRD-PARTY-01 with them.
 [processes]
-  app = "python server.py --port 8081 --root /app --host 0.0.0.0 --tracker-base https://greenaccess-trackers.fly.dev --quiet"
+  app = "python server.py --port 8081 --root /app --host 0.0.0.0 --tracker-base https://greenaccess-aarushi-trackers.fly.dev --quiet"
 
 [http_service]
   internal_port = 8081

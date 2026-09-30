@@ -8,8 +8,8 @@
 # domain differs from the page's", and `fly.dev` is not in the public suffix
 # list bundled with tldextract, so both of these:
 #
-#   greenaccess-demo.fly.dev      -> registrable domain "fly.dev"
-#   greenaccess-trackers.fly.dev  -> registrable domain "fly.dev"
+#   greenaccess-aarushi-demo.fly.dev      -> registrable domain "fly.dev"
+#   greenaccess-aarushi-trackers.fly.dev  -> registrable domain "fly.dev"
 #
 # resolve to the same registrable domain. On the hosted demo the scanner
 # therefore does NOT count these scripts as third party: defect THIRD-PARTY-01
@@ -25,7 +25,7 @@
 # herald-trackers.example) and point DEMO_URL at the first. docs/DEPLOYMENT.md
 # has the steps.
 
-app = "greenaccess-trackers"
+app = "greenaccess-aarushi-trackers"
 primary_region = "sin"
 
 [build]

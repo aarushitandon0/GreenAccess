@@ -1,38 +1,92 @@
+# ---------------------------------------------------------------------------
 # Python
+# ---------------------------------------------------------------------------
 __pycache__/
 *.py[cod]
+*.egg-info/
 .venv/
 venv/
-*.egg-info/
+.eggs/
+build/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
 .pytest_cache/
 .ruff_cache/
-.coverage
-htmlcov/
+.tox/
 
-# Node
+# ---------------------------------------------------------------------------
+# Node / frontend
+# ---------------------------------------------------------------------------
 node_modules/
 dist/
+dist-ssr/
 .vite/
 *.tsbuildinfo
+npm-debug.log*
+yarn-error.log*
+.eslintcache
 
-# App data
-greenaccess.db
-backend/.llm_cache/
+# Playwright (e2e) output
+playwright-report/
+test-results/
+blob-report/
+.playwright/
+
+# ---------------------------------------------------------------------------
+# Runtime data. Everything the app writes at scan time: screenshots, patched
+# copies, per-scan work directories, zips and the SQLite database. Regenerated
+# by running a scan; never review-worthy.
+# ---------------------------------------------------------------------------
+backend/data/
 backend/patched/
 backend/screenshots/
-backend/data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
 *.log
 
-# Generated demo assets (regenerate with scripts/make_demo_assets.py)
+# The writable LLM answer cache. The *committed* cache that `make demo-record`
+# records for offline replay lives in backend/app/fixtures/llm_cache/ and is
+# deliberately tracked (MASTERSPEC 16), so it is not covered by this rule.
+backend/.llm_cache/
+
+# Ad-hoc `python -m app.cli scan --out <file>` dumps. Handy locally, but they
+# are one-off snapshots, not fixtures: the tracked fixtures are the labelled
+# ones under backend/app/fixtures/ and backend/tests/fixtures/.
+/scan-*.json
+/backend/scan-*.json
+
+# ---------------------------------------------------------------------------
+# Generated demo media. Rebuilt by `make assets`
+# (scripts/make_demo_assets.py). The committed fallback hero video in
+# demo-site/assets/fallback/ is tracked so the demo runs without ffmpeg.
+# ---------------------------------------------------------------------------
 demo-site/assets/generated/
 
-# Env
-.env
-.env.local
+# Demo fonts are copied out of frontend/node_modules by make_demo_assets.py but
+# are kept in git, so the demo site runs without a frontend install.
 
-# OS
+# ---------------------------------------------------------------------------
+# Secrets and local configuration. API keys only ever come from the
+# environment (CLAUDE.md security rules); nothing here belongs in a commit.
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ---------------------------------------------------------------------------
+# Editors and operating systems
+# ---------------------------------------------------------------------------
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.swp
+*~
 .DS_Store
 Thumbs.db
-
-# Demo fonts are copied from frontend/node_modules by make_demo_assets.py
-# (kept in git so the demo runs without a frontend install)
+desktop.ini

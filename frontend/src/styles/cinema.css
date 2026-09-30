@@ -85,8 +85,11 @@
    * property that forces a repaint of the terrain -- see SceneGrade for why
    * the colour grading is separate layers rather than a filter.
    */
-  transform: scale(calc(1.01 + var(--p, 1) * 0.04));
-  transform-origin: 62% 48%;
+  /*
+   * No scale of its own any more: each scene now runs its own camera move, and
+   * a second zoom on the wrapper would compound with it and fight the framing
+   * the scenes were placed against.
+   */
   will-change: transform;
   /*
    * Layout and paint containment only. `contain: strict` adds *size*
@@ -143,7 +146,11 @@
 }
 
 /* --------------------------------------------------------------------------
-   Backdrop: the stack of landscape plates (see Backdrop.tsx)
+   Backdrop: the scenes, the camera on them, and the scenery that moves
+
+   See Backdrop.tsx and Scenery.tsx. Everything below resolves from `--p`, the
+   chapter's progress, so one property write per frame moves the camera, the
+   cross-fade and every prop at once.
    -------------------------------------------------------------------------- */
 
 .backdrop {
@@ -153,9 +160,9 @@
 
 /*
  * On a wide screen the landscape is held to the right of the frame and the
- * prose gets the left quarter to itself, which is the composition the chapter
- * was drawn for. Offsetting the whole stack rather than each plate keeps the
- * drawn fallback registered with the plates above it. Below the breakpoint the
+ * prose gets the left sixth to itself, which is the composition the chapter
+ * was drawn for. Offsetting the whole stack rather than each scene keeps the
+ * drawn fallback registered under the plates. Below the breakpoint the
  * landscape goes full bleed and the scrim carries legibility instead.
  */
 @media (min-width: 60rem) {
@@ -164,8 +171,7 @@
   }
 }
 
-.backdrop__base,
-.backdrop__plate {
+.backdrop__base {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -173,52 +179,137 @@
   display: block;
 }
 
-.backdrop__plate {
-  object-fit: cover;
-  /*
-   * Each plate is composed differently, and a full-height frame is narrower
-   * than the plate, so a single crop would cut the subject out of some of
-   * them. These keep what each plate is *about* inside the frame: the signpost
-   * on the first, the contrast across the bridge on the third, both verdict
-   * boards on the fourth. Overridden per plate below.
-   */
-  object-position: 60% 50%;
+/* ---- The scene, and the camera over it ---- */
+
+.backdrop__scene {
+  position: absolute;
+  inset: 0;
 
   /*
-   * How far past this plate's own moment the reader has travelled, 0 until it
-   * arrives and rising to 1 by the end of the chapter. One number drives both
-   * the drift and the push in, so a plate is still moving while it is on
-   * screen instead of sitting dead until the next one replaces it.
+   * How far through this scene's own stretch of the chapter the reader is.
+   * The scenes overlap, so each one is still moving while the other fades in
+   * over it and the hand-over never looks like a cut.
    */
-  --plate-past: clamp(0, calc(var(--p, 1) - var(--plate-full, 0)), 1);
+  --q: clamp(0, calc((var(--p, 1) - var(--from)) / var(--span)), 1);
 
   /*
-   * Fades in over the plate below and then stays. Never fades out: the layer
-   * underneath is opaque for the whole transition, so a cross-fade cannot dip
-   * to the background the way two opposed opacity ramps would.
+   * A real camera move: several viewport percent of pan and a fifth of scale
+   * across the scene. The pan is centred on the middle of the move, so the
+   * landscape travels through the frame rather than away from one edge of it.
    */
-  opacity: clamp(0, calc((var(--p, 1) - var(--plate-in, 0)) / 0.15), 1);
+  transform: translate3d(
+      calc((0.5 - var(--q)) * var(--pan-x) * 1vw),
+      calc((0.5 - var(--q)) * var(--pan-y) * 1vh),
+      0
+    )
+    scale(calc(var(--zoom-from) + var(--q) * var(--zoom-by)));
 
-  transform: translate3d(calc(var(--plate-past) * -1.8vw), calc(var(--plate-past) * -0.9vh), 0)
-    scale(calc(1.03 + var(--plate-past) * 0.09));
+  /*
+   * Fades in over the scene below and then stays. The first scene is given a
+   * negative `--scene-in`, which resolves this to 1 and keeps it opaque from
+   * the first frame.
+   */
+  opacity: clamp(0, calc((var(--p, 1) - var(--scene-in)) / 0.09), 1);
 
-  will-change: opacity, transform;
+  will-change: transform, opacity;
 }
 
-.backdrop__plate[data-plate='weight'] {
+.backdrop__plate {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  /*
+   * Each plate is composed differently and a full-height frame is narrower
+   * than the plate, so one crop would cut the subject out of the other. These
+   * keep what each plate is about inside the frame: the signpost on the first,
+   * the two banks either side of the bridge on the second.
+   */
+  object-position: 60% 50%;
+}
+
+.backdrop__scene[data-scene='weight'] .backdrop__plate {
   object-position: 74% 50%;
 }
 
-.backdrop__plate[data-plate='barrier'] {
-  object-position: 54% 50%;
+.backdrop__scene[data-scene='both'] .backdrop__plate {
+  object-position: 38% 50%;
 }
 
-.backdrop__plate[data-plate='both'] {
-  object-position: 44% 50%;
+/* ---- Scenery: the props that arrive, rise and clear ---- */
+
+.scenery {
+  position: absolute;
+  inset: 0;
 }
 
-.backdrop__plate[data-plate='tradeoff'] {
-  object-position: 62% 50%;
+.prop {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--w);
+  display: block;
+
+  /* 0 before it is due, 1 once it has fully arrived. */
+  --arrive: clamp(0, calc((var(--p, 1) - var(--enter)) * 8), 1);
+  /* 1 until it is due to go, 0 once it has gone. */
+  --depart: clamp(0, calc((var(--exit) - var(--p, 1)) * 8), 1);
+
+  opacity: min(var(--arrive), var(--depart));
+
+  /*
+   * Three movements composed: centring on its own point, the drift it makes
+   * across the chapter, and the last of the hop it arrives on. The scale pops
+   * it in from slightly small, so a prop lands on the island rather than
+   * fading up out of it.
+   */
+  transform: translate(-50%, -50%)
+    translate3d(
+      calc(var(--drift-x) * 1vw * var(--p, 1)),
+      calc(var(--drift-y) * 1vh * var(--p, 1) + (1 - var(--arrive)) * 26px),
+      0
+    )
+    scale(calc(0.64 + var(--arrive) * 0.36));
+
+  will-change: transform, opacity;
+}
+
+/*
+ * The idle bob lives on an inner element on purpose. A keyframe animating
+ * `transform` on the prop itself would replace the scroll-driven transform
+ * above rather than compose with it, and the prop would jump to the middle of
+ * the scene. Two elements, two transforms, no conflict.
+ */
+.prop .prop__art {
+  width: 100%;
+  height: auto;
+  display: block;
+  /* Grounds the prop on the landscape instead of leaving it pasted over it. */
+  filter: drop-shadow(0 8px 12px rgba(5, 18, 16, 0.5));
+  animation: prop-bob var(--bob) ease-in-out var(--bob-delay) infinite alternate;
+}
+
+@keyframes prop-bob {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, -7px, 0);
+  }
+}
+
+/*
+ * A bob is ambient motion with no meaning attached, which is exactly the kind
+ * of thing prefers-reduced-motion exists to stop. The blanket rule in base.css
+ * caps every animation at one 1ms iteration, which would leave these resting
+ * at the *end* of the bob; this stops them where they were drawn.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .prop .prop__art {
+    animation: none;
+  }
 }
 
 /* A vignette keeps text legible wherever it lands over the figure. */

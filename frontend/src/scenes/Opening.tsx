@@ -21,11 +21,9 @@
  * defect (WCAG 2.4.7), so the scan form is its own section immediately below.
  */
 
-import beatBarrier from '../assets/scenes/beat-2-barrier.webp'
-import beatBoth from '../assets/scenes/beat-3-both.webp'
-import beatTradeoff from '../assets/scenes/beat-4-tradeoff.webp'
-import beatWeight from '../assets/scenes/beat-1-weight.webp'
-import { Backdrop, type BackdropPlate } from '../components/Backdrop'
+import plateBoth from '../assets/scenes/beat-3-both.webp'
+import plateWeight from '../assets/scenes/beat-1-weight.webp'
+import { Backdrop, type BackdropScene } from '../components/Backdrop'
 import { HudFrame, ScanGrid, SceneGrade, ScrollCue } from '../components/Hud'
 import { usePrefersReducedMotion } from '../lib/motion'
 import { useInView, useStickyProgress } from '../lib/scroll'
@@ -76,12 +74,73 @@ const BEATS: readonly Beat[] = [
   },
 ]
 
-/** The landscape plates, one per beat, in the order the reader meets them. */
-const PLATES: readonly BackdropPlate[] = [
-  { id: 'weight', src: beatWeight },
-  { id: 'barrier', src: beatBarrier },
-  { id: 'both', src: beatBoth },
-  { id: 'tradeoff', src: beatTradeoff },
+/**
+ * The two landscapes, and what happens on them.
+ *
+ * The first is the page as it stands: a laptop is planted on the island, the
+ * carbon it costs rises off it, and the machines serving it appear behind. The
+ * second is the same argument answered: that cloud sinks and clears while a
+ * sprout, a turbine and a tree come up on the far bank. The beats say it in
+ * words; the scenery says it in the same order, at the same moments.
+ *
+ * The schedule is in chapter progress, where 0 is the moment the landscape
+ * pins and 1 the moment it lets go. The four beats are centred at 0, 1/3, 2/3
+ * and 1, so a prop keyed to 0.24 lands while the second beat is being read.
+ */
+const SCENES: readonly BackdropScene[] = [
+  {
+    id: 'weight',
+    plate: plateWeight,
+    from: 0,
+    span: 0.55,
+    fadeIn: 0,
+    zoomFrom: 1.22,
+    zoomBy: -0.13,
+    panX: 5,
+    panY: 2.5,
+    props: [
+      // Beat one: the page itself, planted on the island by the signposts.
+      { sprite: 'iso-laptop', x: 82, y: 50, w: 13, enter: 0.04, driftY: -1, bob: 6.5 },
+      // Beat two: the weight nobody sees, rising off it and drifting away over
+      // the water, and the machines on the far bank that serve it.
+      { sprite: 'iso-co2', x: 70, y: 31, w: 11, enter: 0.23, driftY: -6, bob: 5, bobDelay: 0.6 },
+      { sprite: 'iso-server', x: 50, y: 15, w: 11, enter: 0.31, driftY: -1.5, bob: 7, bobDelay: 1.2 },
+    ],
+  },
+  {
+    id: 'both',
+    plate: plateBoth,
+    from: 0.45,
+    span: 0.55,
+    fadeIn: 0.55,
+    zoomFrom: 1.18,
+    zoomBy: -0.11,
+    panX: -5,
+    panY: 1.5,
+    props: [
+      // The heavy bank at the near end of the bridge, which clears as the fix
+      // lands. Kept to the quay at the city's right edge rather than out over
+      // its middle: the prose sits across the left of the frame, and a prop
+      // that has to be read cannot be placed under it.
+      { sprite: 'iso-server', x: 38, y: 23, w: 11, enter: 0.5, exit: 0.8, bob: 7 },
+      {
+        sprite: 'iso-co2',
+        x: 46,
+        y: 17,
+        w: 11,
+        enter: 0.52,
+        exit: 0.79,
+        driftY: -3,
+        bob: 5,
+        bobDelay: 0.4,
+      },
+      // The lighter bank across the water, coming up in their place: a sprout
+      // beside the sign as the third beat lands, a turbine on the far headland
+      // as the fourth does.
+      { sprite: 'iso-sprout', x: 66, y: 56, w: 9, enter: 0.68, driftY: -1, bob: 5, bobDelay: 0.9 },
+      { sprite: 'iso-turbine', x: 84, y: 76, w: 11, enter: 0.8, driftY: -1, bob: 7, bobDelay: 0.3 },
+    ],
+  },
 ]
 
 /**
@@ -139,7 +198,7 @@ export function Opening(): JSX.Element {
     >
       <div className="sticky-scene__pin">
         <div className="sticky-scene__figure">
-          <Backdrop plates={PLATES} />
+          <Backdrop scenes={SCENES} />
         </div>
 
         <SceneGrade />

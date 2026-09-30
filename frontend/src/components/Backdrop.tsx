@@ -1,85 +1,114 @@
 /**
- * The backdrop: the voxel landscape behind the pinned opening.
+ * The backdrop: the landscapes behind the pinned opening, and the camera on
+ * them.
  *
- * Single responsibility: hold a stack of landscape plates and hand the
- * stylesheet the two numbers it needs to cross-fade between them as the reader
- * scrolls.
+ * Single responsibility: stack the scenes, and hand the stylesheet the numbers
+ * it needs to move a camera over each one and cross-fade between them.
  *
- * The plates are stacked, never swapped. Each one above the base fades *in*
- * over the one below and then stays opaque; none of them ever fades out. That
- * asymmetry is the whole trick: two layers cross-fading by opposite opacity
- * ramps let the background show through at the midpoint, which reads as a dip
- * in brightness on every transition. Fading in over an opaque layer cannot dip,
- * because the plate underneath is still at full strength the entire time.
+ * A scene is a landscape plate plus the scenery that moves on it, held in one
+ * box so that a single camera transform carries both. That is why the props
+ * stay put on the water and the grass as the view pushes in: they are being
+ * moved by the same transform as the ground under them, not animated to chase
+ * it.
  *
- * Nothing here re-renders while the reader scrolls. Each plate is given its
- * fade window once, as two custom properties, and the stylesheet resolves the
- * opacity from the chapter's `--p`. One property write per frame moves the
- * whole stack.
+ * There are two scenes, not one per beat. Four stills cross-fading is a
+ * slideshow; two landscapes that are actually travelled over, with the argument
+ * being built out of props on top of them, is a scrollytell. Each scene owns
+ * half the chapter and gets a real camera move across it — a pan of several
+ * viewport percent and a fifth of its scale — rather than the token push-in a
+ * still can get away with.
  *
- * The plates are decorative and `aria-hidden` by way of an empty `alt`: every
- * claim the opening makes is written as text beside them. The `Terrain` drawing
- * sits underneath as the base, so a plate that fails to load leaves a coherent
- * landscape rather than a black rectangle.
+ * The second scene fades in over the first and then stays. Two layers
+ * cross-fading on opposite opacity ramps let the background show through at
+ * the midpoint, which reads as a dip in brightness; fading in over a layer
+ * that is still fully opaque cannot dip.
+ *
+ * Nothing here re-renders while the reader scrolls. Each scene is given its
+ * schedule once and the stylesheet resolves everything from `--p`.
  */
 
+import { Scenery, type SceneProp } from './Scenery'
 import { Terrain } from './Terrain'
 
-/** How much of the chapter a plate takes to fade in, as a fraction of `--p`. */
-const FADE = 0.15
-
-export interface BackdropPlate {
-  /** The imported image URL. */
-  src: string
-  /** A stable key, also used in the DOM for debugging. */
+export interface BackdropScene {
+  /** Stable id, also used to hang the per-plate crop off in CSS. */
   id: string
+  /** The landscape plate. */
+  plate: string
+  /** Chapter progress at which this scene's camera move starts. */
+  from: number
+  /** How much of the chapter that move spans. */
+  span: number
+  /** Chapter progress at which the scene has finished fading in. */
+  fadeIn: number
+  /** Scale at the start of the move, and how much it changes by the end. */
+  zoomFrom: number
+  zoomBy: number
+  /** Total pan across the move, in vw / vh. */
+  panX: number
+  panY: number
+  /** What moves on this landscape. */
+  props: readonly SceneProp[]
 }
 
 export interface BackdropProps {
-  /** The plates, in the order the reader meets them. */
-  plates: readonly BackdropPlate[]
+  scenes: readonly BackdropScene[]
 }
 
-export function Backdrop({ plates }: BackdropProps): JSX.Element {
-  // Plate k is the one on screen when the k-th beat is centred, which happens
-  // at p = k / (n - 1). Deriving the schedule here rather than hard-coding it
-  // keeps the fades aligned with the beats if a beat is ever added or removed.
-  const last = Math.max(plates.length - 1, 1)
+/**
+ * How long a scene takes to fade in, as a fraction of chapter progress.
+ *
+ * Kept short on purpose. The two landscapes are different geometry, so a long
+ * dissolve puts two unrelated coastlines on screen at once and reads as a
+ * muddle rather than as a transition.
+ */
+const FADE = 0.09
 
+export function Backdrop({ scenes }: BackdropProps): JSX.Element {
   return (
     <div className="backdrop" aria-hidden="true">
+      {/* The drawn landscape underneath: if a plate never arrives, the chapter
+          still has a coherent backdrop rather than a flat rectangle. */}
       <Terrain className="backdrop__base" />
 
-      {plates.map((plate, index) => {
-        const centre = index / last
-        return (
+      {scenes.map((scene, index) => (
+        <div
+          className="backdrop__scene"
+          key={scene.id}
+          data-scene={scene.id}
+          style={
+            {
+              '--from': scene.from,
+              '--span': scene.span,
+              '--zoom-from': scene.zoomFrom,
+              '--zoom-by': scene.zoomBy,
+              '--pan-x': scene.panX,
+              '--pan-y': scene.panY,
+              // The first scene is the opening frame and is opaque from the
+              // start; the rest fade in over whatever is already there.
+              '--scene-in': index === 0 ? -1 : scene.fadeIn - FADE,
+            } as React.CSSProperties
+          }
+        >
           <img
-            key={plate.id}
             className="backdrop__plate"
-            data-plate={plate.id}
-            src={plate.src}
+            src={scene.plate}
             alt=""
             decoding="async"
             /*
-             * The first plate is the opening frame and blocks nothing behind
-             * it, so it loads at normal priority. The rest are wanted before
-             * the reader reaches them but never ahead of the text and fonts,
-             * which is exactly what a low fetch priority asks for. They are
-             * inside the pinned viewport from the first paint, so `lazy` would
-             * not defer them anyway — it would only risk a plate arriving mid
-             * cross-fade.
+             * The opening plate blocks nothing behind it, so it loads at normal
+             * priority. The second is wanted before the reader reaches it but
+             * never ahead of the text and fonts, which is what a low fetch
+             * priority asks for. Both are inside the pinned viewport from the
+             * first paint, so `lazy` would not defer either — it would only
+             * risk one arriving mid cross-fade.
              */
             fetchPriority={index === 0 ? 'auto' : 'low'}
-            style={
-              {
-                // Where this plate is fully on screen, and where its fade began.
-                '--plate-in': (centre - FADE).toFixed(4),
-                '--plate-full': centre.toFixed(4),
-              } as React.CSSProperties
-            }
           />
-        )
-      })}
+
+          <Scenery props={scene.props} eager={index === 0} />
+        </div>
+      ))}
     </div>
   )
 }

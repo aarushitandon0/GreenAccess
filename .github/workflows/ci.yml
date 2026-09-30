@@ -1,0 +1,106 @@
+# Tests, lint and a build of the deployment image, on every push and PR.
+#
+# The backend job runs in the pinned Playwright image rather than installing a
+# browser on the runner, so CI exercises the same Chromium the deployment does.
+# The image tag and `playwright==1.63.0` in backend/pyproject.toml move together.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A new push supersedes an in-flight run of the same branch.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend tests and lint
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright/python:v1.63.0-noble
+      # Chromium wants more than Docker's default 64 MB of shared memory.
+      options: --shm-size=1gb
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          pip install --no-cache-dir -r requirements.lock.txt
+          pip install --no-cache-dir ruff
+
+      - name: Ruff
+        run: |
+          ruff check --config backend/pyproject.toml backend scripts demo-site/server.py
+          ruff format --check --config backend/pyproject.toml backend scripts demo-site/server.py
+
+      # MASTERSPEC §13 requires every design token pair to meet WCAG AA.
+      # GreenAccess holds itself to the standard it audits for.
+      - name: Contrast gate
+        run: python scripts/contrast_check.py
+
+      - name: Pytest
+        working-directory: backend
+        # LLM_OFFLINE so no test can reach for a key that CI does not have.
+        env:
+          LLM_OFFLINE: "1"
+        run: python -m pytest -q
+
+  frontend:
+    name: Frontend tests and lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci --no-audit --no-fund
+
+      - name: Typecheck
+        working-directory: frontend
+        run: npm run typecheck
+
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Vitest
+        working-directory: frontend
+        run: npm run test
+
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+
+  image:
+    name: Deployment image builds
+    runs-on: ubuntu-latest
+    # Only worth the minutes once the code itself is known good.
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      # Built, not pushed. This job exists to catch a broken Dockerfile before
+      # a deploy does, not to publish anything.
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

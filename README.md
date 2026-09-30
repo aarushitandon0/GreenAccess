@@ -254,6 +254,10 @@ detection with its estimated byte saving, and every trade-off finding.
 | `make demo-record` | Full fix loop with the live LLM; records the offline cache |
 | `make demo-replay` | The same loop with `LLM_OFFLINE=1`, from the committed cache |
 | `make build` | Production frontend build |
+| `make image` | Builds the production image: API plus built UI, one origin |
+| `make image-run` | Runs that image on :8000 with a local data volume |
+| `make deploy` | `fly deploy` the application. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
+| `make deploy-demo` | `fly deploy` the Daily Herald and its tracker host |
 | `make clean` | Removes generated runtime data |
 | `make e2e` | Not implemented. See [section 18](#18-project-status-and-known-gaps) |
 | `make dogfood` | Not implemented. See [section 18](#18-project-status-and-known-gaps) |
@@ -672,6 +676,7 @@ answer between validation and connection.
 | POST | `/api/scans/{id}/patch` | Body `{accepted_fix_ids}`, runs patch and re-scan |
 | GET | `/api/scans/{id}/patch.zip` | The patched site as a zip |
 | GET | `/api/scans/{id}/screenshot?state=before\|after` | PNG |
+| GET | `/api/badge/{id}.svg` | Embeddable SVG badge for a finished scan |
 | GET | `/api/history?host=` | Past scans and trend for a host |
 | GET | `/patched/{scan_id}/...` | The patched copy, static, restrictive CSP |
 
@@ -871,7 +876,8 @@ with parity tests, the Green Web Foundation lookup, all three scoring functions,
 the eleven detectors, the trade-off engine, the full HTTP API with SSE, SQLite
 persistence and history, the SSRF guard, the redirect pre-flight, the per-scan
 egress proxy, fix generation across twenty kinds, the lxml patcher, the image
-optimiser, the deterministic contrast solver, the zip export, the real re-scan,
+optimiser, the deterministic contrast solver, the zip export, the badge
+endpoint, the real re-scan,
 and the frontend narrative through nine chapters: Opening, Scan, Progress,
 Verdict, Access, Carbon, Trade-offs, Fixes and After.
 
@@ -885,8 +891,6 @@ Verdict, Access, Carbon, Trade-offs, Fixes and After.
   because nothing generated the alt text. Every deterministic fix still applies,
   which is why the after score is 66 rather than 0. This is the single largest
   gap in the project.
-- **Badge generation.** `GET /api/badge/{id}.svg` is not routed and returns 404.
-  Specification tier 2, cut-order item 4.
 - **The Simulate chapter.** The ARIA tree is captured, stored and returned by the
   API, but no UI renders it, and the colour-blindness SVG filters are not built.
   Tier 2, cut-order item 3.
@@ -959,3 +963,5 @@ enforced in the code and the copy, not just aspired to.
   and is read by the integration tests.
 - [docs/CONTRAST.md](docs/CONTRAST.md) documents the deterministic contrast
   repair algorithm.
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) is the runbook for hosting
+  GreenAccess, including the two demo behaviours that differ in the cloud.

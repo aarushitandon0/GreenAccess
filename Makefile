@@ -34,6 +34,10 @@ help:
 	@echo "  dogfood    scan GreenAccess's own frontend"
 	@echo "  demo-record  scan -> fixes -> patch -> re-scan the demo with the live LLM; record cache"
 	@echo "  demo-replay  the same loop with LLM_OFFLINE=1, from the committed cache"
+	@echo "  image        build the production image (API + built UI, one origin)"
+	@echo "  image-run    run that image on :8000 with a local data volume"
+	@echo "  deploy       fly deploy the application (see docs/DEPLOYMENT.md)"
+	@echo "  deploy-demo  fly deploy the Daily Herald and its tracker host"
 
 # ---------------------------------------------------------------- setup ----
 
@@ -124,3 +128,23 @@ build:
 
 clean:
 	$(PY) scripts/clean.py
+
+# -------------------------------------------------------------- deploy ----
+# The runbook, including the volume and the three app names, is in
+# docs/DEPLOYMENT.md. These targets are the commands from it, nothing more.
+
+image:
+	docker build -t greenaccess:latest .
+
+image-run:
+	docker run --rm -p 8000:8000 -v greenaccess-data:/app/data greenaccess:latest
+
+deploy:
+	fly deploy
+
+# `make assets` first: the generated media is gitignored and the demo
+# Dockerfile copies it only if present, so skipping it ships a demo with no
+# images and quietly different carbon numbers.
+deploy-demo: assets
+	fly deploy --config demo-site/fly.trackers.toml --dockerfile demo-site/Dockerfile
+	fly deploy --config demo-site/fly.toml --dockerfile demo-site/Dockerfile

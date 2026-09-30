@@ -1,0 +1,57 @@
+# Build context for the production image (root Dockerfile).
+#
+# Keep this tight. Everything listed here would otherwise be uploaded to the
+# builder on every `docker build` and every `fly deploy`: node_modules and the
+# backend venv alone are hundreds of megabytes, and backend/data holds every
+# screenshot and patched copy from every local scan.
+
+# Version control and CI
+.git/
+.github/
+.gitignore
+.gitattributes
+
+# Python
+**/__pycache__/
+**/*.py[cod]
+backend/.venv/
+.venv/
+venv/
+**/.pytest_cache/
+**/.ruff_cache/
+**/.mypy_cache/
+.coverage
+htmlcov/
+
+# Node. The frontend stage runs its own `npm ci`, so a host node_modules would
+# only be a slower, possibly wrong-platform copy.
+**/node_modules/
+frontend/dist/
+**/.vite/
+**/*.tsbuildinfo
+
+# Runtime data and secrets
+backend/data/
+backend/.llm_cache/
+**/*.db
+**/*.db-journal
+**/*.db-wal
+**/*.db-shm
+**/*.log
+.env
+.env.*
+
+# Tests do not run in the image; CI runs them before a deploy.
+backend/tests/
+
+# The demo site is deployed as its own app from demo-site/, not from here.
+demo-site/
+
+# Docs and editor noise
+docs/
+*.md
+!backend/app/fixtures/**/*.md
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

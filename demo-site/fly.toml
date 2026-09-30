@@ -1,0 +1,42 @@
+# The Daily Herald, deployed so the hosted GreenAccess has something to scan.
+#
+# Deliberately defective. Every fault is planted and catalogued in DEFECTS.md.
+# It is a fixture, not a site anyone should copy from.
+#
+#   fly deploy --config demo-site/fly.toml
+#
+# Run `make assets` first. The generated media (hero video, article JPEGs,
+# banners) is gitignored, and the Dockerfile's `COPY asset[s]` copies it only
+# if it exists, so deploying without it silently ships a demo with no images.
+#
+# The tracker host is a second app from this same directory; see
+# fly.trackers.toml and the third-party note in docs/DEPLOYMENT.md.
+
+app = "greenaccess-demo"
+primary_region = "sin"
+
+[build]
+  dockerfile = "Dockerfile"
+
+# Serves the whole site from /app with compression off, which is defect
+# UNCOMPRESSED-01. The scanner is supposed to find that.
+# --host 0.0.0.0 because the default is loopback, which Fly cannot reach.
+# --tracker-base rewrites the planted script URLs, which are absolute
+# http://localhost:8082 in index.html and would otherwise be blocked as mixed
+# content on an HTTPS host, taking defect THIRD-PARTY-01 with them.
+[processes]
+  app = "python server.py --port 8081 --root /app --host 0.0.0.0 --tracker-base https://greenaccess-trackers.fly.dev --quiet"
+
+[http_service]
+  internal_port = 8081
+  force_https = true
+  # A static fixture: cheap to start, pointless to keep warm. A cold start
+  # adds a second or two to the first scan of the day.
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+  cpus = 1

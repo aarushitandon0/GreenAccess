@@ -49,6 +49,20 @@ COMPRESSIBLE = {
 # Below this, gzip costs more than it saves.
 MIN_COMPRESS_BYTES = 256
 
+# The tracker host as index.html spells it. Rewritten on the way out when the
+# demo is served from somewhere other than a developer's machine.
+#
+# This exists for hosted deployments. The planted third-party scripts are
+# absolute `http://localhost:8082` URLs, which are right locally and useless
+# anywhere else: served over HTTPS they are blocked as mixed content, so the
+# defect they represent (THIRD-PARTY-01) would vanish from a hosted demo, and
+# not because anything was fixed. `--tracker-base https://host` substitutes
+# the literal below at serve time.
+#
+# The default is the literal itself, so a local run is byte-for-byte what it
+# has always been and the integration tests keep asserting real behaviour.
+DEFAULT_TRACKER_BASE = "http://localhost:8082"
+
 
 class DemoRequestHandler(SimpleHTTPRequestHandler):
     """Serves the demo tree, optionally gzipping text responses."""
@@ -62,10 +76,12 @@ class DemoRequestHandler(SimpleHTTPRequestHandler):
         directory: str,
         compress: bool,
         strip_prefix: str,
+        tracker_base: str = DEFAULT_TRACKER_BASE,
         **kwargs: object,
     ) -> None:
         self.compress = compress
         self.strip_prefix = strip_prefix
+        self.tracker_base = tracker_base
         super().__init__(*args, directory=directory, **kwargs)  # type: ignore[arg-type]
 
     # -- routing ---------------------------------------------------------- #
@@ -95,6 +111,12 @@ class DemoRequestHandler(SimpleHTTPRequestHandler):
         except OSError:
             self.send_error(HTTPStatus.NOT_FOUND, "File not found")
             return
+
+        if self.tracker_base != DEFAULT_TRACKER_BASE and target.suffix.lower() in {
+            ".html",
+            ".htm",
+        }:
+            body = body.replace(DEFAULT_TRACKER_BASE.encode(), self.tracker_base.encode())
 
         content_type = mimetypes.guess_type(str(target))[0] or "application/octet-stream"
         if content_type.startswith("text/") or content_type in {
@@ -147,7 +169,14 @@ class _IPv6ThreadingHTTPServer(ThreadingHTTPServer):
 
 
 def build_server(
-    *, port: int, root: Path, compress: bool, strip_prefix: str, quiet: bool
+    *,
+    port: int,
+    root: Path,
+    compress: bool,
+    strip_prefix: str,
+    quiet: bool,
+    tracker_base: str = DEFAULT_TRACKER_BASE,
+    host: str | None = None,
 ) -> ThreadingHTTPServer:
     if not root.is_dir():
         raise SystemExit(f"Root directory does not exist: {root}")
@@ -160,6 +189,7 @@ def build_server(
         directory=str(root),
         compress=compress,
         strip_prefix=f"/{normalised_prefix}" if normalised_prefix else "",
+        tracker_base=tracker_base,
     )
     DemoRequestHandler.server_quiet = quiet
 
@@ -182,6 +212,16 @@ def build_server(
     # fixes it at the source instead of spreading IPv4 literals through the
     # config. Falls back to IPv4 where IPv6 is unavailable.
     server: ThreadingHTTPServer
+    if host is not None:
+        # An explicit bind address, for running the demo in a container where
+        # loopback would be unreachable from outside it. Never the default.
+        family = socket.AF_INET6 if ":" in host else socket.AF_INET
+        server_class = (
+            _IPv6ThreadingHTTPServer if family is socket.AF_INET6 else ThreadingHTTPServer
+        )
+        server = server_class((host, port), handler_class)  # type: ignore[arg-type]
+        server.daemon_threads = True
+        return server
     try:
         server = _IPv6ThreadingHTTPServer(("::1", port), handler_class)  # type: ignore[arg-type]
     except OSError:
@@ -225,6 +265,22 @@ def main() -> int:
     )
     parser.set_defaults(compress=False)
     parser.add_argument("--quiet", action="store_true", help="suppress the request log")
+    parser.add_argument(
+        "--tracker-base",
+        default=DEFAULT_TRACKER_BASE,
+        help=(
+            "base URL to rewrite the planted tracker script URLs to, for a hosted "
+            f"demo (default {DEFAULT_TRACKER_BASE}, which leaves the page untouched)"
+        ),
+    )
+    parser.add_argument(
+        "--host",
+        default=None,
+        help=(
+            "bind address. Defaults to loopback, which is what a developer wants. "
+            "Pass :: or 0.0.0.0 only when running in a container."
+        ),
+    )
     args = parser.parse_args()
 
     server = build_server(
@@ -233,6 +289,8 @@ def main() -> int:
         compress=args.compress,
         strip_prefix=args.strip_prefix,
         quiet=args.quiet,
+        tracker_base=args.tracker_base,
+        host=args.host,
     )
 
     state = "gzip enabled" if args.compress else "UNCOMPRESSED (defect UNCOMPRESSED-01)"

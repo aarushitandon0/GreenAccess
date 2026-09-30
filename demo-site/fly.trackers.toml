@@ -1,0 +1,49 @@
+# The Daily Herald's tracker host: the same image, a different app, so the
+# demo's analytics and ad scripts come from somewhere other than the page.
+#
+#   fly deploy --config demo-site/fly.trackers.toml
+#
+# A known limitation of hosting this on fly.dev, stated here because it is
+# invisible otherwise. MASTERSPEC §6.2 defines third party as "the registrable
+# domain differs from the page's", and `fly.dev` is not in the public suffix
+# list bundled with tldextract, so both of these:
+#
+#   greenaccess-demo.fly.dev      -> registrable domain "fly.dev"
+#   greenaccess-trackers.fly.dev  -> registrable domain "fly.dev"
+#
+# resolve to the same registrable domain. On the hosted demo the scanner
+# therefore does NOT count these scripts as third party: defect THIRD-PARTY-01
+# goes undetected, costing about 10 KB of attributed savings and one synergy
+# card. Everything else about the demo is unaffected.
+#
+# The local demo (localhost:8081 against localhost:8082) is unaffected too,
+# because the guard treats bare hosts without a registrable domain by their
+# host:port, so the integration tests keep asserting the real behaviour.
+#
+# To get correct detection on a hosted demo, put the two apps on two different
+# registrable domains with `fly certs add` (for example dailyherald.example and
+# herald-trackers.example) and point DEMO_URL at the first. docs/DEPLOYMENT.md
+# has the steps.
+
+app = "greenaccess-trackers"
+primary_region = "sin"
+
+[build]
+  dockerfile = "Dockerfile"
+
+# --strip-prefix is given without a leading slash on purpose; see server.py.
+# --host 0.0.0.0 because the default is loopback, which Fly cannot reach.
+[processes]
+  app = "python server.py --port 8082 --root /app/third-party --strip-prefix t --host 0.0.0.0 --quiet"
+
+[http_service]
+  internal_port = 8082
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+  cpus = 1

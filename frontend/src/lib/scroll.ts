@@ -255,6 +255,19 @@ export function useScrollVar<T extends HTMLElement>(
 }
 
 /**
+ * How much of the gap to the target is closed in one second's worth of easing.
+ *
+ * This is the time constant of an exponential approach, in seconds: after
+ * `SMOOTH_TAU` the remaining distance is down to 1/e. Small enough that the
+ * figure never feels detached from the wheel, large enough to absorb the coarse
+ * discrete deltas a mouse wheel and a trackpad's fling actually deliver.
+ */
+const SMOOTH_TAU = 0.085
+
+/** Below this, the eased value has arrived and the loop can stop. */
+const SETTLED = 0.0004
+
+/**
  * The same, measured while an element is pinned by `position: sticky`.
  *
  * A sticky figure does not move, so its own rect cannot say how far the reader
@@ -262,12 +275,31 @@ export function useScrollVar<T extends HTMLElement>(
  * reaches the top of the viewport (the figure has just pinned) and 1 when its
  * bottom does (the figure is about to unpin). That is the figure's whole life
  * on screen, which is exactly the range a pinned scene animates over.
+ *
+ * The raw value is then eased rather than written straight through, and that is
+ * the difference between a scrollytell that glides and one that stutters. A
+ * mouse wheel does not deliver continuous motion: it delivers a step every few
+ * frames, so a figure driven by the raw position jumps in the same steps. Here
+ * the published value chases the true position exponentially, which turns those
+ * steps into a continuous ramp and keeps a fling from arriving all at once.
+ *
+ * The easing is frame-rate independent — the per-frame factor is derived from
+ * the measured delta, not assumed — so the scene moves at the same speed on a
+ * 60 Hz panel, a 120 Hz one, and a throttled CPU.
+ *
+ * Crucially this eases the *reported* position; it never touches the reader's
+ * scrolling. The page still scrolls natively, at its own speed, exactly as far
+ * as the reader asked. Nothing here calls `scrollTo` or swallows an event.
+ *
+ * The loop runs only while the eased value is still catching up, so a still
+ * page costs nothing: it settles a few frames after the last scroll event and
+ * cancels itself.
  */
 export function useStickyProgress<T extends HTMLElement>(
   name = '--p',
-  options: { reduced?: boolean; restingValue?: number } = {},
+  options: { reduced?: boolean; restingValue?: number; smooth?: number } = {},
 ): React.RefObject<T> {
-  const { reduced = false, restingValue = 1 } = options
+  const { reduced = false, restingValue = 1, smooth = SMOOTH_TAU } = options
   const ref = useRef<T>(null)
 
   useEffect(() => {
@@ -282,34 +314,72 @@ export function useStickyProgress<T extends HTMLElement>(
     }
 
     let frame = 0
+    let previous = 0
+    let eased = 0
 
-    const measure = (): void => {
-      frame = 0
+    /** The true position: 0 as the figure pins, 1 as it unpins. */
+    const target = (): number => {
       const rect = element.getBoundingClientRect()
       // Distance the container travels while the figure stays pinned.
       const travel = rect.height - window.innerHeight
       const progress = travel <= 0 ? 1 : -rect.top / travel
-      const clamped = progress < 0 ? 0 : progress > 1 ? 1 : progress
-      element.style.setProperty(name, clamped.toFixed(4))
+      return progress < 0 ? 0 : progress > 1 ? 1 : progress
     }
 
-    const onScroll = (): void => {
+    const publish = (value: number): void => {
+      element.style.setProperty(name, value.toFixed(4))
+    }
+
+    const tick = (now: number): void => {
+      const goal = target()
+
+      // The first frame of a run has no previous timestamp to difference
+      // against, so assume one frame at 60 Hz rather than easing by zero.
+      const delta = previous === 0 ? 1 / 60 : (now - previous) / 1000
+      previous = now
+
+      // Cap the step. A backgrounded tab resumes with a delta of several
+      // seconds, and without this the scene would snap on the frame it returns.
+      const step = delta > 0.05 ? 0.05 : delta
+      eased += (goal - eased) * (1 - Math.exp(-step / smooth))
+
+      const remaining = goal - eased
+      if (remaining > SETTLED || remaining < -SETTLED) {
+        publish(eased)
+        frame = window.requestAnimationFrame(tick)
+        return
+      }
+
+      // Arrived. Land exactly on the target so nothing rests a fraction short
+      // of its finished state, and stop burning frames until the next scroll.
+      eased = goal
+      publish(eased)
+      frame = 0
+      previous = 0
+    }
+
+    const start = (): void => {
       if (frame === 0) {
-        frame = window.requestAnimationFrame(measure)
+        previous = 0
+        frame = window.requestAnimationFrame(tick)
       }
     }
 
-    measure()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', onScroll, { passive: true })
+    // The first paint must be correct, not eased in from zero: a reader who
+    // loads the page half way down the chapter should see it half way through.
+    eased = target()
+    publish(eased)
+
+    window.addEventListener('scroll', start, { passive: true })
+    window.addEventListener('resize', start, { passive: true })
     return () => {
       if (frame !== 0) {
         window.cancelAnimationFrame(frame)
       }
-      window.removeEventListener('scroll', onScroll)
-      window.removeEventListener('resize', onScroll)
+      window.removeEventListener('scroll', start)
+      window.removeEventListener('resize', start)
     }
-  }, [name, reduced, restingValue])
+  }, [name, reduced, restingValue, smooth])
 
   return ref
 }

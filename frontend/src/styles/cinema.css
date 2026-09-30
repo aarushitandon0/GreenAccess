@@ -42,6 +42,14 @@
   --terrain-land: #35502f;
   --cue-track: rgba(232, 232, 232, 0.28);
   --hud-line: rgba(232, 232, 232, 0.4);
+
+  /*
+   * The deep green the landscape plates are painted on. The chapter's own
+   * background, the scrim over the plates and the analysis grid all use it, so
+   * the left column reads as the same air the landscape sits in rather than as
+   * a black band beside it.
+   */
+  --cine-deep: #0a2220;
 }
 
 /* --------------------------------------------------------------------------
@@ -55,7 +63,7 @@
    * reader travels while the figure is pinned. Roughly one viewport per text
    * panel, plus one for the figure to arrive and leave.
    */
-  background-color: #0d0f0e;
+  background-color: var(--cine-deep);
   color: var(--ink);
 }
 
@@ -77,8 +85,8 @@
    * property that forces a repaint of the terrain -- see SceneGrade for why
    * the colour grading is separate layers rather than a filter.
    */
-  transform: scale(calc(1.04 + var(--p, 1) * 0.08));
-  transform-origin: 58% 45%;
+  transform: scale(calc(1.01 + var(--p, 1) * 0.04));
+  transform-origin: 62% 48%;
   will-change: transform;
   /*
    * Layout and paint containment only. `contain: strict` adds *size*
@@ -105,20 +113,26 @@
  * the V without a keyframe. The `var(--p, 1)` fallback lands on 0 -- with no
  * script the landscape is simply ungraded.
  */
+/*
+ * The ceilings here are deliberately low. The landscape is the chapter's
+ * subject, and grading it to grey in the middle would say the opposite. These
+ * take the edge off colour while the analysis is at its tightest and give it
+ * straight back, which reads as a lens passing over the scene.
+ */
 .grade--desaturate {
   background-color: #808080;
   mix-blend-mode: saturation;
   opacity: min(
-    clamp(0, calc((var(--p, 1) - 0.16) * 4.2), 1),
-    clamp(0, calc((0.92 - var(--p, 1)) * 4.6), 1)
+    clamp(0, calc((var(--p, 1) - 0.18) * 3.2), 0.18),
+    clamp(0, calc((0.9 - var(--p, 1)) * 3.6), 0.18)
   );
 }
 
 .grade--darken {
-  background-color: #0d0f0e;
+  background-color: var(--cine-deep);
   opacity: min(
-    clamp(0, calc((var(--p, 1) - 0.18) * 2.4), 0.62),
-    clamp(0, calc((0.9 - var(--p, 1)) * 2.8), 0.62)
+    clamp(0, calc((var(--p, 1) - 0.2) * 2), 0.16),
+    clamp(0, calc((0.88 - var(--p, 1)) * 2.4), 0.16)
   );
 }
 
@@ -128,6 +142,85 @@
   display: block;
 }
 
+/* --------------------------------------------------------------------------
+   Backdrop: the stack of landscape plates (see Backdrop.tsx)
+   -------------------------------------------------------------------------- */
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+}
+
+/*
+ * On a wide screen the landscape is held to the right of the frame and the
+ * prose gets the left quarter to itself, which is the composition the chapter
+ * was drawn for. Offsetting the whole stack rather than each plate keeps the
+ * drawn fallback registered with the plates above it. Below the breakpoint the
+ * landscape goes full bleed and the scrim carries legibility instead.
+ */
+@media (min-width: 60rem) {
+  .backdrop {
+    left: 16%;
+  }
+}
+
+.backdrop__base,
+.backdrop__plate {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.backdrop__plate {
+  object-fit: cover;
+  /*
+   * Each plate is composed differently, and a full-height frame is narrower
+   * than the plate, so a single crop would cut the subject out of some of
+   * them. These keep what each plate is *about* inside the frame: the signpost
+   * on the first, the contrast across the bridge on the third, both verdict
+   * boards on the fourth. Overridden per plate below.
+   */
+  object-position: 60% 50%;
+
+  /*
+   * How far past this plate's own moment the reader has travelled, 0 until it
+   * arrives and rising to 1 by the end of the chapter. One number drives both
+   * the drift and the push in, so a plate is still moving while it is on
+   * screen instead of sitting dead until the next one replaces it.
+   */
+  --plate-past: clamp(0, calc(var(--p, 1) - var(--plate-full, 0)), 1);
+
+  /*
+   * Fades in over the plate below and then stays. Never fades out: the layer
+   * underneath is opaque for the whole transition, so a cross-fade cannot dip
+   * to the background the way two opposed opacity ramps would.
+   */
+  opacity: clamp(0, calc((var(--p, 1) - var(--plate-in, 0)) / 0.15), 1);
+
+  transform: translate3d(calc(var(--plate-past) * -1.8vw), calc(var(--plate-past) * -0.9vh), 0)
+    scale(calc(1.03 + var(--plate-past) * 0.09));
+
+  will-change: opacity, transform;
+}
+
+.backdrop__plate[data-plate='weight'] {
+  object-position: 74% 50%;
+}
+
+.backdrop__plate[data-plate='barrier'] {
+  object-position: 54% 50%;
+}
+
+.backdrop__plate[data-plate='both'] {
+  object-position: 44% 50%;
+}
+
+.backdrop__plate[data-plate='tradeoff'] {
+  object-position: 62% 50%;
+}
+
 /* A vignette keeps text legible wherever it lands over the figure. */
 .sticky-scene__pin::after {
   content: '';
@@ -135,10 +228,35 @@
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(to right, rgba(13, 15, 14, 0.7) 0%, rgba(13, 15, 14, 0) 52%),
-    linear-gradient(to left, rgba(13, 15, 14, 0.55) 0%, rgba(13, 15, 14, 0) 46%),
-    linear-gradient(to bottom, rgba(13, 15, 14, 0.5) 0%, rgba(13, 15, 14, 0) 26%);
+    linear-gradient(
+      to right,
+      rgba(10, 34, 32, 0.97) 0%,
+      rgba(10, 34, 32, 0.92) 24%,
+      rgba(10, 34, 32, 0.58) 42%,
+      rgba(10, 34, 32, 0.16) 58%,
+      rgba(10, 34, 32, 0) 74%
+    ),
+    linear-gradient(to bottom, rgba(10, 34, 32, 0.6) 0%, rgba(10, 34, 32, 0) 24%),
+    linear-gradient(to top, rgba(10, 34, 32, 0.55) 0%, rgba(10, 34, 32, 0) 26%);
   z-index: 2;
+}
+
+/*
+ * Narrow screens put the prose straight over the landscape, so the scrim has
+ * to do the whole job of keeping it readable rather than just feathering an
+ * edge. Same colour, carried much further across the frame.
+ */
+@media (max-width: 59.999rem) {
+  .sticky-scene__pin::after {
+    background:
+      linear-gradient(
+        to right,
+        rgba(10, 34, 32, 0.95) 0%,
+        rgba(10, 34, 32, 0.82) 45%,
+        rgba(10, 34, 32, 0.5) 100%
+      ),
+      linear-gradient(to bottom, rgba(10, 34, 32, 0.7) 0%, rgba(10, 34, 32, 0) 30%);
+  }
 }
 
 /*
@@ -256,8 +374,8 @@
    * grid masks nothing at all.
    */
   --aperture: max(
-    clamp(0.42, calc(1 - (var(--p, 1) - 0.14) * 2), 1),
-    clamp(0.42, calc((var(--p, 1) - 0.68) * 3.2), 1)
+    clamp(0.66, calc(1 - (var(--p, 1) - 0.14) * 2), 1),
+    clamp(0.66, calc((var(--p, 1) - 0.7) * 3.2), 1)
   );
 }
 
@@ -267,11 +385,11 @@
  * blur, low enough that a ring of cells is mid-fade and the frame has texture.
  */
 .scan-grid__cell {
-  background-color: #0d0f0e;
+  background-color: var(--cine-deep);
   /* Paint containment only: these are grid items, and size containment would
      fight the track sizing that gives them their dimensions. */
   contain: paint;
-  opacity: clamp(0, calc((var(--d) - var(--aperture)) * 7), 1);
+  opacity: clamp(0, calc((var(--d) - var(--aperture)) * 7), 0.52);
 }
 
 /* --------------------------------------------------------------------------
@@ -383,23 +501,27 @@
 .cue {
   position: absolute;
   z-index: 5;
-  left: 50%;
-  bottom: clamp(var(--space-8), 12vh, var(--space-20));
-  width: 6.5rem;
-  height: 6.5rem;
-  display: grid;
-  place-items: center;
+  left: var(--space-6);
+  bottom: clamp(var(--space-8), 9vh, var(--space-16));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
   pointer-events: none;
-  /* Drifts left as the chapter advances, the way an instrument tracks. */
-  transform: translateX(calc(-50% - var(--p, 1) * 14vw));
-  opacity: clamp(0, calc((0.92 - var(--p, 1)) * 8), 1);
+  /* Settles downward as the chapter advances, then leaves before it unpins. */
+  transform: translate3d(0, calc(var(--p, 1) * 10px), 0);
+  opacity: clamp(0, calc((0.88 - var(--p, 1)) * 8), 1);
+}
+
+@media (min-width: 60rem) {
+  .cue {
+    left: var(--space-16);
+  }
 }
 
 .cue__ring {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  width: 3.25rem;
+  height: 3.25rem;
 }
 
 .cue__arc {
@@ -416,36 +538,57 @@
 }
 
 /* --------------------------------------------------------------------------
-   Cinematic hero (the prologue's pinned opening)
+   Beats: the opening's prose, scrolling past the pinned landscape
+
+   Each beat is a real block in normal flow carrying a real heading, so the
+   chapter degrades to four headed passages over a still landscape if the
+   script never runs. They are what gives the chapter its scroll height; the
+   pinned figure has none of its own.
    -------------------------------------------------------------------------- */
 
-.hero-cine {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
+.beat {
+  min-height: 100vh;
   display: grid;
   align-content: center;
-  padding: var(--space-8) var(--space-6);
-  pointer-events: none;
+  padding-block: var(--space-16);
+  padding-inline: var(--space-6);
 }
 
 @media (min-width: 60rem) {
-  .hero-cine {
+  .beat {
     padding-inline: var(--space-16);
   }
 }
 
-.hero-cine__inner {
-  max-width: 52rem;
-  /*
-   * The headline leaves as the analysis begins: gone by the time the grid has
-   * swept, back to nothing rather than lingering over the scan.
-   */
-  opacity: clamp(0, calc((0.42 - var(--p, 1)) * 5), 1);
-  transform: translateY(calc(var(--p, 1) * -40px));
+.beat__inner {
+  max-width: 36rem;
+  opacity: 0;
+  transform: translate3d(0, 26px, 0);
+  transition:
+    opacity 720ms var(--ease-out),
+    transform 720ms var(--ease-out);
+  will-change: opacity, transform;
 }
 
-.hero-cine__eyebrow {
+.beat[data-active='true'] .beat__inner {
+  opacity: 1;
+  transform: none;
+}
+
+/*
+ * A beat that never became active must still be readable: a browser with no
+ * IntersectionObserver reports every beat in view, and reduced motion pins
+ * them active, so this is the belt to that braces.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .beat__inner {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+.beat__eyebrow {
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -458,21 +601,30 @@
   color: var(--forest-strong);
 }
 
-.hero-cine__title {
-  font-size: clamp(2.5rem, 7vw, 5rem);
-  line-height: 1.02;
+.beat__title {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 4.5vw, 3.55rem);
+  line-height: 1.04;
   letter-spacing: -0.02em;
   color: var(--ink);
   margin-bottom: var(--space-6);
   text-wrap: balance;
-  text-shadow: 0 2px 24px rgba(13, 15, 14, 0.8);
+  /* The landscape under the text is drawn, not flat, so the scrim alone
+     cannot guarantee the contrast the type needs. This closes the gap. */
+  text-shadow: 0 2px 26px rgba(6, 20, 19, 0.88);
 }
 
-.hero-cine__lede {
-  max-width: 34rem;
+.beat__accent {
+  color: var(--forest-strong);
+}
+
+.beat__lede {
+  max-width: 31rem;
   font-size: var(--text-md);
+  line-height: var(--leading-snug);
   color: var(--ink);
-  text-shadow: 0 1px 14px rgba(13, 15, 14, 0.9);
+  text-wrap: pretty;
+  text-shadow: 0 1px 16px rgba(6, 20, 19, 0.92);
 }
 
 /* --------------------------------------------------------------------------

@@ -111,6 +111,7 @@ export function App(): JSX.Element {
             */}
             <a className="site-header__action" href="#begin">
               Scan a site
+              <span aria-hidden="true"> &#8594;</span>
             </a>
           </nav>
         </div>

@@ -89,6 +89,15 @@ export function ScrollCue({ label = 'SCROLL' }: { label?: string }): JSX.Element
           strokeDasharray="1"
           strokeLinecap="round"
         />
+        {/* The direction the cue is asking for, said in the glyph as well as
+            in the label, for anyone reading the shape rather than the word. */}
+        <path
+          d="M50 33 V64 M39 53 L50 64 L61 53"
+          stroke="var(--ink)"
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </svg>
       <span className="cue__label">{label}</span>
     </div>

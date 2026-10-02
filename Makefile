@@ -17,7 +17,7 @@ URL ?= http://localhost:8081
 
 .PHONY: help install dev demo test test-backend test-frontend lint lint-backend \
         lint-frontend contrast assets weight scan types e2e dogfood build clean \
-        demo-record demo-replay public public-down
+        demo-record demo-replay public public-down static-demo
 
 help:
 	@echo "GreenAccess targets:"
@@ -40,6 +40,7 @@ help:
 	@echo "  deploy-demo  fly deploy the Daily Herald and its tracker host"
 	@echo "  public       free public HTTPS URL, no card: production image + tunnel"
 	@echo "  public-down  stop the public stack"
+	@echo "  static-demo  build the cached-demo site for Netlify (dist-static/)"
 
 # ---------------------------------------------------------------- setup ----
 
@@ -170,3 +171,12 @@ public: assets
 
 public-down:
 	docker compose -f docker-compose.public.yml down
+
+# ---------------------------------------------------------- static demo -----
+# A permanent URL with no credit card. No free no-card host can run the scanner
+# (a real Chromium, about 2 GB of RAM), so this publishes a recording of a real
+# run instead, labelled as cached on the page. See docs/DEPLOYMENT.md section 7.
+#
+#   make static-demo && netlify deploy --prod --dir dist-static
+static-demo:
+	$(PY) scripts/build_static_demo.py

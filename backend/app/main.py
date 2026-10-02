@@ -18,6 +18,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.demo_fallback import router as demo_fallback_router
 from app.api.errors import install_error_handlers
 from app.api.events import EventHub
 from app.api.fixes import LlmFactory, PatchRunner, patched_router
@@ -111,6 +112,15 @@ def create_app(
         expose_headers=["Location", "Retry-After"],
     )
     install_error_handlers(app)
+    # Registered first on purpose: in cached-demo mode its routes must shadow
+    # the live ones, and FastAPI resolves by first match. See
+    # app/api/demo_fallback.py for what it does and refuses to do.
+    if resolved.demo_fallback:
+        logger.warning(
+            "DEMO_FALLBACK is on: serving the recorded demo, not scanning. "
+            "Results are cached, not live."
+        )
+        app.include_router(demo_fallback_router)
     app.include_router(scans_router)
     app.include_router(fixes_router)
     app.include_router(patched_router)

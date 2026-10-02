@@ -90,3 +90,6 @@ demo-site/assets/generated/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Built by scripts/build_static_demo.py; deploy it, do not commit it.
+dist-static/

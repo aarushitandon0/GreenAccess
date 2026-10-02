@@ -456,3 +456,86 @@ things are worth knowing:
 
 Windows note: `cloudflared` is a signed binary, so Smart App Control permits it,
 unlike `flyctl`. See the Windows subsection of section 2.
+
+---
+
+## 7. The cached demo on Netlify — a permanent URL with no credit card
+
+Sections 1–6 all need somewhere that can run a browser. GreenAccess wants a real
+Chromium and about 2 GB of RAM, and no free tier that takes no credit card
+offers that: Vercel and Netlify cap serverless functions at 250 MB unzipped
+against a 4.04 GB image, Render's free tier gives 512 MB of RAM, Railway's free
+tier is gone, Cloud Run and Oracle want a card to verify identity, and Hugging
+Face Spaces — the one free tier with enough memory — now marks the Docker SDK
+**Paid**.
+
+So a permanent free URL cannot run the scanner. What it can do is publish a
+*recording* of a real run, which is what this section builds.
+
+```bash
+python scripts/build_static_demo.py        # writes dist-static/
+netlify deploy --prod --dir dist-static
+```
+
+### What gets published
+
+`scripts/build_static_demo.py` builds the frontend with `VITE_CACHED_DEMO=1`,
+copies the recording in beside the bundles, and injects the "cached demo" banner
+into the built `index.html`:
+
+```
+dist-static/
+    index.html          the built UI + the cached-data banner
+    assets/...          the UI's bundles, unchanged
+    cached-demo.json    the recorded scan, both chapters, labelled
+    screenshots/        before.png, after.png
+```
+
+The page never calls an API. `src/lib/cachedDemo.ts` holds the recording and
+`src/lib/api.ts` and `src/lib/events.ts` short-circuit to it when the build flag
+is set. In a normal build `isCachedDemo()` is false and none of that code runs,
+so `make dev` and the Docker deployments are unaffected.
+
+### Where the numbers come from
+
+`backend/app/fixtures/static_demo/recording.json`, captured from a real run
+through a running instance: `POST /api/scans` → `/fixes` → `/patch`, with
+`LLM_OFFLINE=1` so the fixes come from the committed cache and no API credit is
+spent. The screenshots beside it are from that same run, so the images and the
+figures always agree.
+
+Re-record it by driving a running instance and saving the finished scan, keeping
+`_label` and `_recorded_at` accurate. `app/fixtures/loader.py` prefers this file
+when it exists and falls back to the `demo_scan_{before,after}.json` pair that
+`make demo-record` writes — that pair is what the integration test asserts
+against and has its screenshots stripped, so it is left alone.
+
+### Honesty (CLAUDE.md rule 4)
+
+| Measure | Where |
+|---|---|
+| Visible banner naming the recording date and saying "not a live scan" | injected into `index.html` by the build |
+| `"live": false` and the label inside the data | `cached-demo.json` |
+| A URL other than the recorded one is refused, not answered | `createScan` in `src/lib/api.ts` |
+| The build refuses to run if the recording has no label | `load_recording` in the build script |
+
+The replayed progress steps use the real pipeline's step names, with `ms` set to
+`0` because the recording stores no per-step timings — a made-up duration would
+be an invented measurement. Every score shown is a recorded one.
+
+### What this build cannot do
+
+- **No live scanning.** The form accepts only the recorded URL and explains why.
+- **No patched-site link or zip.** `patched_url` and `zip_path` are cleared when
+  the recording is written; they pointed at a server that is not there.
+- **No history.** There is one recorded scan.
+- **`THIRD-PARTY-01` is still detected**, unlike on `fly.dev`: the recording was
+  made against the Docker stack, where the demo hosts are distinct `host:port`
+  pairs. See `demo-site/fly.trackers.toml`.
+
+### The same recording, served by the real app
+
+`DEMO_FALLBACK=1` makes the running backend serve the recording from the real
+endpoints instead of scanning (`backend/app/api/demo_fallback.py`). It is for a
+host that can run the app but not a browser. It refuses other URLs the same way
+and stamps `_cached` on every response. It is off by default.

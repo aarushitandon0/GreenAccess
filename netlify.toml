@@ -1,0 +1,65 @@
+# Netlify: the cached-demo build of GreenAccess.
+#
+# This publishes a *recording* of a real run, not the running application. The
+# scanner needs a real Chromium and about 2 GB of RAM, which no free tier that
+# takes no credit card provides, so a permanent URL cannot scan. It shows the
+# real measured result of a real scan instead, and says so on the page.
+#
+# Build it locally and deploy the directory:
+#
+#     python scripts/build_static_demo.py
+#     netlify deploy --prod --dir dist-static
+#
+# See docs/DEPLOYMENT.md for the full runbook and the limits of this build.
+
+[build]
+  # Already built by scripts/build_static_demo.py, which injects the
+  # cached-data banner and copies the recording in beside the bundles.
+  publish = "dist-static"
+  command = ""
+
+[build.environment]
+  NODE_VERSION = "24"
+
+# The UI is a single-page app: every path it routes to is index.html.
+# `force = false` so real files (cached-demo.json, the screenshots, the
+# bundles) are served before this ever applies.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
+
+# There is no API behind this deployment. Without this, a stray /api/ request
+# would fall through the SPA rule above and resolve to index.html, so the
+# caller would parse a page of HTML as JSON and report a confusing error.
+[[redirects]]
+  from = "/api/*"
+  to = "/api-unavailable.json"
+  status = 404
+  force = true
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    # No API, no inline eval, no third parties: everything is served from here.
+    # 'unsafe-inline' covers the injected banner's style attribute and the
+    # style block Vite emits.
+    Content-Security-Policy = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'"
+
+# The recording and its screenshots change only when the demo is re-recorded,
+# but they are small and a stale copy would misreport the numbers, so they are
+# revalidated rather than held.
+[[headers]]
+  for = "/cached-demo.json"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    # Vite fingerprints these, so they are safe to hold indefinitely.
+    Cache-Control = "public, max-age=31536000, immutable"

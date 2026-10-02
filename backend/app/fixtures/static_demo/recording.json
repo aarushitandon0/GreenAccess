@@ -1,0 +1,2658 @@
+{
+  "_label": "Cached run of 2026-10-02: a real end-to-end scan, fix and re-scan of the Daily Herald demo site, recorded from a running GreenAccess instance. Not live data.",
+  "_recorded_at": "2026-10-02",
+  "_source": "real run through POST /api/scans -> /fixes -> /patch, LLM_OFFLINE=1 (fixes from the committed cache)",
+  "scan": {
+    "id": "978e1b3034d64a04bae838814623a204",
+    "url": "http://demo-site:8081/",
+    "host": "demo-site",
+    "status": "done",
+    "created_at": "2026-10-02T08:10:01.143089Z",
+    "before": {
+      "scores": {
+        "a11y": 0,
+        "carbon": 38,
+        "combined": 19,
+        "carbon_grade": "E",
+        "weights": {
+          "a11y": 0.5,
+          "carbon": 0.5
+        },
+        "is_placeholder": false,
+        "breakdown": {
+          "a11y": {
+            "starting_points": 100.0,
+            "items": [
+              {
+                "label": "image-alt",
+                "points": -18.45098040014257,
+                "detail": "critical impact, 7 elements: 10 x 1.85",
+                "evidence": [
+                  "div[data-card-index=\"0\"] > .card__image[loading=\"eager\"]",
+                  "div[data-card-index=\"1\"] > .card__image[loading=\"eager\"]",
+                  "div[data-card-index=\"3\"] > .card__image[loading=\"eager\"]"
+                ]
+              },
+              {
+                "label": "label",
+                "points": -14.771212547196624,
+                "detail": "critical impact, 3 elements: 10 x 1.48",
+                "evidence": [
+                  "input[name=\"name\"]",
+                  "input[type=\"email\"]",
+                  "#terms-box"
+                ]
+              },
+              {
+                "label": "color-contrast",
+                "points": -14.0,
+                "detail": "serious impact, 13 elements: 7 x 2.00",
+                "evidence": [
+                  ".masthead__date",
+                  "div[data-card-index=\"0\"] > .card__meta",
+                  "div[data-card-index=\"1\"] > .card__meta"
+                ]
+              },
+              {
+                "label": "button-name",
+                "points": -10.0,
+                "detail": "critical impact, 1 element: 10 x 1.00",
+                "evidence": [
+                  ".chat__close"
+                ]
+              },
+              {
+                "label": "select-name",
+                "points": -10.0,
+                "detail": "critical impact, 1 element: 10 x 1.00",
+                "evidence": [
+                  "select"
+                ]
+              },
+              {
+                "label": "keyboard-trap",
+                "points": -10.0,
+                "detail": "Focus could not be moved past this container, detected by automated keyboard crawl",
+                "evidence": [
+                  "div#promo"
+                ]
+              },
+              {
+                "label": "html-has-lang",
+                "points": -7.0,
+                "detail": "serious impact, 1 element: 7 x 1.00",
+                "evidence": [
+                  "html"
+                ]
+              },
+              {
+                "label": "link-name",
+                "points": -7.0,
+                "detail": "serious impact, 1 element: 7 x 1.00",
+                "evidence": [
+                  ".nav__icon"
+                ]
+              },
+              {
+                "label": "region",
+                "points": -6.0,
+                "detail": "moderate impact, 15 elements: 3 x 2.00",
+                "evidence": [
+                  ".masthead__inner",
+                  ".hero",
+                  ".wrap > .banner"
+                ]
+              },
+              {
+                "label": "heading-order",
+                "points": -3.0,
+                "detail": "moderate impact, 1 element: 3 x 1.00",
+                "evidence": [
+                  ".hero__overlay > h4"
+                ]
+              }
+            ],
+            "total": 0,
+            "formula": "100 minus one penalty per failing rule, where penalty = base(impact) x min(1 + log10(nodes), 2), plus 10 if the keyboard crawl found a trap. Items axe marks as needing review are not scored.",
+            "spec_ref": "MASTERSPEC §9.1"
+          },
+          "carbon": {
+            "starting_points": 0.0,
+            "items": [
+              {
+                "label": "Rating band E",
+                "points": 37.744094870179474,
+                "detail": "0.673 g CO2e per view (estimate) sits between 0.656 g and 0.846 g, which scores 25-39",
+                "evidence": []
+              }
+            ],
+            "total": 38,
+            "formula": "Grams CO2e per view (Sustainable Web Design v3, an estimate) placed in a rating band, then interpolated linearly inside that band, plus 3 for a green-hosted domain, capped at 100.",
+            "spec_ref": "MASTERSPEC §9.2"
+          },
+          "combined": {
+            "starting_points": 0.0,
+            "items": [
+              {
+                "label": "Carbon",
+                "points": 19.0,
+                "detail": "38 x 0.50 weight",
+                "evidence": []
+              },
+              {
+                "label": "Accessibility",
+                "points": 0.0,
+                "detail": "0 x 0.50 weight",
+                "evidence": []
+              }
+            ],
+            "total": 19,
+            "formula": "A weighted average of the accessibility and carbon scores, rounded to a whole number.",
+            "spec_ref": "MASTERSPEC §9.3"
+          }
+        }
+      },
+      "a11y": {
+        "violations": [
+          {
+            "rule_id": "image-alt",
+            "impact": "critical",
+            "help": "Images must have alternative text",
+            "help_url": "https://dequeuniversity.com/rules/axe/4.13/image-alt?application=axeAPI",
+            "tags": [
+              "cat.text-alternatives",
+              "wcag2a",
+              "wcag111",
+              "section508",
+              "section508.22.a",
+              "TTv5",
+              "TT7.a",
+              "TT7.b",
+              "EN-301-549",
+              "EN-9.1.1.1",
+              "ACT",
+              "RGAAv4",
+              "RGAA-1.1.1"
+            ],
+            "nodes": [
+              {
+                "selector": "div[data-card-index=\"0\"] > .card__image[loading=\"eager\"]",
+                "html": "<img class=\"card__image\" src=\"/assets/generated/article-01.jpg\" loading=\"eager\">",
+                "failure_summary": "Fix any of the following:\n  Element does not have an alt attribute\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+              },
+              {
+                "selector": "div[data-card-index=\"1\"] > .card__image[loading=\"eager\"]",
+                "html": "<img class=\"card__image\" src=\"/assets/generated/article-02.jpg\" loading=\"eager\">",
+                "failure_summary": "Fix any of the following:\n  Element does not have an alt attribute\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+              },
+              {
+                "selector": "div[data-card-index=\"3\"] > .card__image[loading=\"eager\"]",
+                "html": "<img class=\"card__image\" src=\"/assets/generated/article-04.jpg\" loading=\"eager\">",
+                "failure_summary": "Fix any of the following:\n  Element does not have an alt attribute\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+              },
+              {
+                "selector": "div[data-card-index=\"4\"] > .card__image[loading=\"eager\"]",
+                "html": "<img class=\"card__image\" src=\"/assets/generated/article-05.jpg\" loading=\"eager\">",
+                "failure_summary": "Fix any of the following:\n  Element does not have an alt attribute\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+              },
+              {
+                "selector": "div[data-card-index=\"5\"] > .card__image[loading=\"eager\"]",
+                "html": "<img class=\"card__image\" src=\"/assets/generated/article-06.jpg\" loading=\"eager\">",
+                "failure_summary": "Fix any of the following:\n  Element does not have an alt attribute\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+              },
+              {
+                "selector": "div[data-card-index=\"7\"] > .card__image[loading=\"eager\"]",
+                "html": "<img class=\"card__image\" src=\"/assets/generated/article-08.jpg\" loading=\"eager\">",
+                "failure_summary": "Fix any of the following:\n  Element does not have an alt attribute\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+              },
+              {
+                "selector": ".main-column > .banner",
+                "html": "<img class=\"banner\" src=\"/assets/generated/banner-subscribe.png\">",
+                "failure_summary": "Fix any of the following:\n  Element does not have an alt attribute\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+              }
+            ]
+          },
+          {
+            "rule_id": "label",
+            "impact": "critical",
+            "help": "Form elements must have labels",
+            "help_url": "https://dequeuniversity.com/rules/axe/4.13/label?application=axeAPI",
+            "tags": [
+              "cat.forms",
+              "wcag2a",
+              "wcag412",
+              "section508",
+              "section508.22.n",
+              "TTv5",
+              "TT5.c",
+              "EN-301-549",
+              "EN-9.4.1.2",
+              "ACT",
+              "RGAAv4",
+              "RGAA-11.1.1"
+            ],
+            "nodes": [
+              {
+                "selector": "input[name=\"name\"]",
+                "html": "<input type=\"text\" name=\"name\" class=\"newsletter__input\" style=\"\">",
+                "failure_summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+              },
+              {
+                "selector": "input[type=\"email\"]",
+                "html": "<input type=\"email\" name=\"email\" class=\"newsletter__input\" style=\"\">",
+                "failure_summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+              },
+              {
+                "selector": "#terms-box",
+                "html": "<input type=\"checkbox\" id=\"terms-box\" name=\"terms\" style=\"\">",
+                "failure_summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+              }
+            ]
+          },
+          {
+            "rule_id": "button-name",
+            "impact": "critical",
+            "help": "Buttons must have discernible text",
+            "help_url": "https://dequeuniversity.com/rules/axe/4.13/button-name?application=axeAPI",
+            "tags": [
+              "cat.name-role-value",
+              "wcag2a",
+              "wcag412",
+              "section508",
+              "section508.22.a",
+              "TTv5",
+              "TT6.a",
+              "EN-301-549",
+              "EN-9.4.1.2",
+              "ACT",
+              "RGAAv4",
+              "RGAA-11.9.1"
+            ],
+            "nodes": [
+              {
+                "selector": ".chat__close",
+                "html": "<button class=\"chat__close\" onclick=\"closeChat()\"><span class=\"icon-x\"></span></button>",
+                "failure_summary": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+              }
+            ]
+          },
+          {
+            "rule_id": "select-name",
+            "impact": "critical",
+            "help": "Select element must have an accessible name",
+            "help_url": "https://dequeuniversity.com/rules/axe/4.13/select-name?application=axeAPI",
+            "tags": [
+              "cat.forms",
+              "wcag2a",
+              "wcag412",
+              "section508",
+              "section508.22.n",
+              "TTv5",
+              "TT5.c",
+              "EN-301-549",
+              "EN-9.4.1.2",
+              "ACT",
+              "RGAAv4",
+              "RGAA-11.1.1"
+            ],
+            "nodes": [
+              {
+                "selector": "select",
+                "html": "<select name=\"edition\" class=\"newsletter__input\">\n                <option>Morning edition</option>\n                <option>Evening edition</option>\n              </select>",
+                "failure_summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+              }
+            ]
+          },
+          {
+            "rule_id": "color-contrast",
+            "impact": "serious",
+            "help": "Elements must meet minimum color contrast ratio thresholds",
+            "help_url": "https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=axeAPI",
+            "tags": [
+              "cat.color",
+              "wcag2aa",
+              "wcag143",
+              "TTv5",
+              "TT13.c",
+              "EN-301-549",
+              "EN-9.1.4.3",
+              "ACT",
+              "RGAAv4",
+              "RGAA-3.2.1"
+            ],
+            "nodes": [
+              {
+                "selector": ".masthead__date",
+                "html": "<div class=\"masthead__date\">Friday Edition</div>",
+                "failure_summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.16 (foreground color: #b0b0b0, background color: #ffffff, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "selector": "div[data-card-index=\"0\"] > .card__meta",
+                "html": "<p class=\"card__meta\">City desk</p>",
+                "failure_summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.07 (foreground color: #b4b4b4, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "selector": "div[data-card-index=\"1\"] > .card__meta",
+                "html": "<p class=\"card__meta\">Transport</p>",
+                "failure_summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.07 (foreground color: #b4b4b4, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "selector": "div[data-card-index=\"2\"] > .card__meta",
+                "html": "<p class=\"card__meta\">Environment</p>",
+                "failure_summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.07 (foreground color: #b4b4b4, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "selector": "div[data-card-index=\"3\"] > .card__meta",
+                "html": "<p class=\"card__meta\">Culture</p>",
+                "failure_summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.07 (foreground color: #b4b4b4, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "selector": "div[data-card-index=\"4\"] > .card__meta",
+                "html": "<p class=\"card__meta\">Business</p>",
+                "failure_summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.07 (foreground color: #b4b4b4, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "selector": "div[data-card-index=\"5\"] > .card__meta",
+                "html": "<p class=\"card__meta\">Feature</p>",
+                "failure_summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.07 (foreground color: #b4b4b4, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "selector": "div[data-card-index=\"6\"] > .card__meta",
+                "html": "<p class=\"card__meta\">Culture</p>",
+                "failure_summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.07 (foreground color: #b4b4b4, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "selector": "div[data-card-index=\"7\"] > .card__meta",
+                "html": "<p class=\"card__meta\">Sport</p>",
+                "failure_summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.07 (foreground color: #b4b4b4, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "selector": ".main-column > .fine-print",
+                "html": "<p class=\"fine-print\">\n            Prices correct at time of publication. Terms apply to all subscription\n            offers. The Daily Herald is published daily except on public holidays.\n          </p>",
+                "failure_summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.98 (foreground color: #b8b8b8, background color: #ffffff, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "selector": ".weather > .fine-print",
+                "html": "<p class=\"fine-print\">Cloud clearing after midday.</p>",
+                "failure_summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.98 (foreground color: #b8b8b8, background color: #ffffff, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "selector": ".fine-print:nth-child(1)",
+                "html": "<p class=\"fine-print\">© The Daily Herald. All rights reserved.</p>",
+                "failure_summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.98 (foreground color: #b8b8b8, background color: #ffffff, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+              },
+              {
+                "selector": ".fine-print:nth-child(2)",
+                "html": "<p class=\"fine-print\">\n          <a href=\"#privacy\">Privacy</a> · <a href=\"#terms\">Terms</a> ·\n          <a href=\"#contact\">Contact</a>\n        </p>",
+                "failure_summary": "Fix any of the following:\n  Element has insufficient color contrast of 1.98 (foreground color: #b8b8b8, background color: #ffffff, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+              }
+            ]
+          },
+          {
+            "rule_id": "html-has-lang",
+            "impact": "serious",
+            "help": "<html> element must have a lang attribute",
+            "help_url": "https://dequeuniversity.com/rules/axe/4.13/html-has-lang?application=axeAPI",
+            "tags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT",
+              "RGAAv4",
+              "RGAA-8.3.1"
+            ],
+            "nodes": [
+              {
+                "selector": "html",
+                "html": "<html>",
+                "failure_summary": "Fix any of the following:\n  The <html> element does not have a lang attribute"
+              }
+            ]
+          },
+          {
+            "rule_id": "link-name",
+            "impact": "serious",
+            "help": "Links must have discernible text",
+            "help_url": "https://dequeuniversity.com/rules/axe/4.13/link-name?application=axeAPI",
+            "tags": [
+              "cat.name-role-value",
+              "wcag2a",
+              "wcag244",
+              "wcag412",
+              "section508",
+              "section508.22.a",
+              "TTv5",
+              "TT6.a",
+              "EN-301-549",
+              "EN-9.2.4.4",
+              "EN-9.4.1.2",
+              "ACT",
+              "RGAAv4",
+              "RGAA-6.2.1"
+            ],
+            "nodes": [
+              {
+                "selector": ".nav__icon",
+                "html": "<a href=\"#search\" class=\"nav__icon\"><span class=\"icon-glass\"></span></a>",
+                "failure_summary": "Fix all of the following:\n  Element is in tab order and does not have accessible text\n\nFix any of the following:\n  Element does not have text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute"
+              }
+            ]
+          },
+          {
+            "rule_id": "region",
+            "impact": "moderate",
+            "help": "All page content should be contained by landmarks",
+            "help_url": "https://dequeuniversity.com/rules/axe/4.13/region?application=axeAPI",
+            "tags": [
+              "cat.keyboard",
+              "best-practice",
+              "RGAAv4",
+              "RGAA-9.2.1"
+            ],
+            "nodes": [
+              {
+                "selector": ".masthead__inner",
+                "html": "<div class=\"masthead__inner\">\n        <div class=\"masthead__brand\">The Daily Herald</div>\n        <div class=\"masthead__date\">Friday Edition</div>\n      </div>",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": ".hero",
+                "html": "<div class=\"hero\">",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": ".wrap > .banner",
+                "html": "<img class=\"banner\" src=\"/assets/generated/banner-sale.jpg\" alt=\"HALF-PRICE SALE Every subscription tier this week only. Claim offer now by clicking this banner advertisement for the Daily Herald half price subscription sale event\">",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": "#world",
+                "html": "<div class=\"section-head\" id=\"world\">Top stories</div>",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": ".card-grid",
+                "html": "<div class=\"card-grid\">",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": ".main-column > .banner",
+                "html": "<img class=\"banner\" src=\"/assets/generated/banner-subscribe.png\">",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": "div[onclick=\"loadMore('prev')\"]",
+                "html": "<div class=\"pager__btn\" onclick=\"loadMore('prev')\">Previous</div>",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": "div[onclick=\"loadMore('next')\"]",
+                "html": "<div class=\"pager__btn\" onclick=\"loadMore('next')\">Load more stories</div>",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": ".main-column > .fine-print",
+                "html": "<p class=\"fine-print\">\n            Prices correct at time of publication. Terms apply to all subscription\n            offers. The Daily Herald is published daily except on public holidays.\n          </p>",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": ".side-column",
+                "html": "<div class=\"side-column\">",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": "#sport",
+                "html": "<div class=\"section-head\" id=\"sport\">More from the Herald</div>",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": ".tag-row",
+                "html": "<div class=\"tag-row\">",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": ".footer",
+                "html": "<div class=\"footer\">",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": ".chat__head > span",
+                "html": "<span>Herald Assistant</span>",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": ".chat__body",
+                "html": "<div class=\"chat__body\">\n        <p class=\"chat__msg\">Hello! Can I help you find a story?</p>\n        <input type=\"text\" class=\"chat__input\" placeholder=\"Type a message\" style=\"\">\n      </div>",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              }
+            ]
+          },
+          {
+            "rule_id": "heading-order",
+            "impact": "moderate",
+            "help": "Heading levels should only increase by one",
+            "help_url": "https://dequeuniversity.com/rules/axe/4.13/heading-order?application=axeAPI",
+            "tags": [
+              "cat.semantics",
+              "best-practice"
+            ],
+            "nodes": [
+              {
+                "selector": ".hero__overlay > h4",
+                "html": "<h4>A photo essay from our correspondents</h4>",
+                "failure_summary": "Fix any of the following:\n  Heading order invalid"
+              }
+            ]
+          }
+        ],
+        "counts_by_impact": {
+          "critical": 4,
+          "serious": 3,
+          "moderate": 2
+        },
+        "unique_rules": 9,
+        "total_nodes": 43,
+        "incomplete_count": 2
+      },
+      "keyboard": {
+        "tabs_pressed": 60,
+        "trap_detected": true,
+        "trap_container": "div#promo",
+        "unreachable_interactive_count": 0,
+        "focus_visible_missing_count": 6,
+        "reached_count": 31
+      },
+      "carbon": {
+        "total_bytes": 2327050,
+        "request_count": 22,
+        "by_type": {
+          "html": 13843,
+          "css": 11548,
+          "js": 16627,
+          "img": 1079432,
+          "font": 204568,
+          "media": 1001032
+        },
+        "third_party": {
+          "requests": 4,
+          "bytes": 10289,
+          "hosts": [
+            "demo-third-party:8082"
+          ],
+          "script_bytes": 10289
+        },
+        "images": [
+          {
+            "url": "http://demo-site:8081/assets/generated/banner-sale.jpg",
+            "bytes": 185919,
+            "natural_w": 1600,
+            "natural_h": 400,
+            "rendered_w": 820,
+            "rendered_h": 205,
+            "format": "jpeg",
+            "issues": [
+              "legacy_format",
+              "no_dimensions",
+              "text_in_image_suspected"
+            ],
+            "selector": "html > body > div:nth-of-type(3) > img",
+            "estimated_saving_bytes": 0
+          },
+          {
+            "url": "http://demo-site:8081/assets/generated/article-01.jpg",
+            "bytes": 86410,
+            "natural_w": 3000,
+            "natural_h": 2000,
+            "rendered_w": 400,
+            "rendered_h": 260,
+            "format": "jpeg",
+            "issues": [
+              "oversized",
+              "legacy_format",
+              "no_dimensions",
+              "eager_below_fold"
+            ],
+            "selector": "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > img",
+            "estimated_saving_bytes": 80265
+          },
+          {
+            "url": "http://demo-site:8081/assets/generated/article-02.jpg",
+            "bytes": 83771,
+            "natural_w": 3000,
+            "natural_h": 2000,
+            "rendered_w": 400,
+            "rendered_h": 260,
+            "format": "jpeg",
+            "issues": [
+              "oversized",
+              "legacy_format",
+              "no_dimensions",
+              "eager_below_fold"
+            ],
+            "selector": "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > img",
+            "estimated_saving_bytes": 77813
+          },
+          {
+            "url": "http://demo-site:8081/assets/generated/article-03.jpg",
+            "bytes": 90867,
+            "natural_w": 3000,
+            "natural_h": 2000,
+            "rendered_w": 400,
+            "rendered_h": 260,
+            "format": "jpeg",
+            "issues": [
+              "oversized",
+              "legacy_format",
+              "no_dimensions",
+              "eager_below_fold"
+            ],
+            "selector": "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > img",
+            "estimated_saving_bytes": 84405
+          },
+          {
+            "url": "http://demo-site:8081/assets/generated/article-04.jpg",
+            "bytes": 89584,
+            "natural_w": 3000,
+            "natural_h": 2000,
+            "rendered_w": 400,
+            "rendered_h": 260,
+            "format": "jpeg",
+            "issues": [
+              "oversized",
+              "legacy_format",
+              "no_dimensions",
+              "eager_below_fold"
+            ],
+            "selector": "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(4) > img",
+            "estimated_saving_bytes": 83213
+          },
+          {
+            "url": "http://demo-site:8081/assets/generated/article-05.jpg",
+            "bytes": 90653,
+            "natural_w": 3000,
+            "natural_h": 2000,
+            "rendered_w": 400,
+            "rendered_h": 260,
+            "format": "jpeg",
+            "issues": [
+              "oversized",
+              "legacy_format",
+              "no_dimensions",
+              "eager_below_fold"
+            ],
+            "selector": "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(5) > img",
+            "estimated_saving_bytes": 84206
+          },
+          {
+            "url": "http://demo-site:8081/assets/generated/article-06.jpg",
+            "bytes": 87348,
+            "natural_w": 3000,
+            "natural_h": 2000,
+            "rendered_w": 400,
+            "rendered_h": 260,
+            "format": "jpeg",
+            "issues": [
+              "oversized",
+              "legacy_format",
+              "no_dimensions",
+              "eager_below_fold"
+            ],
+            "selector": "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(6) > img",
+            "estimated_saving_bytes": 81136
+          },
+          {
+            "url": "http://demo-site:8081/assets/generated/article-07.jpg",
+            "bytes": 86150,
+            "natural_w": 3000,
+            "natural_h": 2000,
+            "rendered_w": 400,
+            "rendered_h": 260,
+            "format": "jpeg",
+            "issues": [
+              "oversized",
+              "legacy_format",
+              "no_dimensions",
+              "eager_below_fold"
+            ],
+            "selector": "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(7) > img",
+            "estimated_saving_bytes": 80023
+          },
+          {
+            "url": "http://demo-site:8081/assets/generated/article-08.jpg",
+            "bytes": 84480,
+            "natural_w": 3000,
+            "natural_h": 2000,
+            "rendered_w": 400,
+            "rendered_h": 260,
+            "format": "jpeg",
+            "issues": [
+              "oversized",
+              "legacy_format",
+              "no_dimensions",
+              "eager_below_fold"
+            ],
+            "selector": "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(8) > img",
+            "estimated_saving_bytes": 78472
+          },
+          {
+            "url": "http://demo-site:8081/assets/generated/banner-subscribe.png",
+            "bytes": 194250,
+            "natural_w": 1600,
+            "natural_h": 400,
+            "rendered_w": 746,
+            "rendered_h": 187,
+            "format": "png",
+            "issues": [
+              "oversized",
+              "legacy_format",
+              "no_dimensions",
+              "eager_below_fold",
+              "text_in_image_suspected"
+            ],
+            "selector": "html > body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > img",
+            "estimated_saving_bytes": 25338
+          }
+        ],
+        "autoplay_media": [
+          {
+            "url": "http://demo-site:8081/assets/generated/hero.mp4",
+            "bytes": 1001032,
+            "selector": "html > body > div:nth-of-type(2) > video",
+            "kind": "video",
+            "autoplay": true,
+            "loop": true,
+            "muted": true,
+            "has_poster": false
+          }
+        ],
+        "fonts": {
+          "count": 4,
+          "bytes": 204568,
+          "urls": [
+            "http://demo-site:8081/assets/fonts/fraunces-latin-wght-normal.woff2",
+            "http://demo-site:8081/assets/fonts/fraunces-latin-ext-wght-normal.woff2",
+            "http://demo-site:8081/assets/fonts/inter-latin-wght-normal.woff2",
+            "http://demo-site:8081/assets/fonts/inter-latin-ext-wght-normal.woff2"
+          ]
+        },
+        "uncompressed_text": [
+          {
+            "url": "http://demo-site:8081/",
+            "resource_type": "html",
+            "transfer_bytes": 13843,
+            "decoded_bytes": 13583,
+            "content_encoding": "",
+            "estimated_saving_bytes": 9508
+          },
+          {
+            "url": "http://demo-site:8081/css/main.css",
+            "resource_type": "css",
+            "transfer_bytes": 11548,
+            "decoded_bytes": 11289,
+            "content_encoding": "",
+            "estimated_saving_bytes": 7902
+          },
+          {
+            "url": "http://demo-third-party:8082/t/analytics.js",
+            "resource_type": "js",
+            "transfer_bytes": 2972,
+            "decoded_bytes": 2707,
+            "content_encoding": "",
+            "estimated_saving_bytes": 1894
+          },
+          {
+            "url": "http://demo-third-party:8082/t/adtech.js",
+            "resource_type": "js",
+            "transfer_bytes": 2708,
+            "decoded_bytes": 2443,
+            "content_encoding": "",
+            "estimated_saving_bytes": 1710
+          },
+          {
+            "url": "http://demo-third-party:8082/t/heatmap.js",
+            "resource_type": "js",
+            "transfer_bytes": 2626,
+            "decoded_bytes": 2361,
+            "content_encoding": "",
+            "estimated_saving_bytes": 1652
+          },
+          {
+            "url": "http://demo-site:8081/js/main.js",
+            "resource_type": "js",
+            "transfer_bytes": 6338,
+            "decoded_bytes": 6073,
+            "content_encoding": "",
+            "estimated_saving_bytes": 4251
+          }
+        ],
+        "detections": [
+          {
+            "detector": "oversized_image",
+            "summary": "3000x2000 image rendered at 400x260",
+            "estimated_saving_bytes": 80265,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "oversized_image",
+            "summary": "3000x2000 image rendered at 400x260",
+            "estimated_saving_bytes": 77813,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "oversized_image",
+            "summary": "3000x2000 image rendered at 400x260",
+            "estimated_saving_bytes": 84405,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "oversized_image",
+            "summary": "3000x2000 image rendered at 400x260",
+            "estimated_saving_bytes": 83213,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(4) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "oversized_image",
+            "summary": "3000x2000 image rendered at 400x260",
+            "estimated_saving_bytes": 84206,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(5) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "oversized_image",
+            "summary": "3000x2000 image rendered at 400x260",
+            "estimated_saving_bytes": 81136,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(6) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "oversized_image",
+            "summary": "3000x2000 image rendered at 400x260",
+            "estimated_saving_bytes": 80023,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(7) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "oversized_image",
+            "summary": "3000x2000 image rendered at 400x260",
+            "estimated_saving_bytes": 78472,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(8) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "oversized_image",
+            "summary": "1600x400 image rendered at 746x187",
+            "estimated_saving_bytes": 25338,
+            "evidence": [
+              "html > body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "legacy_format",
+            "summary": "JPEG at 185,919 bytes; WebP or AVIF would typically save about 30% (estimate)",
+            "estimated_saving_bytes": 55775,
+            "evidence": [
+              "html > body > div:nth-of-type(3) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "legacy_format",
+            "summary": "JPEG at 86,410 bytes; WebP or AVIF would typically save about 30% (estimate)",
+            "estimated_saving_bytes": 25923,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "legacy_format",
+            "summary": "JPEG at 83,771 bytes; WebP or AVIF would typically save about 30% (estimate)",
+            "estimated_saving_bytes": 25131,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "legacy_format",
+            "summary": "JPEG at 90,867 bytes; WebP or AVIF would typically save about 30% (estimate)",
+            "estimated_saving_bytes": 27260,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "legacy_format",
+            "summary": "JPEG at 89,584 bytes; WebP or AVIF would typically save about 30% (estimate)",
+            "estimated_saving_bytes": 26875,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(4) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "legacy_format",
+            "summary": "JPEG at 90,653 bytes; WebP or AVIF would typically save about 30% (estimate)",
+            "estimated_saving_bytes": 27195,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(5) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "legacy_format",
+            "summary": "JPEG at 87,348 bytes; WebP or AVIF would typically save about 30% (estimate)",
+            "estimated_saving_bytes": 26204,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(6) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "legacy_format",
+            "summary": "JPEG at 86,150 bytes; WebP or AVIF would typically save about 30% (estimate)",
+            "estimated_saving_bytes": 25845,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(7) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "legacy_format",
+            "summary": "JPEG at 84,480 bytes; WebP or AVIF would typically save about 30% (estimate)",
+            "estimated_saving_bytes": 25344,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(8) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "legacy_format",
+            "summary": "PNG at 194,250 bytes; WebP or AVIF would typically save about 50% (estimate)",
+            "estimated_saving_bytes": 97125,
+            "evidence": [
+              "html > body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "no_dimensions",
+            "summary": "10 image(s) with no width/height attributes, so the browser cannot reserve space and the layout shifts as they load",
+            "estimated_saving_bytes": 0,
+            "evidence": [
+              "html > body > div:nth-of-type(3) > img",
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > img",
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > img",
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > img",
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(4) > img",
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(5) > img",
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(6) > img",
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(7) > img",
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(8) > img",
+              "html > body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > img"
+            ],
+            "saves_bytes": false
+          },
+          {
+            "detector": "eager_below_fold",
+            "summary": "image 966px down the page loads eagerly; deferring it moves the bytes off the critical path",
+            "estimated_saving_bytes": 86410,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "eager_below_fold",
+            "summary": "image 966px down the page loads eagerly; deferring it moves the bytes off the critical path",
+            "estimated_saving_bytes": 83771,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "eager_below_fold",
+            "summary": "image 1361px down the page loads eagerly; deferring it moves the bytes off the critical path",
+            "estimated_saving_bytes": 90867,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "eager_below_fold",
+            "summary": "image 1361px down the page loads eagerly; deferring it moves the bytes off the critical path",
+            "estimated_saving_bytes": 89584,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(4) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "eager_below_fold",
+            "summary": "image 1756px down the page loads eagerly; deferring it moves the bytes off the critical path",
+            "estimated_saving_bytes": 90653,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(5) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "eager_below_fold",
+            "summary": "image 1756px down the page loads eagerly; deferring it moves the bytes off the critical path",
+            "estimated_saving_bytes": 87348,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(6) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "eager_below_fold",
+            "summary": "image 2151px down the page loads eagerly; deferring it moves the bytes off the critical path",
+            "estimated_saving_bytes": 86150,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(7) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "eager_below_fold",
+            "summary": "image 2151px down the page loads eagerly; deferring it moves the bytes off the critical path",
+            "estimated_saving_bytes": 84480,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(8) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "eager_below_fold",
+            "summary": "image 2520px down the page loads eagerly; deferring it moves the bytes off the critical path",
+            "estimated_saving_bytes": 194250,
+            "evidence": [
+              "html > body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "text_in_image_suspected",
+            "summary": "wide JPEG banner of 185,919 bytes appears to contain text; real text would be a fraction of the size and readable by a screen reader (suspected, not confirmed)",
+            "estimated_saving_bytes": 183871,
+            "evidence": [
+              "html > body > div:nth-of-type(3) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "text_in_image_suspected",
+            "summary": "wide PNG banner of 194,250 bytes appears to contain text; real text would be a fraction of the size and readable by a screen reader (suspected, not confirmed)",
+            "estimated_saving_bytes": 192202,
+            "evidence": [
+              "html > body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > img"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "autoplay_media",
+            "summary": "autoplaying video of 1,001,032 bytes plays without being asked; a poster image and a play button would defer all of it",
+            "estimated_saving_bytes": 1001032,
+            "evidence": [
+              "html > body > div:nth-of-type(2) > video"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "third_party_scripts",
+            "summary": "10,289 bytes of third-party JavaScript from demo-third-party:8082",
+            "estimated_saving_bytes": 10289,
+            "evidence": [
+              "http://demo-third-party:8082/t/analytics.js",
+              "http://demo-third-party:8082/t/adtech.js",
+              "http://demo-third-party:8082/t/heatmap.js",
+              "http://demo-third-party:8082/t/social.js"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "font_bloat",
+            "summary": "4 font files (more than 3) and 204,568 bytes (more than 153,600); subsetting and dropping unused faces would bring this near 61,440 bytes (estimate)",
+            "estimated_saving_bytes": 143128,
+            "evidence": [
+              "http://demo-site:8081/assets/fonts/fraunces-latin-wght-normal.woff2",
+              "http://demo-site:8081/assets/fonts/fraunces-latin-ext-wght-normal.woff2",
+              "http://demo-site:8081/assets/fonts/inter-latin-wght-normal.woff2",
+              "http://demo-site:8081/assets/fonts/inter-latin-ext-wght-normal.woff2"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "uncompressed_text",
+            "summary": "6 text resource(s) totalling 38,456 bytes are served with no compression; gzip or brotli typically removes about 70%",
+            "estimated_saving_bytes": 26917,
+            "evidence": [
+              "http://demo-site:8081/",
+              "http://demo-site:8081/css/main.css",
+              "http://demo-third-party:8082/t/analytics.js",
+              "http://demo-third-party:8082/t/adtech.js",
+              "http://demo-third-party:8082/t/heatmap.js",
+              "http://demo-site:8081/js/main.js"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "no_reduced_motion",
+            "summary": "the page animates but no stylesheet honours prefers-reduced-motion, so a visitor who asked their system for less motion still gets all of it",
+            "estimated_saving_bytes": 0,
+            "evidence": [],
+            "saves_bytes": false
+          },
+          {
+            "detector": "div_soup_widgets",
+            "summary": "8 clickable element(s) that are not buttons and cannot be reached or activated from the keyboard",
+            "estimated_saving_bytes": 0,
+            "evidence": [
+              "body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1)",
+              "body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(2)",
+              "body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(3)",
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > form > div:nth-of-type(2)",
+              "html > body > div:nth-of-type(3) > div:nth-of-type(3) > div:nth-of-type(1)",
+              "html > body > div:nth-of-type(3) > div:nth-of-type(3) > div:nth-of-type(2)",
+              "html > body > div:nth-of-type(3) > div:nth-of-type(3) > div:nth-of-type(3)",
+              "html > body > div:nth-of-type(3) > div:nth-of-type(3) > div:nth-of-type(4)"
+            ],
+            "saves_bytes": false
+          },
+          {
+            "detector": "no_color_scheme",
+            "summary": "no prefers-color-scheme media query, color-scheme declaration or meta tag, so every visitor gets the light theme whatever their system asks for",
+            "estimated_saving_bytes": 0,
+            "evidence": [
+              "document"
+            ],
+            "saves_bytes": false
+          },
+          {
+            "detector": "video_no_captions",
+            "summary": "1 video element(s) with no track of kind captions or subtitles, so the content is unavailable to deaf and hard-of-hearing visitors",
+            "estimated_saving_bytes": 0,
+            "evidence": [
+              "html > body > div:nth-of-type(2) > video"
+            ],
+            "saves_bytes": false
+          }
+        ],
+        "grams_per_view": 0.6730444267618501,
+        "grams_first_visit": 0.8914495718700002,
+        "grams_return_visit": 0.017828991437400004,
+        "assumptions": {
+          "model": "sustainable-web-design",
+          "model_version": "3",
+          "kwh_per_gb": 0.81,
+          "grid_intensity_g_per_kwh": 472.94,
+          "renewable_intensity_g_per_kwh": 50.0,
+          "first_visit_percentage": 0.75,
+          "return_visit_percentage": 0.25,
+          "data_reload_ratio": 0.02,
+          "green_hosted": false,
+          "segment_shares": {
+            "consumerDeviceEnergy": 0.52,
+            "networkEnergy": 0.14,
+            "productionEnergy": 0.19,
+            "dataCenterEnergy": 0.15
+          },
+          "source_url": "https://sustainablewebdesign.org/estimating-digital-emissions/"
+        },
+        "is_estimate": true
+      },
+      "green": {
+        "host": "demo-site",
+        "green": false,
+        "hosted_by": null,
+        "source": "greenweb"
+      },
+      "tradeoffs": [
+        {
+          "rule_id": "autoplay_media",
+          "type": "synergy",
+          "title": "Media that plays on its own",
+          "a11y_impact": "Motion that starts without being asked can trigger vestibular symptoms and pulls focus from the content. WCAG 2.2.2 expects anything moving for more than five seconds to be pausable.",
+          "carbon_delta_bytes": 1001032,
+          "carbon_delta_grams": 0.28952493870362406,
+          "evidence": [
+            "html > body > div:nth-of-type(2) > video"
+          ],
+          "recommended_fix_id": "autoplay_video",
+          "explanation": "Autoplay is set on 1 media element. Replacing it with a poster image and visible controls saves about 1.00 MB (0.290 g CO2e per view, estimated) for every visitor who never presses play, and hands control of the motion back to the person using the page. A poster image plus controls downloads a few tens of kilobytes instead of the whole media file, and only for visitors who press play."
+        },
+        {
+          "rule_id": "eager_below_fold",
+          "type": "synergy",
+          "title": "Below-the-fold images loaded eagerly",
+          "a11y_impact": "Everything below the fold competes for bandwidth with the content in view, so the first screen takes longer to become readable and usable. That hurts most on slow connections and on devices where a screen reader is waiting for the page to settle.",
+          "carbon_delta_bytes": 893513,
+          "carbon_delta_grams": 0.258427599273441,
+          "evidence": [
+            "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > img",
+            "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > img",
+            "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > img",
+            "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(4) > img",
+            "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(5) > img"
+          ],
+          "recommended_fix_id": "lazy_load",
+          "explanation": "This page loads 9 images eagerly below the first screen. Deferring them with loading=lazy saves about 893.5 KB (0.258 g CO2e per view, estimated) for a visitor who does not scroll that far, and lets the first screen finish sooner for everyone. These bytes are deferred rather than removed. A visitor who scrolls the whole page still downloads them; one who does not, never does."
+        },
+        {
+          "rule_id": "text_in_image",
+          "type": "synergy",
+          "title": "Text baked into images",
+          "a11y_impact": "Screen readers cannot read words that only exist as pixels. The text also cannot be resized, reflowed, selected, searched or translated, and it blurs at high zoom.",
+          "carbon_delta_bytes": 376073,
+          "carbon_delta_grams": 0.10877026136336101,
+          "evidence": [
+            "html > body > div:nth-of-type(3) > img",
+            "html > body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > img"
+          ],
+          "recommended_fix_id": "text_in_image",
+          "explanation": "Suspected text baked into the pixels of 2 images. Moving those words into real HTML saves about 376.1 KB (0.109 g CO2e per view, estimated), and at the same time makes them readable by screen readers, resizable, selectable and translatable. Both goals point the same way here. Real HTML text weighs a couple of kilobytes; the banner it replaces weighs orders of magnitude more."
+        },
+        {
+          "rule_id": "third_party_widgets",
+          "type": "synergy",
+          "title": "Third-party scripts and widgets",
+          "a11y_impact": "Widgets injected by another domain are outside your control: their focus order, labelling and contrast are whatever the vendor shipped, and they frequently trap keyboard focus or appear as unlabelled controls.",
+          "carbon_delta_bytes": 10289,
+          "carbon_delta_grams": 0.0029758510160730004,
+          "evidence": [
+            "demo-third-party:8082"
+          ],
+          "recommended_fix_id": "third_party_remove",
+          "explanation": "This page makes 4 requests to 1 other registrable domain (demo-third-party:8082). Removing or deferring that code saves about 10.3 KB (0.0030 g CO2e per view, estimated), and takes back control of markup you are accountable for but cannot edit. Third-party code often pulls further requests of its own, so the measured bytes are a floor rather than the full cost."
+        },
+        {
+          "rule_id": "div_soup_widgets",
+          "type": "synergy",
+          "title": "Clickable elements that are not buttons",
+          "a11y_impact": "A div with an onclick handler is not focusable, is not announced as a control, and does not respond to Enter or Space. Keyboard and screen-reader users simply cannot operate it.",
+          "carbon_delta_bytes": 0,
+          "carbon_delta_grams": 0.0,
+          "evidence": [
+            "body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1)",
+            "body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(2)",
+            "body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(3)",
+            "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > form > div:nth-of-type(2)",
+            "html > body > div:nth-of-type(3) > div:nth-of-type(3) > div:nth-of-type(1)"
+          ],
+          "recommended_fix_id": "manual_review",
+          "explanation": "This page has 8 clickable elements built from divs or spans rather than buttons or links. Swapping them for native elements makes the controls focusable, operable by Enter and Space, and announceable by screen readers, and lets the hand-written keyboard and focus code go (changes no transfer bytes). This one needs a developer: the markup change is not safe to automate. A native button brings focus handling, keyboard activation and roles for free, so the hand-written script that emulated them can go."
+        },
+        {
+          "rule_id": "no_reduced_motion",
+          "type": "synergy",
+          "title": "Animation with no reduced-motion escape",
+          "a11y_impact": "People who get migraines, nausea or dizziness from movement have told the browser so through their operating system. Without a prefers-reduced-motion rule the page ignores them.",
+          "carbon_delta_bytes": 0,
+          "carbon_delta_grams": 0.0,
+          "evidence": [],
+          "recommended_fix_id": "reduced_motion",
+          "explanation": "This page carries 0 animation or transition rules and never checks prefers-reduced-motion, so the movement runs even for visitors whose operating system has asked for it to stop. Adding the media query is a few lines of CSS and gives those readers a still page. This one saves no transfer bytes. It saves processor and GPU work on the visitor's device, which is where the Sustainable Web Design model puts the majority of a page view's energy."
+        },
+        {
+          "rule_id": "captions_bytes",
+          "type": "tension",
+          "title": "Captions add bytes, and are worth them",
+          "a11y_impact": "Without captions, deaf and hard-of-hearing visitors get nothing from the video, and neither does anyone watching with the sound off, in a noisy place, or in a second language. WCAG 1.2.2 requires captions for prerecorded audio.",
+          "carbon_delta_bytes": -2048,
+          "carbon_delta_grams": -0.000592335783936,
+          "evidence": [
+            "html > body > div:nth-of-type(2) > video"
+          ],
+          "recommended_fix_id": "manual_review",
+          "explanation": "No caption track on 1 video here. Adding one costs bytes rather than saving them, and the point of this card is to show how few. A WebVTT track is plain text: about 2.0 KB per video on our estimate, against 1.001 MB of video already being shipped. The page's video payload goes from 1.001 MB to 1.003 MB, an increase of 0.20%. That is the entire carbon cost of making the video usable by deaf and hard-of-hearing visitors, and it is a rounding error next to the media it describes. Captions also need writing, so this is a person's job rather than a generated fix. WebVTT is plain text. The estimate used here is 2 KB per video, which covers roughly a minute of dialogue; the real file depends on how much is said."
+        },
+        {
+          "rule_id": "dark_mode",
+          "type": "tension",
+          "title": "Dark mode: energy saving versus readability",
+          "a11y_impact": "Genuinely split. People with photophobia, migraine or concussion recovery often need a dark theme to read at all. People with astigmatism and some low-vision conditions get halation, where light text on a dark field smears, and read a light theme far more easily. Neither group is a minority you can design away.",
+          "carbon_delta_bytes": -700,
+          "carbon_delta_grams": -0.0002024585199,
+          "evidence": [
+            "document"
+          ],
+          "recommended_fix_id": "dark_mode_tokens",
+          "explanation": "This page has no prefers-color-scheme handling, so every visitor gets the light theme whatever their system asks for. A dark theme is a real trade-off rather than a straight win. On an OLED screen dark pixels draw measurably less power, and for readers with photophobia, migraine or light sensitivity a dark theme is the difference between reading the page and closing it. For readers with astigmatism, though, light text on a dark background halates and smears, and a forced dark theme makes the page harder to read, not easier. The resolution is not to pick a side: honour prefers-color-scheme so each visitor gets what their system already says they want, and add a visible toggle so anyone can override it. Use #121212 rather than pure black with off-white text near #E8E8E8; the softer contrast reduces halation while still meeting AA. Expect this to cost roughly 700 B of extra CSS and script, about 0.0002 g CO2e per view on the estimate, and to be worth it. Adding a theme costs bytes rather than saving them. The energy argument for dark mode is about OLED screens, where dark pixels draw less power, and that saving is on the visitor's device, not in transfer."
+        },
+        {
+          "rule_id": "font_subsetting",
+          "type": "tension",
+          "title": "Font subsetting versus the words people are called",
+          "a11y_impact": "A subset that drops a glyph does not fail loudly. The character falls back to a system font mid-word, or renders as a box, which is jarring to read and can make a name unreadable. Names with diacritics, currency symbols and any second script are the usual casualties.",
+          "carbon_delta_bytes": 0,
+          "carbon_delta_grams": 0.0,
+          "evidence": [
+            "http://demo-site:8081/assets/fonts/fraunces-latin-wght-normal.woff2",
+            "http://demo-site:8081/assets/fonts/fraunces-latin-ext-wght-normal.woff2",
+            "http://demo-site:8081/assets/fonts/inter-latin-wght-normal.woff2",
+            "http://demo-site:8081/assets/fonts/inter-latin-ext-wght-normal.woff2"
+          ],
+          "recommended_fix_id": "manual_review",
+          "explanation": "This page ships 4 font files totalling 204.6 KB, enough that subsetting will come up. Trimming unused weights and styles is safe and worth doing. Trimming character ranges is where the tension sits: a latin-only subset saves more bytes and then breaks the moment someone's name carries an accent, a price appears in a second currency, or a quotation arrives in another script, and the fallback happens silently mid-word. Cut weights first, keep the ranges your content and your readers' names actually use, and always declare a sensible system fallback so a missing glyph degrades rather than disappears. Dropping unused weights is a safe saving and the scanner's font_bloat detector already counts it. How much a character-range subset would save depends on which ranges the page truly needs, so no number is claimed here."
+        },
+        {
+          "rule_id": "high_res_zoom",
+          "type": "tension",
+          "title": "Image compression versus zoom",
+          "a11y_impact": "WCAG 1.4.4 expects content to survive 200% zoom, and plenty of people browse at that magnification or on a 2x display. An image with no resolution headroom left turns to mush for exactly the readers who most need to enlarge it.",
+          "carbon_delta_bytes": 0,
+          "carbon_delta_grams": 0.0,
+          "evidence": [
+            "html > body > div:nth-of-type(3) > img"
+          ],
+          "recommended_fix_id": "image_compress",
+          "explanation": "Resolution headroom is already below 2x on 1 image, so the compression fix must skip those images. Downscaling an image to exactly its rendered size looks fine at 100% on a 1x screen and falls apart at 200% zoom or on any high-density display, which is precisely where readers with low vision are. Keep 2x the rendered width as the floor, take the saving on the genuinely oversized images instead, and accept zero bytes saved here. This finding exists to stop a saving being taken, not to claim one. Leaving these images alone costs nothing extra; downscaling them further would save bytes at a real cost to readability."
+        }
+      ],
+      "aria_snapshot": "- text: The Daily Herald Friday Edition\n- link \"World\":\n  - /url: \"#world\"\n- link \"Business\":\n  - /url: \"#business\"\n- link \"Technology\":\n  - /url: \"#tech\"\n- link \"Culture\":\n  - /url: \"#culture\"\n- link \"Sport\":\n  - /url: \"#sport\"\n- link:\n  - /url: \"#search\"\n- heading \"The city at night\" [level=1]\n- heading \"A photo essay from our correspondents\" [level=4]\n- img \"HALF-PRICE SALE Every subscription tier this week only. Claim offer now by clicking this banner advertisement for the Daily Herald half price subscription sale event\"\n- text: Top stories\n- img\n- heading \"Harbour redevelopment clears final vote\" [level=4]:\n  - link \"Harbour redevelopment clears final vote\":\n    - /url: \"#story-1\"\n- paragraph: City desk\n- paragraph: Councillors approved the scheme after a four-hour session, ending a dispute that has run since the spring.\n- img\n- heading \"Rail operators warn of winter disruption\" [level=4]:\n  - link \"Rail operators warn of winter disruption\":\n    - /url: \"#story-2\"\n- paragraph: Transport\n- paragraph: Engineering work on the northern line will close three stations for six weekends from November.\n- img \"Aerial view of the old harbour at dusk\"\n- heading \"A quiet revolution in the allotments\" [level=4]:\n  - link \"A quiet revolution in the allotments\":\n    - /url: \"#story-3\"\n- paragraph: Environment\n- paragraph: Growers are trading seed varieties that have not been planted here in fifty years.\n- img\n- heading \"Gallery buys disputed portrait\" [level=4]:\n  - link \"Gallery buys disputed portrait\":\n    - /url: \"#story-4\"\n- paragraph: Culture\n- paragraph: The acquisition ends a decade of argument about where the painting properly belongs.\n- img\n- heading \"Small brewers face a hard autumn\" [level=4]:\n  - link \"Small brewers face a hard autumn\":\n    - /url: \"#story-5\"\n- paragraph: Business\n- paragraph: Energy costs and a soft summer have left independents with more stock than they can shift.\n- img\n- heading \"The bridge that took thirty years\" [level=4]:\n  - link \"The bridge that took thirty years\":\n    - /url: \"#story-6\"\n- paragraph: Feature\n- paragraph: It was meant to open in 1994. We traced what happened to the money and the people.\n- img \"Crowds outside the municipal theatre\"\n- heading \"Theatre announces its winter season\" [level=4]:\n  - link \"Theatre announces its winter season\":\n    - /url: \"#story-7\"\n- paragraph: Culture\n- paragraph: Two revivals and a commission, in a programme the new director calls deliberately unfashionable.\n- img\n- heading \"United hold on at the death\" [level=4]:\n  - link \"United hold on at the death\":\n    - /url: \"#story-8\"\n- paragraph: Sport\n- paragraph: A goal in the ninety-fourth minute settled a match that neither side deserved to lose.\n- img\n- text: Previous Load more stories\n- button \"Subscribe\"\n- paragraph: Prices correct at time of publication. Terms apply to all subscription offers. The Daily Herald is published daily except on public holidays.\n- text: Most read\n- paragraph:\n  - text: \"1\"\n  - link \"What the budget means for renters\":\n    - /url: \"#r1\"\n- paragraph:\n  - text: \"2\"\n  - link \"The quiet return of the corner shop\":\n    - /url: \"#r2\"\n- paragraph:\n  - text: \"3\"\n  - link \"Why the reservoir is still empty\":\n    - /url: \"#r3\"\n- paragraph:\n  - text: \"4\"\n  - link \"A season that turned on one match\":\n    - /url: \"#r4\"\n- paragraph:\n  - text: \"5\"\n  - 'link \"Letters: on the harbour vote\"':\n    - /url: \"#r5\"\n- text: Newsletter\n- paragraph: The day's reporting, every evening at six.\n- textbox\n- textbox\n- combobox:\n  - option \"Morning edition\" [selected]\n  - option \"Evening edition\"\n- checkbox\n- text: I agree to the terms Sign up Weather\n- paragraph: 14°C\n- paragraph: Cloud clearing after midday.\n- text: More from the Herald Politics Economy Climate Media\n- paragraph: © The Daily Herald. All rights reserved.\n- paragraph:\n  - link \"Privacy\":\n    - /url: \"#privacy\"\n  - text: ·\n  - link \"Terms\":\n    - /url: \"#terms\"\n  - text: ·\n  - link \"Contact\":\n    - /url: \"#contact\"\n- text: Herald Assistant\n- button\n- paragraph: Hello! Can I help you find a story?\n- textbox \"Type a message\"\n- dialog \"Subscription offer\":\n  - heading \"Read without limits\" [level=4]\n  - paragraph: Unlimited articles, the full archive, and the evening newsletter.\n  - button \"See offers\"\n  - button \"Not now\"\n  - link \"Offer terms\":\n    - /url: \"#promo-terms\"",
+      "screenshot_path": "",
+      "engine_versions": {
+        "playwright": "1.63.0",
+        "axe": "4.13.0",
+        "swd_model": "3"
+      }
+    },
+    "after": {
+      "scores": {
+        "a11y": 66,
+        "carbon": 91,
+        "combined": 79,
+        "carbon_grade": "A",
+        "weights": {
+          "a11y": 0.5,
+          "carbon": 0.5
+        },
+        "is_placeholder": false,
+        "breakdown": {
+          "a11y": {
+            "starting_points": 100.0,
+            "items": [
+              {
+                "label": "image-alt",
+                "points": -18.45098040014257,
+                "detail": "critical impact, 7 elements: 10 x 1.85",
+                "evidence": [
+                  "div[data-card-index=\"0\"] > .card__image[width=\"800\"][height=\"533\"]",
+                  "div[data-card-index=\"1\"] > .card__image[width=\"800\"][height=\"533\"]",
+                  "div[data-card-index=\"3\"] > .card__image[width=\"800\"][height=\"533\"]"
+                ]
+              },
+              {
+                "label": "keyboard-trap",
+                "points": -10.0,
+                "detail": "Focus could not be moved past this container, detected by automated keyboard crawl",
+                "evidence": [
+                  "html > body > div:nth-of-type(2)"
+                ]
+              },
+              {
+                "label": "region",
+                "points": -6.0,
+                "detail": "moderate impact, 16 elements: 3 x 2.00",
+                "evidence": [
+                  ".masthead__inner",
+                  ".nav__icon",
+                  ".hero"
+                ]
+              }
+            ],
+            "total": 66,
+            "formula": "100 minus one penalty per failing rule, where penalty = base(impact) x min(1 + log10(nodes), 2), plus 10 if the keyboard crawl found a trap. Items axe marks as needing review are not scored.",
+            "spec_ref": "MASTERSPEC §9.1"
+          },
+          "carbon": {
+            "starting_points": 0.0,
+            "items": [
+              {
+                "label": "Rating band A",
+                "points": 91.25574975693311,
+                "detail": "0.123 g CO2e per view (estimate) sits between 0.095 g and 0.186 g, which scores 85-94",
+                "evidence": []
+              }
+            ],
+            "total": 91,
+            "formula": "Grams CO2e per view (Sustainable Web Design v3, an estimate) placed in a rating band, then interpolated linearly inside that band, plus 3 for a green-hosted domain, capped at 100.",
+            "spec_ref": "MASTERSPEC §9.2"
+          },
+          "combined": {
+            "starting_points": 0.0,
+            "items": [
+              {
+                "label": "Carbon",
+                "points": 45.5,
+                "detail": "91 x 0.50 weight",
+                "evidence": []
+              },
+              {
+                "label": "Accessibility",
+                "points": 33.0,
+                "detail": "66 x 0.50 weight",
+                "evidence": []
+              }
+            ],
+            "total": 79,
+            "formula": "A weighted average of the accessibility and carbon scores, rounded to a whole number.",
+            "spec_ref": "MASTERSPEC §9.3"
+          }
+        }
+      },
+      "a11y": {
+        "violations": [
+          {
+            "rule_id": "image-alt",
+            "impact": "critical",
+            "help": "Images must have alternative text",
+            "help_url": "https://dequeuniversity.com/rules/axe/4.13/image-alt?application=axeAPI",
+            "tags": [
+              "cat.text-alternatives",
+              "wcag2a",
+              "wcag111",
+              "section508",
+              "section508.22.a",
+              "TTv5",
+              "TT7.a",
+              "TT7.b",
+              "EN-301-549",
+              "EN-9.1.1.1",
+              "ACT",
+              "RGAAv4",
+              "RGAA-1.1.1"
+            ],
+            "nodes": [
+              {
+                "selector": "div[data-card-index=\"0\"] > .card__image[width=\"800\"][height=\"533\"]",
+                "html": "<img class=\"card__image\" src=\"assets/optimized/article-01-135531ad.webp\" loading=\"lazy\" width=\"800\" height=\"533\" data-ga-size=\"\">",
+                "failure_summary": "Fix any of the following:\n  Element does not have an alt attribute\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+              },
+              {
+                "selector": "div[data-card-index=\"1\"] > .card__image[width=\"800\"][height=\"533\"]",
+                "html": "<img class=\"card__image\" src=\"assets/optimized/article-02-ca248d65.webp\" loading=\"lazy\" width=\"800\" height=\"533\" data-ga-size=\"\">",
+                "failure_summary": "Fix any of the following:\n  Element does not have an alt attribute\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+              },
+              {
+                "selector": "div[data-card-index=\"3\"] > .card__image[width=\"800\"][height=\"533\"]",
+                "html": "<img class=\"card__image\" src=\"assets/optimized/article-04-c8952617.webp\" loading=\"lazy\" width=\"800\" height=\"533\" data-ga-size=\"\">",
+                "failure_summary": "Fix any of the following:\n  Element does not have an alt attribute\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+              },
+              {
+                "selector": "div[data-card-index=\"4\"] > .card__image[width=\"800\"][height=\"533\"]",
+                "html": "<img class=\"card__image\" src=\"assets/optimized/article-05-789ab231.webp\" loading=\"lazy\" width=\"800\" height=\"533\" data-ga-size=\"\">",
+                "failure_summary": "Fix any of the following:\n  Element does not have an alt attribute\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+              },
+              {
+                "selector": "div[data-card-index=\"5\"] > .card__image[width=\"800\"][height=\"533\"]",
+                "html": "<img class=\"card__image\" src=\"assets/optimized/article-06-7706b8ab.webp\" loading=\"lazy\" width=\"800\" height=\"533\" data-ga-size=\"\">",
+                "failure_summary": "Fix any of the following:\n  Element does not have an alt attribute\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+              },
+              {
+                "selector": "div[data-card-index=\"7\"] > .card__image[width=\"800\"][height=\"533\"]",
+                "html": "<img class=\"card__image\" src=\"assets/optimized/article-08-a1d9f7fa.webp\" loading=\"lazy\" width=\"800\" height=\"533\" data-ga-size=\"\">",
+                "failure_summary": "Fix any of the following:\n  Element does not have an alt attribute\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+              },
+              {
+                "selector": "img[width=\"1492\"]",
+                "html": "<img class=\"banner\" src=\"assets/optimized/banner-subscribe-385e3a2e.webp\" width=\"1492\" height=\"373\" data-ga-size=\"\" loading=\"lazy\">",
+                "failure_summary": "Fix any of the following:\n  Element does not have an alt attribute\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+              }
+            ]
+          },
+          {
+            "rule_id": "region",
+            "impact": "moderate",
+            "help": "All page content should be contained by landmarks",
+            "help_url": "https://dequeuniversity.com/rules/axe/4.13/region?application=axeAPI",
+            "tags": [
+              "cat.keyboard",
+              "best-practice",
+              "RGAAv4",
+              "RGAA-9.2.1"
+            ],
+            "nodes": [
+              {
+                "selector": ".masthead__inner",
+                "html": "<div class=\"masthead__inner\">\n        <div class=\"masthead__brand\">The Daily Herald</div>\n        <div class=\"masthead__date\">Friday Edition</div>\n      </div>",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": ".nav__icon",
+                "html": "<a href=\"#search\" class=\"nav__icon\" aria-label=\"Search\"><span class=\"icon-glass\"></span></a>",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": ".hero",
+                "html": "<div class=\"hero\">",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": "img[width=\"1600\"]",
+                "html": "<img class=\"banner\" src=\"assets/optimized/banner-sale-9b3525d2.webp\" alt=\"HALF-PRICE SALE Every subscription tier this week only. Claim offer now by clicking this banner advertisement for the Daily Herald half price subscription sale event\" width=\"1600\" height=\"400\" data-ga-size=\"\">",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": "#world",
+                "html": "<div class=\"section-head\" id=\"world\">Top stories</div>",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": ".card-grid",
+                "html": "<div class=\"card-grid\">",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": "img[width=\"1492\"]",
+                "html": "<img class=\"banner\" src=\"assets/optimized/banner-subscribe-385e3a2e.webp\" width=\"1492\" height=\"373\" data-ga-size=\"\" loading=\"lazy\">",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": "div[onclick=\"loadMore('prev')\"]",
+                "html": "<div class=\"pager__btn\" onclick=\"loadMore('prev')\">Previous</div>",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": "div[onclick=\"loadMore('next')\"]",
+                "html": "<div class=\"pager__btn\" onclick=\"loadMore('next')\">Load more stories</div>",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": ".main-column > .fine-print",
+                "html": "<p class=\"fine-print\">\n            Prices correct at time of publication. Terms apply to all subscription\n            offers. The Daily Herald is published daily except on public holidays.\n          </p>",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": ".side-column",
+                "html": "<div class=\"side-column\">",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": "#sport",
+                "html": "<div class=\"section-head\" id=\"sport\">More from the Herald</div>",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": ".tag-row",
+                "html": "<div class=\"tag-row\">",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": ".footer",
+                "html": "<div class=\"footer\">",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": ".chat__head > span",
+                "html": "<span>Herald Assistant</span>",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              },
+              {
+                "selector": ".chat__body",
+                "html": "<div class=\"chat__body\">\n        <p class=\"chat__msg\">Hello! Can I help you find a story?</p>\n        <input type=\"text\" class=\"chat__input\" placeholder=\"Type a message\" style=\"\">\n      </div>",
+                "failure_summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+              }
+            ]
+          }
+        ],
+        "counts_by_impact": {
+          "critical": 1,
+          "moderate": 1
+        },
+        "unique_rules": 2,
+        "total_nodes": 23,
+        "incomplete_count": 2
+      },
+      "keyboard": {
+        "tabs_pressed": 60,
+        "trap_detected": true,
+        "trap_container": "html > body > div:nth-of-type(2)",
+        "unreachable_interactive_count": 25,
+        "focus_visible_missing_count": 7,
+        "reached_count": 7
+      },
+      "carbon": {
+        "total_bytes": 424399,
+        "request_count": 24,
+        "by_type": {
+          "html": 4364,
+          "css": 3810,
+          "img": 209651,
+          "js": 2338,
+          "font": 204236
+        },
+        "third_party": {
+          "requests": 0,
+          "bytes": 0,
+          "hosts": [],
+          "script_bytes": 0
+        },
+        "images": [],
+        "autoplay_media": [],
+        "fonts": {
+          "count": 4,
+          "bytes": 204236,
+          "urls": [
+            "https://mounted-peninsula-representative-rid.trycloudflare.com/patched/978e1b3034d64a04bae838814623a204/assets/assets/fonts/fraunces-latin-wght-normal.woff2",
+            "https://mounted-peninsula-representative-rid.trycloudflare.com/patched/978e1b3034d64a04bae838814623a204/assets/assets/fonts/fraunces-latin-ext-wght-normal.woff2",
+            "https://mounted-peninsula-representative-rid.trycloudflare.com/patched/978e1b3034d64a04bae838814623a204/assets/assets/fonts/inter-latin-wght-normal.woff2",
+            "https://mounted-peninsula-representative-rid.trycloudflare.com/patched/978e1b3034d64a04bae838814623a204/assets/assets/fonts/inter-latin-ext-wght-normal.woff2"
+          ]
+        },
+        "uncompressed_text": [],
+        "detections": [
+          {
+            "detector": "font_bloat",
+            "summary": "4 font files (more than 3) and 204,236 bytes (more than 153,600); subsetting and dropping unused faces would bring this near 61,440 bytes (estimate)",
+            "estimated_saving_bytes": 142796,
+            "evidence": [
+              "https://mounted-peninsula-representative-rid.trycloudflare.com/patched/978e1b3034d64a04bae838814623a204/assets/assets/fonts/fraunces-latin-wght-normal.woff2",
+              "https://mounted-peninsula-representative-rid.trycloudflare.com/patched/978e1b3034d64a04bae838814623a204/assets/assets/fonts/fraunces-latin-ext-wght-normal.woff2",
+              "https://mounted-peninsula-representative-rid.trycloudflare.com/patched/978e1b3034d64a04bae838814623a204/assets/assets/fonts/inter-latin-wght-normal.woff2",
+              "https://mounted-peninsula-representative-rid.trycloudflare.com/patched/978e1b3034d64a04bae838814623a204/assets/assets/fonts/inter-latin-ext-wght-normal.woff2"
+            ],
+            "saves_bytes": true
+          },
+          {
+            "detector": "div_soup_widgets",
+            "summary": "8 clickable element(s) that are not buttons and cannot be reached or activated from the keyboard",
+            "estimated_saving_bytes": 0,
+            "evidence": [
+              "body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1)",
+              "body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(2)",
+              "body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(3)",
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > form > div:nth-of-type(2)",
+              "html > body > div:nth-of-type(3) > div:nth-of-type(3) > div:nth-of-type(1)",
+              "html > body > div:nth-of-type(3) > div:nth-of-type(3) > div:nth-of-type(2)",
+              "html > body > div:nth-of-type(3) > div:nth-of-type(3) > div:nth-of-type(3)",
+              "html > body > div:nth-of-type(3) > div:nth-of-type(3) > div:nth-of-type(4)"
+            ],
+            "saves_bytes": false
+          },
+          {
+            "detector": "no_color_scheme",
+            "summary": "no prefers-color-scheme media query, color-scheme declaration or meta tag, so every visitor gets the light theme whatever their system asks for",
+            "estimated_saving_bytes": 0,
+            "evidence": [
+              "document"
+            ],
+            "saves_bytes": false
+          },
+          {
+            "detector": "video_no_captions",
+            "summary": "1 video element(s) with no track of kind captions or subtitles, so the content is unavailable to deaf and hard-of-hearing visitors",
+            "estimated_saving_bytes": 0,
+            "evidence": [
+              "html > body > div:nth-of-type(2) > video"
+            ],
+            "saves_bytes": false
+          },
+          {
+            "detector": "lazy_above_fold",
+            "summary": "2 image(s) inside the first viewport carry loading=lazy, which delays content the visitor is already looking at",
+            "estimated_saving_bytes": 0,
+            "evidence": [
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > img",
+              "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > img"
+            ],
+            "saves_bytes": false
+          }
+        ],
+        "grams_per_view": 0.122747419124343,
+        "grams_first_visit": 0.16257936307860002,
+        "grams_return_visit": 0.003251587261572,
+        "assumptions": {
+          "model": "sustainable-web-design",
+          "model_version": "3",
+          "kwh_per_gb": 0.81,
+          "grid_intensity_g_per_kwh": 472.94,
+          "renewable_intensity_g_per_kwh": 50.0,
+          "first_visit_percentage": 0.75,
+          "return_visit_percentage": 0.25,
+          "data_reload_ratio": 0.02,
+          "green_hosted": false,
+          "segment_shares": {
+            "consumerDeviceEnergy": 0.52,
+            "networkEnergy": 0.14,
+            "productionEnergy": 0.19,
+            "dataCenterEnergy": 0.15
+          },
+          "source_url": "https://sustainablewebdesign.org/estimating-digital-emissions/"
+        },
+        "is_estimate": true
+      },
+      "green": {
+        "host": "demo-site",
+        "green": false,
+        "hosted_by": null,
+        "source": "greenweb"
+      },
+      "tradeoffs": [
+        {
+          "rule_id": "div_soup_widgets",
+          "type": "synergy",
+          "title": "Clickable elements that are not buttons",
+          "a11y_impact": "A div with an onclick handler is not focusable, is not announced as a control, and does not respond to Enter or Space. Keyboard and screen-reader users simply cannot operate it.",
+          "carbon_delta_bytes": 0,
+          "carbon_delta_grams": 0.0,
+          "evidence": [
+            "body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1)",
+            "body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(2)",
+            "body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(3)",
+            "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > form > div:nth-of-type(2)",
+            "html > body > div:nth-of-type(3) > div:nth-of-type(3) > div:nth-of-type(1)"
+          ],
+          "recommended_fix_id": "manual_review",
+          "explanation": "This page has 8 clickable elements built from divs or spans rather than buttons or links. Swapping them for native elements makes the controls focusable, operable by Enter and Space, and announceable by screen readers, and lets the hand-written keyboard and focus code go (changes no transfer bytes). This one needs a developer: the markup change is not safe to automate. A native button brings focus handling, keyboard activation and roles for free, so the hand-written script that emulated them can go."
+        },
+        {
+          "rule_id": "captions_bytes",
+          "type": "tension",
+          "title": "Captions add bytes, and are worth them",
+          "a11y_impact": "Without captions, deaf and hard-of-hearing visitors get nothing from the video, and neither does anyone watching with the sound off, in a noisy place, or in a second language. WCAG 1.2.2 requires captions for prerecorded audio.",
+          "carbon_delta_bytes": -2048,
+          "carbon_delta_grams": -0.000592335783936,
+          "evidence": [
+            "html > body > div:nth-of-type(2) > video"
+          ],
+          "recommended_fix_id": "manual_review",
+          "explanation": "No caption track on 1 video here. Adding one costs bytes rather than saving them, and the point of this card is to show how few. A WebVTT track is plain text: about 2.0 KB per video on our estimate, against 0 B of video already being shipped. The page's video payload goes from 0 B to 2.0 KB, an increase of an unknown share of. That is the entire carbon cost of making the video usable by deaf and hard-of-hearing visitors, and it is a rounding error next to the media it describes. Captions also need writing, so this is a person's job rather than a generated fix. WebVTT is plain text. The estimate used here is 2 KB per video, which covers roughly a minute of dialogue; the real file depends on how much is said."
+        },
+        {
+          "rule_id": "dark_mode",
+          "type": "tension",
+          "title": "Dark mode: energy saving versus readability",
+          "a11y_impact": "Genuinely split. People with photophobia, migraine or concussion recovery often need a dark theme to read at all. People with astigmatism and some low-vision conditions get halation, where light text on a dark field smears, and read a light theme far more easily. Neither group is a minority you can design away.",
+          "carbon_delta_bytes": -700,
+          "carbon_delta_grams": -0.0002024585199,
+          "evidence": [
+            "document"
+          ],
+          "recommended_fix_id": "dark_mode_tokens",
+          "explanation": "This page has no prefers-color-scheme handling, so every visitor gets the light theme whatever their system asks for. A dark theme is a real trade-off rather than a straight win. On an OLED screen dark pixels draw measurably less power, and for readers with photophobia, migraine or light sensitivity a dark theme is the difference between reading the page and closing it. For readers with astigmatism, though, light text on a dark background halates and smears, and a forced dark theme makes the page harder to read, not easier. The resolution is not to pick a side: honour prefers-color-scheme so each visitor gets what their system already says they want, and add a visible toggle so anyone can override it. Use #121212 rather than pure black with off-white text near #E8E8E8; the softer contrast reduces halation while still meeting AA. Expect this to cost roughly 700 B of extra CSS and script, about 0.0002 g CO2e per view on the estimate, and to be worth it. Adding a theme costs bytes rather than saving them. The energy argument for dark mode is about OLED screens, where dark pixels draw less power, and that saving is on the visitor's device, not in transfer."
+        },
+        {
+          "rule_id": "font_subsetting",
+          "type": "tension",
+          "title": "Font subsetting versus the words people are called",
+          "a11y_impact": "A subset that drops a glyph does not fail loudly. The character falls back to a system font mid-word, or renders as a box, which is jarring to read and can make a name unreadable. Names with diacritics, currency symbols and any second script are the usual casualties.",
+          "carbon_delta_bytes": 0,
+          "carbon_delta_grams": 0.0,
+          "evidence": [
+            "https://mounted-peninsula-representative-rid.trycloudflare.com/patched/978e1b3034d64a04bae838814623a204/assets/assets/fonts/fraunces-latin-wght-normal.woff2",
+            "https://mounted-peninsula-representative-rid.trycloudflare.com/patched/978e1b3034d64a04bae838814623a204/assets/assets/fonts/fraunces-latin-ext-wght-normal.woff2",
+            "https://mounted-peninsula-representative-rid.trycloudflare.com/patched/978e1b3034d64a04bae838814623a204/assets/assets/fonts/inter-latin-wght-normal.woff2",
+            "https://mounted-peninsula-representative-rid.trycloudflare.com/patched/978e1b3034d64a04bae838814623a204/assets/assets/fonts/inter-latin-ext-wght-normal.woff2"
+          ],
+          "recommended_fix_id": "manual_review",
+          "explanation": "This page ships 4 font files totalling 204.2 KB, enough that subsetting will come up. Trimming unused weights and styles is safe and worth doing. Trimming character ranges is where the tension sits: a latin-only subset saves more bytes and then breaks the moment someone's name carries an accent, a price appears in a second currency, or a quotation arrives in another script, and the fallback happens silently mid-word. Cut weights first, keep the ranges your content and your readers' names actually use, and always declare a sensible system fallback so a missing glyph degrades rather than disappears. Dropping unused weights is a safe saving and the scanner's font_bloat detector already counts it. How much a character-range subset would save depends on which ranges the page truly needs, so no number is claimed here."
+        },
+        {
+          "rule_id": "lazy_above_fold",
+          "type": "tension",
+          "title": "Lazy loading applied above the fold",
+          "a11y_impact": "An image the visitor is already looking at should not wait for a second round trip. Deferring it delays the largest contentful paint, leaves layout shifting under the reader, and can leave a screen-reader user hearing about an image that has not arrived.",
+          "carbon_delta_bytes": 0,
+          "carbon_delta_grams": 0.0,
+          "evidence": [
+            "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > img",
+            "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > img"
+          ],
+          "recommended_fix_id": "lazy_load",
+          "explanation": "Inside the first screen, this page marks 2 images loading=lazy. This is the carbon fix applied one step too far: below the fold it is a genuine saving; above it, it saves nothing at all, because the visitor is already looking at the image and the browser fetches it regardless. The delta is zero bytes and the cost is a slower first paint. Remove the attribute from anything in the initial viewport and keep it everywhere below. Nothing is saved. The bytes are fetched either way; lazy loading only changes when. Above the fold it changes when for the worse."
+        }
+      ],
+      "aria_snapshot": "- text: The Daily Herald Friday Edition\n- link \"World\":\n  - /url: \"#world\"\n- link \"Business\":\n  - /url: \"#business\"\n- link \"Technology\":\n  - /url: \"#tech\"\n- link \"Culture\":\n  - /url: \"#culture\"\n- link \"Sport\":\n  - /url: \"#sport\"\n- link \"Search\":\n  - /url: \"#search\"\n- heading \"The city at night\" [level=1]\n- heading \"A photo essay from our correspondents\" [level=4]\n- img \"HALF-PRICE SALE Every subscription tier this week only. Claim offer now by clicking this banner advertisement for the Daily Herald half price subscription sale event\"\n- text: Top stories\n- img\n- heading \"Harbour redevelopment clears final vote\" [level=4]:\n  - link \"Harbour redevelopment clears final vote\":\n    - /url: \"#story-1\"\n- paragraph: City desk\n- paragraph: Councillors approved the scheme after a four-hour session, ending a dispute that has run since the spring.\n- img\n- heading \"Rail operators warn of winter disruption\" [level=4]:\n  - link \"Rail operators warn of winter disruption\":\n    - /url: \"#story-2\"\n- paragraph: Transport\n- paragraph: Engineering work on the northern line will close three stations for six weekends from November.\n- img \"Aerial view of the old harbour at dusk\"\n- heading \"A quiet revolution in the allotments\" [level=4]:\n  - link \"A quiet revolution in the allotments\":\n    - /url: \"#story-3\"\n- paragraph: Environment\n- paragraph: Growers are trading seed varieties that have not been planted here in fifty years.\n- img\n- heading \"Gallery buys disputed portrait\" [level=4]:\n  - link \"Gallery buys disputed portrait\":\n    - /url: \"#story-4\"\n- paragraph: Culture\n- paragraph: The acquisition ends a decade of argument about where the painting properly belongs.\n- img\n- heading \"Small brewers face a hard autumn\" [level=4]:\n  - link \"Small brewers face a hard autumn\":\n    - /url: \"#story-5\"\n- paragraph: Business\n- paragraph: Energy costs and a soft summer have left independents with more stock than they can shift.\n- img\n- heading \"The bridge that took thirty years\" [level=4]:\n  - link \"The bridge that took thirty years\":\n    - /url: \"#story-6\"\n- paragraph: Feature\n- paragraph: It was meant to open in 1994. We traced what happened to the money and the people.\n- img \"Crowds outside the municipal theatre\"\n- heading \"Theatre announces its winter season\" [level=4]:\n  - link \"Theatre announces its winter season\":\n    - /url: \"#story-7\"\n- paragraph: Culture\n- paragraph: Two revivals and a commission, in a programme the new director calls deliberately unfashionable.\n- img\n- heading \"United hold on at the death\" [level=4]:\n  - link \"United hold on at the death\":\n    - /url: \"#story-8\"\n- paragraph: Sport\n- paragraph: A goal in the ninety-fourth minute settled a match that neither side deserved to lose.\n- img\n- text: Previous Load more stories\n- button \"Subscribe\"\n- paragraph: Prices correct at time of publication. Terms apply to all subscription offers. The Daily Herald is published daily except on public holidays.\n- text: Most read\n- paragraph:\n  - text: \"1\"\n  - link \"What the budget means for renters\":\n    - /url: \"#r1\"\n- paragraph:\n  - text: \"2\"\n  - link \"The quiet return of the corner shop\":\n    - /url: \"#r2\"\n- paragraph:\n  - text: \"3\"\n  - link \"Why the reservoir is still empty\":\n    - /url: \"#r3\"\n- paragraph:\n  - text: \"4\"\n  - link \"A season that turned on one match\":\n    - /url: \"#r4\"\n- paragraph:\n  - text: \"5\"\n  - 'link \"Letters: on the harbour vote\"':\n    - /url: \"#r5\"\n- text: Newsletter\n- paragraph: The day's reporting, every evening at six.\n- textbox \"Name\"\n- textbox \"Email address\"\n- combobox \"Edition\":\n  - option \"Morning edition\" [selected]\n  - option \"Evening edition\"\n- checkbox \"I agree to the terms\"\n- text: I agree to the terms Sign up Weather\n- paragraph: 14°C\n- paragraph: Cloud clearing after midday.\n- text: More from the Herald Politics Economy Climate Media\n- paragraph: © The Daily Herald. All rights reserved.\n- paragraph:\n  - link \"Privacy\":\n    - /url: \"#privacy\"\n  - text: ·\n  - link \"Terms\":\n    - /url: \"#terms\"\n  - text: ·\n  - link \"Contact\":\n    - /url: \"#contact\"\n- text: Herald Assistant\n- button \"Close chat\"\n- paragraph: Hello! Can I help you find a story?\n- textbox \"Type a message\"\n- dialog \"Subscription offer\":\n  - heading \"Read without limits\" [level=4]\n  - paragraph: Unlimited articles, the full archive, and the evening newsletter.\n  - button \"See offers\"\n  - button \"Not now\"\n  - link \"Offer terms\":\n    - /url: \"#promo-terms\"",
+      "screenshot_path": "",
+      "engine_versions": {
+        "playwright": "1.63.0",
+        "axe": "4.13.0",
+        "swd_model": "3"
+      }
+    },
+    "patch": {
+      "fixes": [
+        {
+          "id": "region-d4a2fd3c1d",
+          "kind": "region",
+          "target": ".masthead__inner, .hero, .wrap > .banner …",
+          "description": "Manual fix needed: All page content should be contained by landmarks (15 element(s), axe rule region). No reliable automatic fix exists for this rule.",
+          "diff": {
+            "before": "",
+            "after": ""
+          },
+          "ai_generated": false,
+          "applied": false,
+          "confidence": 0.0,
+          "manual_review": true
+        },
+        {
+          "id": "img_alt-a933b1f843",
+          "kind": "img_alt",
+          "target": "img.banner",
+          "description": "Manual fix needed: AI alt text is unavailable (LLM_OFFLINE is set, so only cached answers can be used); write alt text by hand",
+          "diff": {
+            "before": "",
+            "after": ""
+          },
+          "ai_generated": false,
+          "applied": false,
+          "confidence": 0.0,
+          "manual_review": true
+        },
+        {
+          "id": "img_alt-ba06e28eb6",
+          "kind": "img_alt",
+          "target": "img.card__image",
+          "description": "Manual fix needed: AI alt text is unavailable (LLM_OFFLINE is set, so only cached answers can be used); write alt text by hand",
+          "diff": {
+            "before": "",
+            "after": ""
+          },
+          "ai_generated": false,
+          "applied": false,
+          "confidence": 0.0,
+          "manual_review": true
+        },
+        {
+          "id": "img_alt-f14eee4558",
+          "kind": "img_alt",
+          "target": "img.card__image",
+          "description": "Manual fix needed: AI alt text is unavailable (LLM_OFFLINE is set, so only cached answers can be used); write alt text by hand",
+          "diff": {
+            "before": "",
+            "after": ""
+          },
+          "ai_generated": false,
+          "applied": false,
+          "confidence": 0.0,
+          "manual_review": true
+        },
+        {
+          "id": "img_alt-a84e92696b",
+          "kind": "img_alt",
+          "target": "img.card__image",
+          "description": "Manual fix needed: AI alt text is unavailable (LLM_OFFLINE is set, so only cached answers can be used); write alt text by hand",
+          "diff": {
+            "before": "",
+            "after": ""
+          },
+          "ai_generated": false,
+          "applied": false,
+          "confidence": 0.0,
+          "manual_review": true
+        },
+        {
+          "id": "img_alt-a4b2d2bc4b",
+          "kind": "img_alt",
+          "target": "img.card__image",
+          "description": "Manual fix needed: AI alt text is unavailable (LLM_OFFLINE is set, so only cached answers can be used); write alt text by hand",
+          "diff": {
+            "before": "",
+            "after": ""
+          },
+          "ai_generated": false,
+          "applied": false,
+          "confidence": 0.0,
+          "manual_review": true
+        },
+        {
+          "id": "img_alt-28c49861f9",
+          "kind": "img_alt",
+          "target": "img.card__image",
+          "description": "Manual fix needed: the vision budget covers the 6 heaviest images; write alt text for this one by hand (alt=\"\" if it is decorative).",
+          "diff": {
+            "before": "",
+            "after": ""
+          },
+          "ai_generated": false,
+          "applied": false,
+          "confidence": 0.0,
+          "manual_review": true
+        },
+        {
+          "id": "img_alt-b153fc56d5",
+          "kind": "img_alt",
+          "target": "img.card__image",
+          "description": "Manual fix needed: the vision budget covers the 6 heaviest images; write alt text for this one by hand (alt=\"\" if it is decorative).",
+          "diff": {
+            "before": "",
+            "after": ""
+          },
+          "ai_generated": false,
+          "applied": false,
+          "confidence": 0.0,
+          "manual_review": true
+        },
+        {
+          "id": "form_label-631c9a79c5",
+          "kind": "form_label",
+          "target": "input[name=\"name\"]",
+          "description": "Accessible name \"Name\", derived from its name attribute (no AI). Review it.",
+          "diff": {
+            "before": "<input type=\"text\" name=\"name\" class=\"newsletter__input\">",
+            "after": "<input type=\"text\" name=\"name\" class=\"newsletter__input\" aria-label=\"Name\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 0.5,
+          "manual_review": false
+        },
+        {
+          "id": "form_label-c00505f7e3",
+          "kind": "form_label",
+          "target": "input[type=\"email\"]",
+          "description": "Accessible name \"Email address\", derived from its name attribute (no AI). Review it.",
+          "diff": {
+            "before": "<input type=\"email\" name=\"email\" class=\"newsletter__input\">",
+            "after": "<input type=\"email\" name=\"email\" class=\"newsletter__input\" aria-label=\"Email address\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 0.5,
+          "manual_review": false
+        },
+        {
+          "id": "form_label-800ba4b24a",
+          "kind": "form_label",
+          "target": "#terms-box",
+          "description": "Turn the visible text \"I agree to the terms\" next to this control into its <label>, so it is announced and clickable. From page context, no AI.",
+          "diff": {
+            "before": "<span>",
+            "after": "<label for=\"terms-box\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 0.85,
+          "manual_review": false
+        },
+        {
+          "id": "form_label-dd3b797681",
+          "kind": "form_label",
+          "target": "select",
+          "description": "Accessible name \"Edition\", derived from its name attribute (no AI). Review it.",
+          "diff": {
+            "before": "<select name=\"edition\" class=\"newsletter__input\">",
+            "after": "<select name=\"edition\" class=\"newsletter__input\" aria-label=\"Edition\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 0.5,
+          "manual_review": false
+        },
+        {
+          "id": "link_name-da09c359c1",
+          "kind": "link_name",
+          "target": ".nav__icon",
+          "description": "Accessible name \"Search\", derived from where it links to (no AI). Review it.",
+          "diff": {
+            "before": "<a href=\"#search\" class=\"nav__icon\">",
+            "after": "<a href=\"#search\" class=\"nav__icon\" aria-label=\"Search\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 0.55,
+          "manual_review": false
+        },
+        {
+          "id": "button_name-ca12b9b03f",
+          "kind": "button_name",
+          "target": ".chat__close",
+          "description": "Accessible name \"Close chat\", derived from its click handler (no AI). Review it.",
+          "diff": {
+            "before": "<button class=\"chat__close\" onclick=\"closeChat()\">",
+            "after": "<button class=\"chat__close\" onclick=\"closeChat()\" aria-label=\"Close chat\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 0.55,
+          "manual_review": false
+        },
+        {
+          "id": "html_lang-3245b893ee",
+          "kind": "html_lang",
+          "target": "html",
+          "description": "Declare the page language: lang=\"en\" (detected from the page's own words, no AI).",
+          "diff": {
+            "before": "<html>",
+            "after": "<html lang=\"en\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 0.89,
+          "manual_review": false
+        },
+        {
+          "id": "heading_order-401950aa87",
+          "kind": "heading_order",
+          "target": "h4, h4.card__title, h4.promo__title",
+          "description": "Repair 10 skipped heading level(s) with aria-level, so screen readers hear a coherent outline. Visual styling is unchanged.",
+          "diff": {
+            "before": "<h4>",
+            "after": "<h4 aria-level=\"2\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 0.75,
+          "manual_review": false
+        },
+        {
+          "id": "contrast-666cbda7e1",
+          "kind": "contrast",
+          "target": ".masthead__date",
+          "description": "Text colour #b0b0b0 on #ffffff is 2.17:1; #767676 is the nearest colour reaching 4.5:1 (4.54:1). Computed, not AI. 1 element(s).",
+          "diff": {
+            "before": "color: #b0b0b0; /* 2.17:1 */",
+            "after": ".masthead__date { color: #767676 !important; }"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "contrast-a8a42a9646",
+          "kind": "contrast",
+          "target": "div[data-card-index=\"0\"] > .card__meta, div[data-card-index=\"1\"] > .card__meta, div[data-card-index=\"2\"] > .card__meta …",
+          "description": "Text colour #b4b4b4 on #ffffff is 2.07:1; #767676 is the nearest colour reaching 4.5:1 (4.54:1). Computed, not AI. 8 element(s).",
+          "diff": {
+            "before": "color: #b4b4b4; /* 2.07:1 */",
+            "after": "div[data-card-index=\"0\"] > .card__meta,\ndiv[data-card-index=\"1\"] > .card__meta,\ndiv[data-card-index=\"2\"] > .card__meta,\ndiv[data-card-index=\"3\"] > .card__meta,\ndiv[data-card-index=\"4\"] > .card__meta,\ndiv[data-card-index=\"5\"] > .card__meta,\ndiv[data-card-index=\"6\"] > .card__meta,\ndiv[data-card-index=\"7\"] > .card__meta { color: #767676 !important; }"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "contrast-0bd0144171",
+          "kind": "contrast",
+          "target": ".main-column > .fine-print, .weather > .fine-print, .fine-print:nth-child(1) …",
+          "description": "Text colour #b8b8b8 on #ffffff is 1.98:1; #767676 is the nearest colour reaching 4.5:1 (4.54:1). Computed, not AI. 4 element(s).",
+          "diff": {
+            "before": "color: #b8b8b8; /* 1.98:1 */",
+            "after": ".main-column > .fine-print,\n.weather > .fine-print,\n.fine-print:nth-child(1),\n.fine-print:nth-child(2) { color: #767676 !important; }"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "image_compress-61e15f0d8b",
+          "kind": "image_compress",
+          "target": "/assets/generated/banner-sale.jpg",
+          "description": "Resize to 2x the rendered 820px width and re-encode as WebP q78 (now 1600x400, 182 KB; estimated saving 0 KB, measured on re-scan). Kept only if actually smaller.",
+          "diff": {
+            "before": "<img class=\"banner\" src=\"/assets/generated/banner-sale.jpg\" alt=\"HALF-PRICE SALE Every subscription tier this week only. Claim offer now by clicking this banner advertisement for the Daily Herald half price subscription sale event\">",
+            "after": "<img class=\"banner\" src=\"assets/optimized/banner-sale-9b3525d2.webp\" alt=\"HALF-PRICE SALE Every subscription tier this week only. Claim offer now by clicking this banner advertisement for the Daily Herald half price subscription sale event\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "text_in_image-1bb868b6d6",
+          "kind": "text_in_image",
+          "target": "/assets/generated/banner-sale.jpg",
+          "description": "Manual fix needed: the banner's text needs to be transcribed by the vision model, which was not available for it.",
+          "diff": {
+            "before": "",
+            "after": ""
+          },
+          "ai_generated": false,
+          "applied": false,
+          "confidence": 0.0,
+          "manual_review": true
+        },
+        {
+          "id": "image_compress-253657a011",
+          "kind": "image_compress",
+          "target": "/assets/generated/article-01.jpg",
+          "description": "Resize to 2x the rendered 400px width and re-encode as WebP q78 (now 3000x2000, 84 KB; estimated saving 78 KB, measured on re-scan). Kept only if actually smaller.",
+          "diff": {
+            "before": "<img class=\"card__image\" src=\"/assets/generated/article-01.jpg\" loading=\"eager\">",
+            "after": "<img class=\"card__image\" src=\"assets/optimized/article-01-135531ad.webp\" loading=\"eager\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "lazy_load-5b49c5406c",
+          "kind": "lazy_load",
+          "target": "/assets/generated/article-01.jpg",
+          "description": "Measured below the first screen: add loading=\"lazy\" and intrinsic width/height so it loads only when scrolled to, without layout shift.",
+          "diff": {
+            "before": "<img class=\"card__image\" src=\"/assets/generated/article-01.jpg\" loading=\"eager\">",
+            "after": "<img class=\"card__image\" src=\"/assets/generated/article-01.jpg\" loading=\"lazy\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "image_compress-6765452f16",
+          "kind": "image_compress",
+          "target": "/assets/generated/article-02.jpg",
+          "description": "Resize to 2x the rendered 400px width and re-encode as WebP q78 (now 3000x2000, 82 KB; estimated saving 76 KB, measured on re-scan). Kept only if actually smaller.",
+          "diff": {
+            "before": "<img class=\"card__image\" src=\"/assets/generated/article-02.jpg\" loading=\"eager\">",
+            "after": "<img class=\"card__image\" src=\"assets/optimized/article-02-ca248d65.webp\" loading=\"eager\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "lazy_load-3e37cd80f0",
+          "kind": "lazy_load",
+          "target": "/assets/generated/article-02.jpg",
+          "description": "Measured below the first screen: add loading=\"lazy\" and intrinsic width/height so it loads only when scrolled to, without layout shift.",
+          "diff": {
+            "before": "<img class=\"card__image\" src=\"/assets/generated/article-02.jpg\" loading=\"eager\">",
+            "after": "<img class=\"card__image\" src=\"/assets/generated/article-02.jpg\" loading=\"lazy\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "image_compress-bea448310b",
+          "kind": "image_compress",
+          "target": "/assets/generated/article-03.jpg",
+          "description": "Resize to 2x the rendered 400px width and re-encode as WebP q78 (now 3000x2000, 89 KB; estimated saving 82 KB, measured on re-scan). Kept only if actually smaller.",
+          "diff": {
+            "before": "<img class=\"card__image\" src=\"/assets/generated/article-03.jpg\" loading=\"eager\" alt=\"Aerial view of the old harbour at dusk\">",
+            "after": "<img class=\"card__image\" src=\"assets/optimized/article-03-88fa7cf3.webp\" loading=\"eager\" alt=\"Aerial view of the old harbour at dusk\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "lazy_load-b23ecefa4d",
+          "kind": "lazy_load",
+          "target": "/assets/generated/article-03.jpg",
+          "description": "Measured below the first screen: add loading=\"lazy\" and intrinsic width/height so it loads only when scrolled to, without layout shift.",
+          "diff": {
+            "before": "<img class=\"card__image\" src=\"/assets/generated/article-03.jpg\" loading=\"eager\" alt=\"Aerial view of the old harbour at dusk\">",
+            "after": "<img class=\"card__image\" src=\"/assets/generated/article-03.jpg\" loading=\"lazy\" alt=\"Aerial view of the old harbour at dusk\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "image_compress-81113266d7",
+          "kind": "image_compress",
+          "target": "/assets/generated/article-04.jpg",
+          "description": "Resize to 2x the rendered 400px width and re-encode as WebP q78 (now 3000x2000, 87 KB; estimated saving 81 KB, measured on re-scan). Kept only if actually smaller.",
+          "diff": {
+            "before": "<img class=\"card__image\" src=\"/assets/generated/article-04.jpg\" loading=\"eager\">",
+            "after": "<img class=\"card__image\" src=\"assets/optimized/article-04-c8952617.webp\" loading=\"eager\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "lazy_load-57500957be",
+          "kind": "lazy_load",
+          "target": "/assets/generated/article-04.jpg",
+          "description": "Measured below the first screen: add loading=\"lazy\" and intrinsic width/height so it loads only when scrolled to, without layout shift.",
+          "diff": {
+            "before": "<img class=\"card__image\" src=\"/assets/generated/article-04.jpg\" loading=\"eager\">",
+            "after": "<img class=\"card__image\" src=\"/assets/generated/article-04.jpg\" loading=\"lazy\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "image_compress-08bed9bc09",
+          "kind": "image_compress",
+          "target": "/assets/generated/article-05.jpg",
+          "description": "Resize to 2x the rendered 400px width and re-encode as WebP q78 (now 3000x2000, 89 KB; estimated saving 82 KB, measured on re-scan). Kept only if actually smaller.",
+          "diff": {
+            "before": "<img class=\"card__image\" src=\"/assets/generated/article-05.jpg\" loading=\"eager\">",
+            "after": "<img class=\"card__image\" src=\"assets/optimized/article-05-789ab231.webp\" loading=\"eager\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "lazy_load-136cc1e5de",
+          "kind": "lazy_load",
+          "target": "/assets/generated/article-05.jpg",
+          "description": "Measured below the first screen: add loading=\"lazy\" and intrinsic width/height so it loads only when scrolled to, without layout shift.",
+          "diff": {
+            "before": "<img class=\"card__image\" src=\"/assets/generated/article-05.jpg\" loading=\"eager\">",
+            "after": "<img class=\"card__image\" src=\"/assets/generated/article-05.jpg\" loading=\"lazy\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "image_compress-ec1c195129",
+          "kind": "image_compress",
+          "target": "/assets/generated/article-06.jpg",
+          "description": "Resize to 2x the rendered 400px width and re-encode as WebP q78 (now 3000x2000, 85 KB; estimated saving 79 KB, measured on re-scan). Kept only if actually smaller.",
+          "diff": {
+            "before": "<img class=\"card__image\" src=\"/assets/generated/article-06.jpg\" loading=\"eager\">",
+            "after": "<img class=\"card__image\" src=\"assets/optimized/article-06-7706b8ab.webp\" loading=\"eager\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "lazy_load-f8c700f6cd",
+          "kind": "lazy_load",
+          "target": "/assets/generated/article-06.jpg",
+          "description": "Measured below the first screen: add loading=\"lazy\" and intrinsic width/height so it loads only when scrolled to, without layout shift.",
+          "diff": {
+            "before": "<img class=\"card__image\" src=\"/assets/generated/article-06.jpg\" loading=\"eager\">",
+            "after": "<img class=\"card__image\" src=\"/assets/generated/article-06.jpg\" loading=\"lazy\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "image_compress-d8032c16c7",
+          "kind": "image_compress",
+          "target": "/assets/generated/article-07.jpg",
+          "description": "Resize to 2x the rendered 400px width and re-encode as WebP q78 (now 3000x2000, 84 KB; estimated saving 78 KB, measured on re-scan). Kept only if actually smaller.",
+          "diff": {
+            "before": "<img class=\"card__image\" src=\"/assets/generated/article-07.jpg\" loading=\"eager\" alt=\"Crowds outside the municipal theatre\">",
+            "after": "<img class=\"card__image\" src=\"assets/optimized/article-07-a86df879.webp\" loading=\"eager\" alt=\"Crowds outside the municipal theatre\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "lazy_load-4ad8f44db3",
+          "kind": "lazy_load",
+          "target": "/assets/generated/article-07.jpg",
+          "description": "Measured below the first screen: add loading=\"lazy\" and intrinsic width/height so it loads only when scrolled to, without layout shift.",
+          "diff": {
+            "before": "<img class=\"card__image\" src=\"/assets/generated/article-07.jpg\" loading=\"eager\" alt=\"Crowds outside the municipal theatre\">",
+            "after": "<img class=\"card__image\" src=\"/assets/generated/article-07.jpg\" loading=\"lazy\" alt=\"Crowds outside the municipal theatre\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "image_compress-9ab30f2bf2",
+          "kind": "image_compress",
+          "target": "/assets/generated/article-08.jpg",
+          "description": "Resize to 2x the rendered 400px width and re-encode as WebP q78 (now 3000x2000, 82 KB; estimated saving 77 KB, measured on re-scan). Kept only if actually smaller.",
+          "diff": {
+            "before": "<img class=\"card__image\" src=\"/assets/generated/article-08.jpg\" loading=\"eager\">",
+            "after": "<img class=\"card__image\" src=\"assets/optimized/article-08-a1d9f7fa.webp\" loading=\"eager\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "lazy_load-64594125cf",
+          "kind": "lazy_load",
+          "target": "/assets/generated/article-08.jpg",
+          "description": "Measured below the first screen: add loading=\"lazy\" and intrinsic width/height so it loads only when scrolled to, without layout shift.",
+          "diff": {
+            "before": "<img class=\"card__image\" src=\"/assets/generated/article-08.jpg\" loading=\"eager\">",
+            "after": "<img class=\"card__image\" src=\"/assets/generated/article-08.jpg\" loading=\"lazy\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "image_compress-e2ae17cb2d",
+          "kind": "image_compress",
+          "target": "/assets/generated/banner-subscribe.png",
+          "description": "Resize to 2x the rendered 746px width and re-encode as WebP q78 (now 1600x400, 190 KB; estimated saving 25 KB, measured on re-scan). Kept only if actually smaller.",
+          "diff": {
+            "before": "<img class=\"banner\" src=\"/assets/generated/banner-subscribe.png\">",
+            "after": "<img class=\"banner\" src=\"assets/optimized/banner-subscribe-385e3a2e.webp\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "lazy_load-b6bd7b7beb",
+          "kind": "lazy_load",
+          "target": "/assets/generated/banner-subscribe.png",
+          "description": "Measured below the first screen: add loading=\"lazy\" and intrinsic width/height so it loads only when scrolled to, without layout shift.",
+          "diff": {
+            "before": "<img class=\"banner\" src=\"/assets/generated/banner-subscribe.png\">",
+            "after": "<img class=\"banner\" src=\"/assets/generated/banner-subscribe.png\" loading=\"lazy\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "text_in_image-7d039aec50",
+          "kind": "text_in_image",
+          "target": "/assets/generated/banner-subscribe.png",
+          "description": "Manual fix needed: the banner's text needs to be transcribed by the vision model, which was not available for it.",
+          "diff": {
+            "before": "",
+            "after": ""
+          },
+          "ai_generated": false,
+          "applied": false,
+          "confidence": 0.0,
+          "manual_review": true
+        },
+        {
+          "id": "autoplay_video-45bf3d717f",
+          "kind": "autoplay_video",
+          "target": "video.hero__video",
+          "description": "Stop autoplay: remove autoplay, add controls and preload=\"none\", so the 978 KB video downloads only if someone presses play. A poster frame is added when ffmpeg is available.",
+          "diff": {
+            "before": "<video class=\"hero__video\" src=\"/assets/generated/hero.mp4\" autoplay=\"\" loop=\"\" muted=\"\" playsinline=\"\" preload=\"auto\">",
+            "after": "<video class=\"hero__video\" src=\"/assets/generated/hero.mp4\" loop=\"\" muted=\"\" playsinline=\"\" preload=\"none\" controls=\"\" poster=\"assets/optimized/hero-poster-d32471fc.webp\">"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "reduced_motion-336bdf74a7",
+          "kind": "reduced_motion",
+          "target": "greenaccess-patch.css",
+          "description": "Add a prefers-reduced-motion block that stills animations and transitions for visitors who asked their OS for less motion.",
+          "diff": {
+            "before": "",
+            "after": "@media (prefers-reduced-motion: reduce) {\n  *,\n  *::before,\n  *::after {\n    animation-duration: 0.01ms !important;\n    animation-iteration-count: 1 !important;\n    transition-duration: 0.01ms !important;\n    scroll-behavior: auto !important;\n  }\n}"
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "third_party_remove-a64e57c954",
+          "kind": "third_party_remove",
+          "target": "http://demo-third-party:8082/t/analytics.js",
+          "description": "Remove this third-party tracker script (on the demo allow-list of removable scripts).",
+          "diff": {
+            "before": "<script src=\"http://demo-third-party:8082/t/analytics.js\">",
+            "after": ""
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "third_party_remove-8a4adff0ab",
+          "kind": "third_party_remove",
+          "target": "http://demo-third-party:8082/t/adtech.js",
+          "description": "Remove this third-party tracker script (on the demo allow-list of removable scripts).",
+          "diff": {
+            "before": "<script src=\"http://demo-third-party:8082/t/adtech.js\">",
+            "after": ""
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "third_party_remove-24b201ec2a",
+          "kind": "third_party_remove",
+          "target": "http://demo-third-party:8082/t/heatmap.js",
+          "description": "Remove this third-party tracker script (on the demo allow-list of removable scripts).",
+          "diff": {
+            "before": "<script src=\"http://demo-third-party:8082/t/heatmap.js\">",
+            "after": ""
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "third_party_remove-c286b91b97",
+          "kind": "third_party_remove",
+          "target": "http://demo-third-party:8082/t/social.js",
+          "description": "Remove this third-party tracker script (on the demo allow-list of removable scripts).",
+          "diff": {
+            "before": "<script src=\"http://demo-third-party:8082/t/social.js\">",
+            "after": ""
+          },
+          "ai_generated": false,
+          "applied": true,
+          "confidence": 1.0,
+          "manual_review": false
+        },
+        {
+          "id": "dark_mode_tokens-b7bd897aaa",
+          "kind": "dark_mode_tokens",
+          "target": "greenaccess-patch.css",
+          "description": "Suggestion only: the page has no colour variables to override, so a dark theme needs design work. A starting point is shown; check every colour pair for contrast before shipping it.",
+          "diff": {
+            "before": "",
+            "after": "@media (prefers-color-scheme: dark) {\n  :root { color-scheme: dark; }\n  body { background: #121212; color: #e8e8e8; }\n}"
+          },
+          "ai_generated": false,
+          "applied": false,
+          "confidence": 0.0,
+          "manual_review": true
+        },
+        {
+          "id": "font_bloat-2a3e2a2817",
+          "kind": "font_bloat",
+          "target": "http://demo-site:8081/assets/fonts/fraunces-latin-wght-normal.woff2, http://demo-site:8081/assets/fonts/fraunces-latin-ext-wght-normal.woff2, http://demo-site:8081/assets/fonts/inter-latin-wght-normal.woff2",
+          "description": "Manual fix needed: Subset the web fonts and drop faces the page never renders.",
+          "diff": {
+            "before": "",
+            "after": ""
+          },
+          "ai_generated": false,
+          "applied": false,
+          "confidence": 0.0,
+          "manual_review": true
+        },
+        {
+          "id": "uncompressed_text-ad77d0a979",
+          "kind": "uncompressed_text",
+          "target": "http://demo-site:8081/, http://demo-site:8081/css/main.css, http://demo-third-party:8082/t/analytics.js",
+          "description": "Manual fix needed: Enable gzip or Brotli for HTML, CSS and JS on the web server.",
+          "diff": {
+            "before": "",
+            "after": ""
+          },
+          "ai_generated": false,
+          "applied": false,
+          "confidence": 0.0,
+          "manual_review": true
+        },
+        {
+          "id": "div_soup_widgets-31b4eb401b",
+          "kind": "div_soup_widgets",
+          "target": "body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1), body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(2), body > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(3)",
+          "description": "Manual fix needed: Replace clickable <div>s with real <button> elements.",
+          "diff": {
+            "before": "",
+            "after": ""
+          },
+          "ai_generated": false,
+          "applied": false,
+          "confidence": 0.0,
+          "manual_review": true
+        },
+        {
+          "id": "keyboard_trap-a4e31e5912",
+          "kind": "keyboard_trap",
+          "target": "div#promo",
+          "description": "Manual fix needed: the automated keyboard crawl found focus trapped here. Let Tab leave the widget and close it with Escape; this lives in the page's script.",
+          "diff": {
+            "before": "",
+            "after": ""
+          },
+          "ai_generated": false,
+          "applied": false,
+          "confidence": 0.0,
+          "manual_review": true
+        },
+        {
+          "id": "focus_visible-3f41f71e07",
+          "kind": "focus_visible",
+          "target": "page",
+          "description": "Manual fix needed: 6 control(s) show no focus indicator (automated keyboard crawl). Restore an outline or equivalent focus style.",
+          "diff": {
+            "before": "",
+            "after": ""
+          },
+          "ai_generated": false,
+          "applied": false,
+          "confidence": 0.0,
+          "manual_review": true
+        }
+      ],
+      "zip_path": null,
+      "patched_url": null,
+      "skipped": [
+        {
+          "fix_id": "img_alt-a933b1f843",
+          "reason": "manual fix needed: not applied automatically"
+        },
+        {
+          "fix_id": "img_alt-ba06e28eb6",
+          "reason": "manual fix needed: not applied automatically"
+        },
+        {
+          "fix_id": "img_alt-f14eee4558",
+          "reason": "manual fix needed: not applied automatically"
+        },
+        {
+          "fix_id": "img_alt-a84e92696b",
+          "reason": "manual fix needed: not applied automatically"
+        },
+        {
+          "fix_id": "img_alt-a4b2d2bc4b",
+          "reason": "manual fix needed: not applied automatically"
+        },
+        {
+          "fix_id": "img_alt-28c49861f9",
+          "reason": "manual fix needed: not applied automatically"
+        },
+        {
+          "fix_id": "img_alt-b153fc56d5",
+          "reason": "manual fix needed: not applied automatically"
+        },
+        {
+          "fix_id": "text_in_image-1bb868b6d6",
+          "reason": "manual fix needed: not applied automatically"
+        },
+        {
+          "fix_id": "text_in_image-7d039aec50",
+          "reason": "manual fix needed: not applied automatically"
+        },
+        {
+          "fix_id": "dark_mode_tokens-b7bd897aaa",
+          "reason": "manual fix needed: not applied automatically"
+        },
+        {
+          "fix_id": "region-d4a2fd3c1d",
+          "reason": "manual fix needed: not applied automatically"
+        },
+        {
+          "fix_id": "font_bloat-2a3e2a2817",
+          "reason": "manual fix needed: not applied automatically"
+        },
+        {
+          "fix_id": "uncompressed_text-ad77d0a979",
+          "reason": "manual fix needed: not applied automatically"
+        },
+        {
+          "fix_id": "div_soup_widgets-31b4eb401b",
+          "reason": "manual fix needed: not applied automatically"
+        },
+        {
+          "fix_id": "keyboard_trap-a4e31e5912",
+          "reason": "manual fix needed: not applied automatically"
+        },
+        {
+          "fix_id": "focus_visible-3f41f71e07",
+          "reason": "manual fix needed: not applied automatically"
+        }
+      ],
+      "ai_usage": {
+        "model": "claude-opus-5",
+        "live_calls": 0,
+        "cached_calls": 0,
+        "failed_calls": 0,
+        "vision_calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_input_tokens": 0,
+        "cached_output_tokens": 0,
+        "offline": true,
+        "unavailable_reason": "LLM_OFFLINE is set, so only cached answers can be used"
+      }
+    },
+    "error": null
+  }
+}

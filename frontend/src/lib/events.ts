@@ -14,6 +14,13 @@
  *   `Last-Event-ID` itself, which is why the query parameter exists.
  */
 
+import {
+  CACHED_PATCH_STEPS,
+  CACHED_SCAN_ID,
+  CACHED_SCAN_STEPS,
+  CACHED_STEP_DELAY_MS,
+  isCachedDemo,
+} from './cachedDemo'
 import type { ApiError, DoneEvent, StepEvent } from './types'
 
 /** What a subscriber wants to be told. Every handler is optional. */
@@ -53,6 +60,9 @@ export function subscribeToScan(
   handlers: ScanStreamHandlers,
   after?: number,
 ): Unsubscribe {
+  if (isCachedDemo()) {
+    return replayRecordedSteps(handlers, after)
+  }
   const query = after !== undefined && after > 0 ? `?after=${after}` : ''
   const source = new EventSource(`/api/scans/${encodeURIComponent(scanId)}/events${query}`)
 
@@ -98,4 +108,47 @@ export function subscribeToScan(
   })
 
   return close
+}
+
+/**
+ * Cached build only: emit the recorded run's steps, then `done`.
+ *
+ * There is no server to stream from, so the step names the real pipeline emits
+ * are replayed on a timer. They describe what a live run does; every number the
+ * UI then shows comes from the recording, not from here.
+ *
+ * `after` selects the phase exactly as the query parameter does against a live
+ * backend: unset for the scan, set once `POST /patch` has been accepted.
+ */
+function replayRecordedSteps(handlers: ScanStreamHandlers, after?: number): Unsubscribe {
+  const steps = after !== undefined && after > 0 ? CACHED_PATCH_STEPS : CACHED_SCAN_STEPS
+  let cancelled = false
+  let timer: ReturnType<typeof setTimeout> | undefined
+
+  const emit = (index: number): void => {
+    if (cancelled) {
+      return
+    }
+    if (index >= steps.length) {
+      const done: DoneEvent = { scan_id: CACHED_SCAN_ID, status: 'done' }
+      handlers.onDone?.(done)
+      return
+    }
+    const step = steps[index]
+    if (step !== undefined) {
+      handlers.onStep?.(step)
+    }
+    timer = setTimeout(() => emit(index + 1), CACHED_STEP_DELAY_MS)
+  }
+
+  // Start on a timer rather than synchronously: a subscriber that renders in
+  // response to the first step must have finished mounting first.
+  timer = setTimeout(() => emit(0), CACHED_STEP_DELAY_MS)
+
+  return () => {
+    cancelled = true
+    if (timer !== undefined) {
+      clearTimeout(timer)
+    }
+  }
 }

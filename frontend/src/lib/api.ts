@@ -9,6 +9,14 @@
  * rather than a request, and lives in `events.ts`.
  */
 
+import {
+  CACHED_SCAN_ID,
+  cachedScan,
+  cachedScreenshotUrl,
+  isCachedDemo,
+  loadRecording,
+  recordedUrl,
+} from './cachedDemo'
 import type {
   ApiError,
   ApiErrorEnvelope,
@@ -117,29 +125,92 @@ function postJson<T>(path: string, body: unknown): Promise<T> {
 // Endpoints
 // --------------------------------------------------------------------------
 
+/**
+ * Cached build only: which chapter of the recording `getScan` should return.
+ *
+ * The live API decides this from the scan's own stored state. There is no
+ * server here, so the one bit of progress the flow has -- whether the fix loop
+ * has been run -- is held here, set by `applyPatch` and read by `getScan`.
+ */
+let patchApplied = false
+
+/** Cached build only: forget that the fix loop ran. Exported for tests. */
+export function resetCachedDemoState(): void {
+  patchApplied = false
+}
+
 /** `GET /api/demo` — where the Daily Herald demo site is served. */
-export function getDemo(): Promise<DemoInfo> {
+export async function getDemo(): Promise<DemoInfo> {
+  if (isCachedDemo()) {
+    return { url: await recordedUrl() }
+  }
   return request<DemoInfo>('/demo')
 }
 
-/** `POST /api/scans` — queue a scan. Rate limited to 10/min/IP. */
-export function createScan(url: string, weights?: Weights): Promise<ScanCreated> {
+/**
+ * `POST /api/scans` — queue a scan. Rate limited to 10/min/IP.
+ *
+ * In the cached build there is no scanner, so only the recorded URL is
+ * answered. Returning the recording for someone else's site would be
+ * presenting cached data as their result (CLAUDE.md rule 4), so anything else
+ * is refused with a message that says why.
+ */
+export async function createScan(url: string, weights?: Weights): Promise<ScanCreated> {
+  if (isCachedDemo()) {
+    const recorded = await recordedUrl()
+    if (url.replace(/\/$/, '') !== recorded.replace(/\/$/, '')) {
+      throw new ApiFailure(
+        {
+          code: 'URL_BLOCKED',
+          message:
+            // No trailing full stop: the UI appends its own sentence after this.
+            'this is a cached demo and cannot scan new sites. It replays one ' +
+            `recorded run of ${recorded}, and GreenAccess must be run locally ` +
+            'to scan your own URL',
+        },
+        403,
+      )
+    }
+    return { scan_id: CACHED_SCAN_ID }
+  }
   const body: ScanRequest = weights ? { url, weights } : { url }
   return postJson<ScanCreated>('/scans', body)
 }
 
 /** `GET /api/scans/{id}` — the whole scan, including `before`/`after`/`patch`. */
 export function getScan(scanId: string): Promise<Scan> {
+  if (isCachedDemo()) {
+    return cachedScan(patchApplied)
+  }
   return request<Scan>(`/scans/${encodeURIComponent(scanId)}`)
 }
 
 /** `POST /api/scans/{id}/cancel` — idempotent; a finished scan is unchanged. */
 export function cancelScan(scanId: string): Promise<Scan> {
+  if (isCachedDemo()) {
+    return cachedScan(patchApplied)
+  }
   return postJson<Scan>(`/scans/${encodeURIComponent(scanId)}/cancel`, {})
 }
 
 /** `POST /api/scans/{id}/fixes` — generate fixes for a finished scan. */
-export function generateFixes(scanId: string): Promise<FixesResponse> {
+export async function generateFixes(scanId: string): Promise<FixesResponse> {
+  if (isCachedDemo()) {
+    const { patch } = (await loadRecording()).after
+    if (!patch) {
+      throw new ApiFailure(
+        { code: 'LLM_UNAVAILABLE', message: 'the recording holds no fixes' },
+        503,
+      )
+    }
+    if (patch.ai_usage === null) {
+      throw new ApiFailure(
+        { code: 'LLM_UNAVAILABLE', message: 'the recording holds no AI usage record' },
+        503,
+      )
+    }
+    return { scan_id: CACHED_SCAN_ID, fixes: patch.fixes, ai_usage: patch.ai_usage }
+  }
   return postJson<FixesResponse>(`/scans/${encodeURIComponent(scanId)}/fixes`, {})
 }
 
@@ -150,6 +221,13 @@ export function generateFixes(scanId: string): Promise<FixesResponse> {
  * passes to the SSE stream as `?after=` to follow only the new steps.
  */
 export function applyPatch(scanId: string, acceptedFixIds: string[]): Promise<PatchAccepted> {
+  if (isCachedDemo()) {
+    // The patched chapter is already recorded; flip to it and let the stream
+    // replay the fix phase. The non-zero `events_after` is what makes the UI
+    // reopen the stream for that phase, exactly as against a live backend.
+    patchApplied = true
+    return Promise.resolve({ scan_id: CACHED_SCAN_ID, events_after: 7 })
+  }
   return postJson<PatchAccepted>(`/scans/${encodeURIComponent(scanId)}/patch`, {
     accepted_fix_ids: acceptedFixIds,
   })
@@ -167,6 +245,9 @@ export function getHistory(host?: string): Promise<HistoryResponse> {
 
 /** `GET /api/scans/{id}/screenshot?state=` — full-page PNG. */
 export function screenshotUrl(scanId: string, state: 'before' | 'after'): string {
+  if (isCachedDemo()) {
+    return cachedScreenshotUrl(state)
+  }
   return `${BASE}/scans/${encodeURIComponent(scanId)}/screenshot?state=${state}`
 }
 
